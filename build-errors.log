@@ -1,0 +1,27 @@
+npm warn cli npm v11.5.2 does not support Node.js v18.20.8. This version of npm supports the following node versions: `^20.17.0 || >=22.9.0`. You can find the latest version at https://nodejs.org/.
+ ⚠ Warning: Found multiple lockfiles. Selecting /Users/ibrahim/pnpm-lock.yaml.
+   Consider removing the lockfiles at:
+   * /Users/ibrahim/Desktop/Unified X/kct-menswear-v2/kct-menswear-v2/package-lock.json
+
+   ▲ Next.js 15.4.5
+   - Environments: .env.local, .env.production
+   - Experiments (use with caution):
+     ✓ typedRoutes
+     · serverActions
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 15.0s
+   Linting and checking validity of types ...
+Failed to compile.
+
+./src/app/account-temp/layout.tsx:19:19
+Type error: Argument of type '"/login?redirect=/account"' is not assignable to parameter of type 'RouteImpl<"/login?redirect=/account">'.
+
+[0m [90m 17 |[39m   useEffect(() [33m=>[39m {
+ [90m 18 |[39m     [36mif[39m ([33m![39misLoading [33m&&[39m [33m![39misAuthenticated) {
+[31m[1m>[22m[39m[90m 19 |[39m       router[33m.[39mpush([32m"/login?redirect=/account"[39m)[33m;[39m
+ [90m    |[39m                   [31m[1m^[22m[39m
+ [90m 20 |[39m     }
+ [90m 21 |[39m   }[33m,[39m [isAuthenticated[33m,[39m isLoading[33m,[39m router])[33m;[39m
+ [90m 22 |[39m[0m
+Next.js build worker exited with code: 1 and signal: null

@@ -1,0 +1,539 @@
+{
+  "date": "2025-08-04T23:02:42.326Z",
+  "filesModified": 133,
+  "totalRemoved": 508,
+  "files": [
+    {
+      "path": "src/test/generateTop15Bundles.ts",
+      "removed": 42
+    },
+    {
+      "path": "src/test/generateFashionClipBundles.ts",
+      "removed": 35
+    },
+    {
+      "path": "src/lib/sendgrid.ts",
+      "removed": 4
+    },
+    {
+      "path": "src/lib/utils/cart-persistence.ts",
+      "removed": 2
+    },
+    {
+      "path": "src/lib/utils/performance/lazyWithRetry.ts",
+      "removed": 1
+    },
+    {
+      "path": "src/lib/supabase/products.ts",
+      "removed": 1
+    },
+    {
+      "path": "src/lib/supabase/client.ts",
+      "removed": 1
+    },
+    {
+      "path": "src/lib/store/weddingStore.ts",
+      "removed": 4
+    },
+    {
+      "path": "src/lib/store/productStore.ts",
+      "removed": 3
+    },
+    {
+      "path": "src/lib/store/cartStore.ts",
+      "removed": 1
+    },
+    {
+      "path": "src/lib/store/authStore.ts",
+      "removed": 3
+    },
+    {
+      "path": "src/lib/services/unifiedRecommendation.ts",
+      "removed": 2
+    },
+    {
+      "path": "src/lib/services/smartBundles.ts",
+      "removed": 1
+    },
+    {
+      "path": "src/lib/services/sizeBotAdapter.ts",
+      "removed": 1
+    },
+    {
+      "path": "src/lib/services/personalStylistChat.ts",
+      "removed": 1
+    },
+    {
+      "path": "src/lib/services/knowledgeBankBundles.ts",
+      "removed": 1
+    },
+    {
+      "path": "src/lib/services/knowledgeBankAdapter.ts",
+      "removed": 8
+    },
+    {
+      "path": "src/lib/services/knowledgeBankAdapter.test.ts",
+      "removed": 23
+    },
+    {
+      "path": "src/lib/services/fashionClipService.ts",
+      "removed": 1
+    },
+    {
+      "path": "src/lib/services/fashionClipAutoTagging.ts",
+      "removed": 2
+    },
+    {
+      "path": "src/lib/recommendations/recommendationService.ts",
+      "removed": 6
+    },
+    {
+      "path": "src/lib/hooks/useWishlist.ts",
+      "removed": 2
+    },
+    {
+      "path": "src/lib/hooks/useWedding.ts",
+      "removed": 2
+    },
+    {
+      "path": "src/lib/hooks/useStripeProducts.ts",
+      "removed": 1
+    },
+    {
+      "path": "src/lib/hooks/useInventory.ts",
+      "removed": 2
+    },
+    {
+      "path": "src/lib/hooks/useCart.ts",
+      "removed": 3
+    },
+    {
+      "path": "src/lib/hooks/useAuth.ts",
+      "removed": 2
+    },
+    {
+      "path": "src/lib/email/service.ts",
+      "removed": 1
+    },
+    {
+      "path": "src/lib/email/emailClient.ts",
+      "removed": 4
+    },
+    {
+      "path": "src/lib/cloudflare/r2-client.ts",
+      "removed": 7
+    },
+    {
+      "path": "src/lib/cloudflare/images-client.ts",
+      "removed": 3
+    },
+    {
+      "path": "src/lib/api/weddingClient.ts",
+      "removed": 7
+    },
+    {
+      "path": "src/lib/api/stripeClient.ts",
+      "removed": 1
+    },
+    {
+      "path": "src/lib/api/adminClient.ts",
+      "removed": 15
+    },
+    {
+      "path": "src/lib/analytics/facebook-pixel.ts",
+      "removed": 1
+    },
+    {
+      "path": "src/lib/analytics/analyticsClient.ts",
+      "removed": 1
+    },
+    {
+      "path": "src/lib/agents/index.ts",
+      "removed": 14
+    },
+    {
+      "path": "src/lib/agents/UIUXFrontendAgent.ts",
+      "removed": 2
+    },
+    {
+      "path": "src/lib/agents/ProductInventoryAgent.ts",
+      "removed": 2
+    },
+    {
+      "path": "src/lib/agents/MasterOrchestrator.ts",
+      "removed": 9
+    },
+    {
+      "path": "src/lib/agents/MarketingAnalyticsSEOAgent.ts",
+      "removed": 2
+    },
+    {
+      "path": "src/lib/agents/ECommerceOperationsAgent.ts",
+      "removed": 2
+    },
+    {
+      "path": "src/lib/agents/CustomerExperienceAgent.ts",
+      "removed": 2
+    },
+    {
+      "path": "src/lib/agents/persistence/AgentMemory.ts",
+      "removed": 3
+    },
+    {
+      "path": "src/lib/agents/core/BaseAgent.ts",
+      "removed": 1
+    },
+    {
+      "path": "src/hooks/useInventory.ts",
+      "removed": 3
+    },
+    {
+      "path": "src/hooks/useCart.ts",
+      "removed": 1
+    },
+    {
+      "path": "src/components/ErrorBoundary.tsx",
+      "removed": 1
+    },
+    {
+      "path": "src/components/wedding/WeddingStyleSwiper.tsx",
+      "removed": 1
+    },
+    {
+      "path": "src/components/wedding/WeddingStudio.tsx",
+      "removed": 1
+    },
+    {
+      "path": "src/components/wedding/WeddingPartyCoordinator.tsx",
+      "removed": 1
+    },
+    {
+      "path": "src/components/wedding/WeddingPartyBuilder.tsx",
+      "removed": 1
+    },
+    {
+      "path": "src/components/video/VideoPlayer.tsx",
+      "removed": 3
+    },
+    {
+      "path": "src/components/video/VerticalVideoSwiper.tsx",
+      "removed": 1
+    },
+    {
+      "path": "src/components/social/StyleMatchingWidget.tsx",
+      "removed": 2
+    },
+    {
+      "path": "src/components/search/VoiceSearch.tsx",
+      "removed": 2
+    },
+    {
+      "path": "src/components/search/VisualSearch.tsx",
+      "removed": 1
+    },
+    {
+      "path": "src/components/recommendations/FashionClipRecommendations.tsx",
+      "removed": 1
+    },
+    {
+      "path": "src/components/products/ShopPageExample.tsx",
+      "removed": 1
+    },
+    {
+      "path": "src/components/products/ProductCard.tsx",
+      "removed": 1
+    },
+    {
+      "path": "src/components/products/EnhancedSuitProductDetail.tsx",
+      "removed": 1
+    },
+    {
+      "path": "src/components/pricing/DynamicPricingDashboard.tsx",
+      "removed": 1
+    },
+    {
+      "path": "src/components/layout/Footer.tsx",
+      "removed": 1
+    },
+    {
+      "path": "src/components/examples/ProductFormExample.tsx",
+      "removed": 1
+    },
+    {
+      "path": "src/components/checkout/CheckoutForm.tsx",
+      "removed": 1
+    },
+    {
+      "path": "src/components/chat/PersonalStylistChat.tsx",
+      "removed": 1
+    },
+    {
+      "path": "src/components/chat/FacebookMessenger.tsx",
+      "removed": 1
+    },
+    {
+      "path": "src/components/cart/CheckoutButton.tsx",
+      "removed": 8
+    },
+    {
+      "path": "src/components/bundle/BundleGenerator.tsx",
+      "removed": 3
+    },
+    {
+      "path": "src/components/ai/AIStyleAssistant.tsx",
+      "removed": 2
+    },
+    {
+      "path": "src/components/admin/AgentMonitor.tsx",
+      "removed": 8
+    },
+    {
+      "path": "src/app/page.tsx",
+      "removed": 1
+    },
+    {
+      "path": "src/app/weddings/page.tsx",
+      "removed": 2
+    },
+    {
+      "path": "src/app/weddings/video-lookbook/page.tsx",
+      "removed": 4
+    },
+    {
+      "path": "src/app/weddings/coordination/page.tsx",
+      "removed": 4
+    },
+    {
+      "path": "src/app/weddings/collections/page.tsx",
+      "removed": 2
+    },
+    {
+      "path": "src/app/voice-search/page.tsx",
+      "removed": 1
+    },
+    {
+      "path": "src/app/style-quiz/page.tsx",
+      "removed": 3
+    },
+    {
+      "path": "src/app/prom/page.tsx",
+      "removed": 3
+    },
+    {
+      "path": "src/app/prom/videos/page.tsx",
+      "removed": 4
+    },
+    {
+      "path": "src/app/prom/guides/page.tsx",
+      "removed": 2
+    },
+    {
+      "path": "src/app/products/page.tsx",
+      "removed": 1
+    },
+    {
+      "path": "src/app/products/ties/[id]/page.tsx",
+      "removed": 3
+    },
+    {
+      "path": "src/app/orders/page.tsx",
+      "removed": 1
+    },
+    {
+      "path": "src/app/occasions/page.tsx",
+      "removed": 1
+    },
+    {
+      "path": "src/app/live/page.tsx",
+      "removed": 2
+    },
+    {
+      "path": "src/app/dev/test/page.tsx",
+      "removed": 1
+    },
+    {
+      "path": "src/app/demo/unified-ai/page.tsx",
+      "removed": 2
+    },
+    {
+      "path": "src/app/demo/knowledge-bank-bundles/page.tsx",
+      "removed": 2
+    },
+    {
+      "path": "src/app/contact/page.tsx",
+      "removed": 1
+    },
+    {
+      "path": "src/app/checkout/page.tsx",
+      "removed": 2
+    },
+    {
+      "path": "src/app/cart/page.tsx",
+      "removed": 4
+    },
+    {
+      "path": "src/app/builder/page.tsx",
+      "removed": 2
+    },
+    {
+      "path": "src/app/auth/reset-password/page.tsx",
+      "removed": 1
+    },
+    {
+      "path": "src/app/api/wedding-studio/generate/route.ts",
+      "removed": 4
+    },
+    {
+      "path": "src/app/api/webhooks/stripe/route.ts",
+      "removed": 19
+    },
+    {
+      "path": "src/app/api/webhooks/orders/route.ts",
+      "removed": 6
+    },
+    {
+      "path": "src/app/api/webhooks/inventory/route.ts",
+      "removed": 5
+    },
+    {
+      "path": "src/app/api/webhooks/customers/route.ts",
+      "removed": 6
+    },
+    {
+      "path": "src/app/api/webhooks/admin/products/route.ts",
+      "removed": 8
+    },
+    {
+      "path": "src/app/api/webhooks/admin/prices/route.ts",
+      "removed": 7
+    },
+    {
+      "path": "src/app/api/webhooks/admin/inventory/route.ts",
+      "removed": 9
+    },
+    {
+      "path": "src/app/api/voice-search/route.ts",
+      "removed": 3
+    },
+    {
+      "path": "src/app/api/test-knowledge-bank/route.ts",
+      "removed": 6
+    },
+    {
+      "path": "src/app/api/supabase/update-vests/route.ts",
+      "removed": 1
+    },
+    {
+      "path": "src/app/api/supabase/update-inventory/route.ts",
+      "removed": 1
+    },
+    {
+      "path": "src/app/api/supabase/search/route.ts",
+      "removed": 1
+    },
+    {
+      "path": "src/app/api/supabase/products/route.ts",
+      "removed": 1
+    },
+    {
+      "path": "src/app/api/supabase/products/category/[category]/route.ts",
+      "removed": 1
+    },
+    {
+      "path": "src/app/api/supabase/products/[id]/route.ts",
+      "removed": 1
+    },
+    {
+      "path": "src/app/api/stripe/webhook/route.ts",
+      "removed": 46
+    },
+    {
+      "path": "src/app/api/stripe/products/route.ts",
+      "removed": 1
+    },
+    {
+      "path": "src/app/api/stripe/list-products/route.ts",
+      "removed": 1
+    },
+    {
+      "path": "src/app/api/stripe/checkout/route.ts",
+      "removed": 10
+    },
+    {
+      "path": "src/app/api/revalidate/route.ts",
+      "removed": 3
+    },
+    {
+      "path": "src/app/api/recommendations/route.ts",
+      "removed": 1
+    },
+    {
+      "path": "src/app/api/recommendations/trending/route.ts",
+      "removed": 1
+    },
+    {
+      "path": "src/app/api/recommendations/affinity/route.ts",
+      "removed": 1
+    },
+    {
+      "path": "src/app/api/orders/[orderId]/route.ts",
+      "removed": 1
+    },
+    {
+      "path": "src/app/api/newsletter/route.ts",
+      "removed": 2
+    },
+    {
+      "path": "src/app/api/inventory/route.ts",
+      "removed": 3
+    },
+    {
+      "path": "src/app/api/fix-product-images/route.ts",
+      "removed": 1
+    },
+    {
+      "path": "src/app/api/email/shipping-notification/route.ts",
+      "removed": 1
+    },
+    {
+      "path": "src/app/api/email/order-confirmation/route.ts",
+      "removed": 1
+    },
+    {
+      "path": "src/app/api/contact/route.ts",
+      "removed": 1
+    },
+    {
+      "path": "src/app/api/checkout/payment-intent/route.ts",
+      "removed": 2
+    },
+    {
+      "path": "src/app/api/bundle-generator/route.ts",
+      "removed": 9
+    },
+    {
+      "path": "src/app/api/analytics/events/route.ts",
+      "removed": 6
+    },
+    {
+      "path": "src/app/api/agents/route.ts",
+      "removed": 2
+    },
+    {
+      "path": "src/app/account-temp/orders/page.tsx",
+      "removed": 1
+    },
+    {
+      "path": "src/app/account-section/orders/page.tsx",
+      "removed": 1
+    },
+    {
+      "path": "src/app/account/profile/page.tsx",
+      "removed": 3
+    },
+    {
+      "path": "src/app/account/orders/page.tsx",
+      "removed": 1
+    }
+  ]
+}

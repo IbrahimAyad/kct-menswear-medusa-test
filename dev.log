@@ -1,0 +1,1159 @@
+
+> kct-menswear-ai-enhanced@1.0.0 dev
+> next dev
+
+ ⚠ Port 3000 is in use, using available port 3001 instead.
+   ▲ Next.js 15.3.5
+   - Local:        http://localhost:3001
+   - Network:      http://192.168.1.80:3001
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 1879ms
+ ○ Compiling /custom-suits ...
+ ⚠ ./src/app/custom-suits/page.tsx
+Attempted import error: 'tieColors' is not exported from '@/lib/products/tieProducts' (imported as 'tieProductColors').
+
+Import trace for requested module:
+./src/app/custom-suits/page.tsx
+
+./src/app/custom-suits/page.tsx
+Attempted import error: 'tieColors' is not exported from '@/lib/products/tieProducts' (imported as 'tieProductColors').
+
+Import trace for requested module:
+./src/app/custom-suits/page.tsx
+
+./src/app/custom-suits/page.tsx
+Attempted import error: 'tieColors' is not exported from '@/lib/products/tieProducts' (imported as 'tieProductColors').
+
+Import trace for requested module:
+./src/app/custom-suits/page.tsx
+
+./src/app/custom-suits/page.tsx
+Attempted import error: 'tieColors' is not exported from '@/lib/products/tieProducts' (imported as 'tieProductColors').
+
+Import trace for requested module:
+./src/app/custom-suits/page.tsx
+
+./src/app/custom-suits/page.tsx
+Attempted import error: 'tieColors' is not exported from '@/lib/products/tieProducts' (imported as 'tieProductColors').
+
+Import trace for requested module:
+./src/app/custom-suits/page.tsx
+
+./src/app/custom-suits/page.tsx
+Attempted import error: 'tieColors' is not exported from '@/lib/products/tieProducts' (imported as 'tieProductColors').
+
+Import trace for requested module:
+./src/app/custom-suits/page.tsx
+ GET /custom-suits 200 in 3718ms
+ ⚠ ./src/app/custom-suits/page.tsx
+Attempted import error: 'tieColors' is not exported from '@/lib/products/tieProducts' (imported as 'tieProductColors').
+
+Import trace for requested module:
+./src/app/custom-suits/page.tsx
+
+./src/app/custom-suits/page.tsx
+Attempted import error: 'tieColors' is not exported from '@/lib/products/tieProducts' (imported as 'tieProductColors').
+
+Import trace for requested module:
+./src/app/custom-suits/page.tsx
+
+./src/app/custom-suits/page.tsx
+Attempted import error: 'tieColors' is not exported from '@/lib/products/tieProducts' (imported as 'tieProductColors').
+
+Import trace for requested module:
+./src/app/custom-suits/page.tsx
+
+./src/app/custom-suits/page.tsx
+Attempted import error: 'tieColors' is not exported from '@/lib/products/tieProducts' (imported as 'tieProductColors').
+
+Import trace for requested module:
+./src/app/custom-suits/page.tsx
+
+./src/app/custom-suits/page.tsx
+Attempted import error: 'tieColors' is not exported from '@/lib/products/tieProducts' (imported as 'tieProductColors').
+
+Import trace for requested module:
+./src/app/custom-suits/page.tsx
+
+./src/app/custom-suits/page.tsx
+Attempted import error: 'tieColors' is not exported from '@/lib/products/tieProducts' (imported as 'tieProductColors').
+
+Import trace for requested module:
+./src/app/custom-suits/page.tsx
+ ✓ Compiled /custom-suits in 600ms (1782 modules)
+ ✓ Compiled in 331ms (1784 modules)
+ ✓ Compiled in 452ms (1784 modules)
+ GET /custom-suits 200 in 205ms
+ ✓ Compiled in 530ms (837 modules)
+ ✓ Compiled in 337ms (837 modules)
+ ✓ Compiled in 348ms (837 modules)
+ ✓ Compiled in 322ms (837 modules)
+ ✓ Compiled in 193ms (837 modules)
+ ✓ Compiled in 185ms (837 modules)
+ ✓ Compiled in 266ms (837 modules)
+ ✓ Compiled in 196ms (837 modules)
+ ✓ Compiled in 496ms (837 modules)
+ ✓ Compiled in 176ms (837 modules)
+ ✓ Compiled in 228ms (837 modules)
+ ✓ Compiled in 443ms (837 modules)
+ ✓ Compiled in 194ms (837 modules)
+ ✓ Compiled in 103ms (823 modules)
+ ✓ Compiled in 199ms (837 modules)
+ ✓ Compiled in 194ms (837 modules)
+ ✓ Compiled in 227ms (837 modules)
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ✓ Compiled in 401ms (916 modules)
+ ✓ Compiled in 146ms (902 modules)
+ ✓ Compiled in 130ms (902 modules)
+ ✓ Compiled in 69ms (902 modules)
+ ✓ Compiled in 70ms (902 modules)
+ ✓ Compiled in 317ms (916 modules)
+ ✓ Compiled in 325ms (916 modules)
+ ✓ Compiled in 362ms (916 modules)
+ ✓ Compiled in 212ms (916 modules)
+ ✓ Compiled in 328ms (916 modules)
+ ✓ Compiled in 455ms (902 modules)
+ ✓ Compiled in 218ms (916 modules)
+ ✓ Compiled in 108ms (902 modules)
+ ✓ Compiled in 335ms (916 modules)
+ ✓ Compiled in 191ms (916 modules)
+ ✓ Compiled in 203ms (916 modules)
+ ✓ Compiled in 404ms (916 modules)
+ ✓ Compiled in 186ms (916 modules)
+ ✓ Compiled in 229ms (916 modules)
+ ✓ Compiled in 181ms (916 modules)
+ ✓ Compiled in 271ms (916 modules)
+ ✓ Compiled in 69ms (902 modules)
+ ✓ Compiled in 238ms (916 modules)
+ ✓ Compiled in 199ms (916 modules)
+ ✓ Compiled in 202ms (916 modules)
+ ✓ Compiled in 259ms (916 modules)
+ ✓ Compiled in 269ms (916 modules)
+ ✓ Compiled in 118ms (902 modules)
+ ✓ Compiled in 145ms (903 modules)
+ ✓ Compiled in 69ms (903 modules)
+ ✓ Compiled in 65ms (903 modules)
+ ✓ Compiled in 81ms (903 modules)
+ ✓ Compiled in 462ms (917 modules)
+ ✓ Compiled in 192ms (917 modules)
+ ✓ Compiled in 239ms (917 modules)
+ ✓ Compiled in 306ms (917 modules)
+ ✓ Compiled in 294ms (917 modules)
+ ✓ Compiled in 335ms (917 modules)
+ ✓ Compiled in 263ms (917 modules)
+ ✓ Compiled in 184ms (917 modules)
+ ✓ Compiled in 208ms (917 modules)
+ ✓ Compiled in 204ms (917 modules)
+ ✓ Compiled in 224ms (917 modules)
+ ✓ Compiled in 270ms (917 modules)
+ ✓ Compiled in 188ms (917 modules)
+ ✓ Compiled in 243ms (917 modules)
+ ✓ Compiled in 190ms (917 modules)
+ ✓ Compiled in 194ms (917 modules)
+ ✓ Compiled in 187ms (917 modules)
+ ✓ Compiled in 305ms (917 modules)
+ ✓ Compiled in 230ms (917 modules)
+ ✓ Compiled in 346ms (917 modules)
+ ✓ Compiled in 196ms (917 modules)
+ ✓ Compiled in 213ms (917 modules)
+ ✓ Compiled in 196ms (917 modules)
+ ✓ Compiled in 185ms (917 modules)
+ ✓ Compiled in 227ms (917 modules)
+ ✓ Compiled in 243ms (917 modules)
+ ✓ Compiled in 194ms (917 modules)
+ ✓ Compiled in 194ms (917 modules)
+ ✓ Compiled in 198ms (917 modules)
+ ✓ Compiled in 246ms (917 modules)
+ ✓ Compiled in 212ms (917 modules)
+ ✓ Compiled in 189ms (917 modules)
+ ✓ Compiled in 255ms (917 modules)
+ ✓ Compiled in 264ms (917 modules)
+ ✓ Compiled in 219ms (917 modules)
+ ✓ Compiled in 202ms (917 modules)
+ ✓ Compiled in 270ms (917 modules)
+ ✓ Compiled in 286ms (917 modules)
+ ✓ Compiled in 455ms (917 modules)
+ ✓ Compiled in 219ms (917 modules)
+ ✓ Compiled in 186ms (917 modules)
+ ✓ Compiled in 286ms (917 modules)
+ ✓ Compiled in 254ms (917 modules)
+ ✓ Compiled in 235ms (917 modules)
+ ✓ Compiled in 201ms (917 modules)
+ ✓ Compiled in 252ms (917 modules)
+ ✓ Compiled in 201ms (917 modules)
+ ✓ Compiled in 243ms (917 modules)
+ ✓ Compiled in 217ms (917 modules)
+ ✓ Compiled in 255ms (917 modules)
+ ✓ Compiled in 191ms (917 modules)
+ ✓ Compiled in 274ms (917 modules)
+ ✓ Compiled in 201ms (917 modules)
+ ✓ Compiled in 246ms (917 modules)
+ ✓ Compiled in 383ms (917 modules)
+ ✓ Compiled in 197ms (917 modules)
+ ✓ Compiled in 239ms (917 modules)
+ ✓ Compiled in 251ms (917 modules)
+ ✓ Compiled in 196ms (917 modules)
+ ✓ Compiled in 211ms (917 modules)
+ ✓ Compiled in 310ms (917 modules)
+ ✓ Compiled in 226ms (917 modules)
+ ✓ Compiled in 528ms (917 modules)
+ ✓ Compiled in 196ms (917 modules)
+ ✓ Compiled in 246ms (917 modules)
+ ✓ Compiled in 61ms (903 modules)
+ ✓ Compiled in 352ms (917 modules)
+ ✓ Compiled in 354ms (917 modules)
+ ✓ Compiled in 205ms (917 modules)
+ ✓ Compiled in 237ms (917 modules)
+ ✓ Compiled in 279ms (917 modules)
+ ✓ Compiled in 204ms (917 modules)
+ ✓ Compiled in 396ms (917 modules)
+ ✓ Compiled in 355ms (917 modules)
+ ✓ Compiled in 195ms (917 modules)
+ ✓ Compiled in 306ms (917 modules)
+ ✓ Compiled in 192ms (917 modules)
+ ✓ Compiled in 237ms (917 modules)
+ ✓ Compiled in 344ms (917 modules)
+ ✓ Compiled in 235ms (917 modules)
+ ✓ Compiled in 248ms (917 modules)
+ ✓ Compiled in 384ms (917 modules)
+ ✓ Compiled in 315ms (917 modules)
+ ✓ Compiled in 296ms (917 modules)
+ ✓ Compiled in 302ms (917 modules)
+ ✓ Compiled in 324ms (917 modules)
+ ✓ Compiled in 262ms (917 modules)
+ ✓ Compiled in 195ms (917 modules)
+ ✓ Compiled in 263ms (917 modules)
+ ✓ Compiled in 262ms (917 modules)
+ ✓ Compiled in 311ms (917 modules)
+ ✓ Compiled in 308ms (917 modules)
+ ✓ Compiled in 218ms (917 modules)
+ ✓ Compiled in 239ms (917 modules)
+ ✓ Compiled in 360ms (917 modules)
+ ✓ Compiled in 198ms (918 modules)
+ ✓ Compiled in 91ms (904 modules)
+   Reload env: .env.local
+ ✓ Compiled in 1890ms (918 modules)
+ ✓ Compiled in 141ms (904 modules)
+ ✓ Compiled in 193ms (904 modules)
+ ✓ Compiled in 230ms (918 modules)
+ ✓ Compiled in 95ms (904 modules)
+ ✓ Compiled in 237ms (918 modules)
+ ✓ Compiled in 202ms (918 modules)
+ ✓ Compiled in 270ms (918 modules)
+ ✓ Compiled in 210ms (918 modules)
+ ✓ Compiled in 196ms (918 modules)
+ ✓ Compiled in 89ms (904 modules)
+ ✓ Compiled in 332ms (918 modules)
+ ✓ Compiled in 381ms (918 modules)
+ ✓ Compiled in 286ms (918 modules)
+ ✓ Compiled in 256ms (918 modules)
+ ✓ Compiled in 286ms (918 modules)
+ ✓ Compiled in 266ms (918 modules)
+ ✓ Compiled in 274ms (918 modules)
+ ✓ Compiled in 346ms (918 modules)
+ ✓ Compiled in 284ms (918 modules)
+ ✓ Compiled in 202ms (918 modules)
+ ✓ Compiled in 288ms (918 modules)
+ ✓ Compiled in 284ms (918 modules)
+ ✓ Compiled in 204ms (918 modules)
+ ✓ Compiled in 285ms (918 modules)
+ ✓ Compiled in 362ms (918 modules)
+ ✓ Compiled in 305ms (918 modules)
+ ✓ Compiled in 267ms (918 modules)
+ ✓ Compiled in 923ms (918 modules)
+ ✓ Compiled in 208ms (918 modules)
+ ✓ Compiled in 313ms (918 modules)
+ ✓ Compiled in 223ms (918 modules)
+ ✓ Compiled in 199ms (918 modules)
+ ✓ Compiled in 541ms (918 modules)
+ ✓ Compiled in 288ms (918 modules)
+ ✓ Compiled in 239ms (918 modules)
+ ✓ Compiled in 299ms (918 modules)
+ ✓ Compiled in 231ms (918 modules)
+ ✓ Compiled in 214ms (918 modules)
+ ✓ Compiled in 376ms (918 modules)
+ ✓ Compiled in 222ms (918 modules)
+ ✓ Compiled in 202ms (918 modules)
+ ✓ Compiled in 205ms (918 modules)
+ ✓ Compiled in 197ms (918 modules)
+ ✓ Compiled in 212ms (918 modules)
+ ✓ Compiled in 199ms (918 modules)
+ ✓ Compiled in 202ms (918 modules)
+ ⚠ Found a change in next.config.ts. Restarting the server to apply the changes...
+   ▲ Next.js 15.3.5
+   - Local:        http://localhost:3001
+   - Network:      http://192.168.1.80:3001
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 1407ms
+ ⚠ Found a change in next.config.ts. Restarting the server to apply the changes...
+   ▲ Next.js 15.3.5
+   - Local:        http://localhost:3001
+   - Network:      http://192.168.1.80:3001
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 1796ms
+ ⚠ Found a change in next.config.ts. Restarting the server to apply the changes...
+   ▲ Next.js 15.3.5
+   - Local:        http://localhost:3001
+   - Network:      http://192.168.1.80:3001
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 1782ms
+[?25h
+s/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename '/Users/ibrahim/Desktop/Unified X/kct-menswear-v2/kct-menswear-v2/.next/cache/webpack/client-development/0.pack.gz_' -> '/Users/ibrahim/Desktop/Unified X/kct-menswear-v2/kct-menswear-v2/.next/cache/webpack/client-development/0.pack.gz'
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename '/Users/ibrahim/Desktop/Unified X/kct-menswear-v2/kct-menswear-v2/.next/cache/webpack/client-development/0.pack.gz_' -> '/Users/ibrahim/Desktop/Unified X/kct-menswear-v2/kct-menswear-v2/.next/cache/webpack/client-development/0.pack.gz'
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename '/Users/ibrahim/Desktop/Unified X/kct-menswear-v2/kct-menswear-v2/.next/cache/webpack/client-development/0.pack.gz_' -> '/Users/ibrahim/Desktop/Unified X/kct-menswear-v2/kct-menswear-v2/.next/cache/webpack/client-development/0.pack.gz'
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename '/Users/ibrahim/Desktop/Unified X/kct-menswear-v2/kct-menswear-v2/.next/cache/webpack/client-development/0.pack.gz_' -> '/Users/ibrahim/Desktop/Unified X/kct-menswear-v2/kct-menswear-v2/.next/cache/webpack/client-development/0.pack.gz'
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ⨯ ./src/components/layout/UserMenu.tsx:4:1
+Module not found: Can't resolve '@headlessui/react'
+  2 |
+  3 | import { Fragment } from 'react'
+> 4 | import { Menu, Transition } from '@headlessui/react'
+    | ^
+  5 | import { useAuth } from '@/hooks/useAuth'
+  6 | import Link from 'next/link'
+  7 | import { User } from 'lucide-react'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/components/layout/Navigation.tsx
+ ✓ Compiled in 958ms (2375 modules)
+ ✓ Compiled in 602ms (2361 modules)
+ ✓ Compiled in 482ms (2361 modules)
+ ✓ Compiled in 249ms (2361 modules)
+ ✓ Compiled in 382ms (2361 modules)
+ ✓ Compiled in 580ms (1213 modules)
+ ✓ Compiled in 549ms (1213 modules)
+ ✓ Compiled /middleware in 478ms (179 modules)
+⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+ GET /?code=413094e2-9ef7-4361-ba52-a39b1b90134d 200 in 165ms
+ ○ Compiling /_not-found ...
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (108kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+ GET /?error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired 200 in 40ms
+[?25h
