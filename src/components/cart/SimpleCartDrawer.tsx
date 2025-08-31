@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSimpleCart } from '@/hooks/useSimpleCart';
 import { X, ShoppingCart, Trash2, Plus, Minus } from 'lucide-react';
-import { CheckoutButton } from './CheckoutButton';
+import { MedusaCheckoutButton } from './MedusaCheckoutButton';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useUIStore } from '@/store/uiStore';
@@ -249,7 +249,7 @@ export function SimpleCartDrawer() {
                   </button>
                 </div>
                 
-                <CheckoutButton />
+                <MedusaCheckoutButton />
                 
                 <p className="text-xs text-gray-500 text-center">
                   Secure checkout powered by Stripe
