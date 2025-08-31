@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/hooks/useAuth'
+import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { 
@@ -16,7 +16,6 @@ import {
   Shield,
   Trash2
 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 
 interface UserProfile {
   first_name: string
@@ -31,7 +30,7 @@ interface UserProfile {
 }
 
 export default function ProfilePage() {
-  const { user, loading: authLoading } = useAuth()
+  const { user, isLoading: authLoading, updateProfile: updateUserProfile } = useAuth()
   const [profile, setProfile] = useState<UserProfile>({
     first_name: '',
     last_name: '',
@@ -47,33 +46,31 @@ export default function ProfilePage() {
   const [isSaving, setIsSaving] = useState(false)
   const [editedProfile, setEditedProfile] = useState<UserProfile>(profile)
   const router = useRouter()
-  const supabase = createClient()
 
   useEffect(() => {
     if (!authLoading && !user) {
-      router.push('/auth/login?redirectTo=/account/profile')
+      router.push('/login?redirectTo=/account/profile')
     }
   }, [user, authLoading, router])
 
   useEffect(() => {
     if (user) {
-      // Extract name from user metadata if available, otherwise use profile data
-      const userMeta = (user as any).user_metadata || {}
+      // Use user data from AuthContext
       setProfile(prev => ({
         ...prev,
-        first_name: userMeta.first_name || (user as any).firstName || '',
-        last_name: userMeta.last_name || (user as any).lastName || '',
-        phone: userMeta.phone || (user as any).phone || '',
-        date_of_birth: userMeta.date_of_birth || (user as any).dateOfBirth || '',
-        preferences: userMeta.preferences || (user as any).preferences || prev.preferences,
+        first_name: user.first_name || '',
+        last_name: user.last_name || '',
+        phone: user.phone || '',
+        date_of_birth: '',
+        preferences: prev.preferences,
       }))
       setEditedProfile(prev => ({
         ...prev,
-        first_name: userMeta.first_name || '',
-        last_name: userMeta.last_name || '',
-        phone: userMeta.phone || '',
-        date_of_birth: userMeta.date_of_birth || '',
-        preferences: userMeta.preferences || prev.preferences,
+        first_name: user.first_name || '',
+        last_name: user.last_name || '',
+        phone: user.phone || '',
+        date_of_birth: '',
+        preferences: prev.preferences,
       }))
     }
   }, [user])
@@ -93,17 +90,11 @@ export default function ProfilePage() {
   const handleSave = async () => {
     setIsSaving(true)
     try {
-      const { error } = await supabase.auth.updateUser({
-        data: {
-          first_name: editedProfile.first_name,
-          last_name: editedProfile.last_name,
-          phone: editedProfile.phone,
-          date_of_birth: editedProfile.date_of_birth,
-          preferences: editedProfile.preferences,
-        }
+      await updateUserProfile({
+        first_name: editedProfile.first_name,
+        last_name: editedProfile.last_name,
+        phone: editedProfile.phone,
       })
-
-      if (error) throw error
 
       setProfile(editedProfile)
       setIsEditing(false)
@@ -115,13 +106,7 @@ export default function ProfilePage() {
   }
 
   const handlePasswordReset = async () => {
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(user.email!)
-      if (error) throw error
-      alert('Password reset link sent to your email')
-    } catch (error) {
-      alert('Failed to send reset email. Please try again.')
-    }
+    alert('Password reset is being implemented. Please contact support for assistance.')
   }
 
   const handleDeleteAccount = async () => {

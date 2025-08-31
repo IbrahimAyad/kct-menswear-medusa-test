@@ -1,11 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useAuth } from '@/hooks/useAuth'
+import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Package, ChevronRight, Truck, CheckCircle, XCircle } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { formatCurrency } from '@/lib/email/service'
 
 interface Order {
@@ -40,15 +39,14 @@ interface Order {
 }
 
 export default function OrdersPage() {
-  const { user, loading: authLoading } = useAuth()
+  const { user, isLoading: authLoading } = useAuth()
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const router = useRouter()
-  const supabase = createClient()
 
   useEffect(() => {
     if (!authLoading && !user) {
-      router.push('/auth/login?redirectTo=/orders')
+      router.push('/login?redirectTo=/orders')
     }
   }, [user, authLoading, router])
 
@@ -60,26 +58,54 @@ export default function OrdersPage() {
 
   const fetchOrders = async () => {
     try {
-      const { data, error } = await supabase
-        .from('orders')
-        .select(`
-          *,
-          order_items (
-            id,
-            quantity,
-            unit_price,
-            total_price,
-            product_name,
-            product_image,
-            attributes
-          )
-        `)
-        .eq('customer_email', user?.email)
-        .order('created_at', { ascending: false })
+      const token = localStorage.getItem('medusa_auth_token')
+      if (!token) {
+        setLoading(false)
+        return
+      }
 
-      if (error) throw error
+      const response = await fetch(`${process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || 'https://backend-production-7441.up.railway.app'}/store/orders`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'x-publishable-api-key': process.env.NEXT_PUBLIC_PUBLISHABLE_KEY || 'pk_4c24b336db3f8819867bec16f4b51db9654e557abbcfbbe003f7ffd8463c3c81'
+        }
+      })
 
-      setOrders(data || [])
+      if (response.ok) {
+        const { orders: medusaOrders } = await response.json()
+        
+        // Transform Medusa orders to match our format
+        const transformedOrders = (medusaOrders || []).map((order: any) => ({
+          id: order.id,
+          order_number: order.display_id || order.id.slice(-8),
+          created_at: order.created_at,
+          status: order.payment_status === 'captured' ? 'paid' : 
+                  order.fulfillment_status === 'fulfilled' ? 'delivered' :
+                  order.fulfillment_status === 'shipped' ? 'shipped' :
+                  order.payment_status === 'awaiting' ? 'pending' : 'processing',
+          amount_total: order.total / 100,
+          amount_subtotal: order.subtotal / 100,
+          discount: order.discount_total / 100,
+          currency: order.currency_code?.toUpperCase() || 'USD',
+          tracking_number: order.fulfillments?.[0]?.tracking_numbers?.[0],
+          carrier: order.fulfillments?.[0]?.provider,
+          order_items: (order.items || []).map((item: any) => ({
+            id: item.id,
+            quantity: item.quantity,
+            unit_price: item.unit_price / 100,
+            total_price: item.total / 100,
+            product_name: item.title,
+            product_image: item.thumbnail,
+            attributes: {
+              size: item.variant?.options?.find((o: any) => o.option?.title === 'Size')?.value,
+              color: item.variant?.options?.find((o: any) => o.option?.title === 'Color')?.value,
+            }
+          }))
+        }))
+        
+        setOrders(transformedOrders)
+      }
     } catch (error) {
       console.error('Error fetching orders:', error)
     } finally {
