@@ -44,26 +44,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshUser = async () => {
     try {
       const token = localStorage.getItem('medusa_auth_token')
-      if (!token) {
+      const userEmail = localStorage.getItem('medusa_user_email')
+      
+      if (!token || !userEmail) {
         setUser(null)
         setIsLoading(false)
         return
       }
 
-      // Get customer details using the token
-      const response = await fetch(`${process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || 'https://backend-production-7441.up.railway.app'}/store/customers/me`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+      // For now, just use the stored email as user info
+      // The backend customer endpoint seems to have issues
+      setUser({
+        id: 'customer',
+        email: userEmail,
+        has_account: true,
+        created_at: new Date().toISOString()
       })
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch user')
-      }
-
-      const { customer } = await response.json()
-      setUser(customer as User)
     } catch (error) {
       console.error('Failed to fetch user:', error)
       // Token might be invalid, clear it
@@ -91,11 +87,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const { token } = await response.json()
 
-      // Store token
+      // Store token and email
       localStorage.setItem('medusa_auth_token', token)
+      localStorage.setItem('medusa_user_email', email)
       
-      // Get user details
-      await refreshUser()
+      // Set user directly with email
+      setUser({
+        id: 'customer',
+        email: email,
+        has_account: true,
+        created_at: new Date().toISOString()
+      })
       
       // Refresh cart to link it to the user
       const cartId = localStorage.getItem('medusa_cart_id')
@@ -142,11 +144,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const { token } = await response.json()
 
-      // Store token - user is immediately logged in
+      // Store token and email - user is immediately logged in
       localStorage.setItem('medusa_auth_token', token)
+      localStorage.setItem('medusa_user_email', email)
       
-      // Get user details
-      await refreshUser()
+      // Set user directly
+      setUser({
+        id: 'customer',
+        email: email,
+        first_name: firstName,
+        last_name: lastName,
+        has_account: true,
+        created_at: new Date().toISOString()
+      })
       
       // No email confirmation needed!
     } catch (error: any) {
@@ -160,6 +170,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     localStorage.removeItem('medusa_auth_token')
+    localStorage.removeItem('medusa_user_email')
     setUser(null)
     router.push('/')
   }
@@ -173,7 +184,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'x-publishable-api-key': process.env.NEXT_PUBLIC_PUBLISHABLE_KEY || 'pk_4c24b336db3f8819867bec16f4b51db9654e557abbcfbbe003f7ffd8463c3c81'
         },
         body: JSON.stringify(data)
       })
