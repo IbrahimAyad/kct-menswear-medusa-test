@@ -75,11 +75,11 @@ export default function ProductsTestPage() {
       const productForCart = {
         id: product.id,
         name: product.title,
-        price: variant.prices?.[0]?.amount || 0,
+        price: (variant.prices?.[0]?.amount || 0) / 100, // Convert from cents to dollars
         images: [product.thumbnail || ''],
       }
 
-      // Add using variant ID directly (not title)
+      // Pass variant ID - cart adapter will handle it
       const result = await addItem(productForCart as any, variantId, 1)
       
       if (result.success) {

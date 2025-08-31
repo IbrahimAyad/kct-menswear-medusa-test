@@ -95,6 +95,7 @@ export class CartAdapter {
       }
 
       let variantId = variantIdOrSize
+      let sizeForZustand = variantIdOrSize
       
       // Check if this is already a variant ID (contains "var" or looks like an ID)
       // Variant IDs can be like "var_xxx" or "variant_xxx" or just short IDs
@@ -109,6 +110,19 @@ export class CartAdapter {
           throw new Error(`Size ${variantIdOrSize} not available for this product`)
         }
         variantId = variant.id
+      } else {
+        // If we got a variant ID, we need to find the size name for Zustand
+        try {
+          const { product: fullProduct } = await medusa.store.product.retrieve(product.id, {
+            fields: "*variants",
+          })
+          const variant = fullProduct.variants?.find((v: any) => v.id === variantId)
+          if (variant) {
+            sizeForZustand = variant.title // This should be the size like "L", "M", etc.
+          }
+        } catch (error) {
+          console.warn('Could not find size name for variant:', variantId)
+        }
       }
 
       // Add to Medusa cart using variant ID directly
@@ -123,9 +137,9 @@ export class CartAdapter {
       
       this.medusaCart = updatedCart as unknown as MedusaCart
 
-      // Also add to Zustand for immediate UI update
+      // Also add to Zustand for immediate UI update with the correct size name
       const cartStore = useCartStore.getState()
-      cartStore.addItem(product, variantIdOrSize, quantity)
+      cartStore.addItem(product, sizeForZustand, quantity)
 
       return this.medusaCart
     } catch (error) {
