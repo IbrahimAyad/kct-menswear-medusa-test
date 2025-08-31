@@ -75,7 +75,7 @@ export default function ProductsTestPage() {
       const productForCart = {
         id: product.id,
         name: product.title,
-        price: variant.prices?.[0]?.amount || 0, // Backend returns prices in dollars already
+        price: (variant.prices?.[0]?.amount || 0) / 100, // Convert from cents to dollars
         images: [product.thumbnail || ''],
       }
 
@@ -188,7 +188,7 @@ export default function ProductsTestPage() {
                         <option key={variant.id} value={variant.id}>
                           {variant.title} 
                           {variant.sku && ` (${variant.sku})`}
-                          {variant.prices?.[0] && ` - $${variant.prices[0].amount.toFixed(2)}`}
+                          {variant.prices?.[0] && ` - $${(variant.prices[0].amount / 100).toFixed(2)}`}
                           {variant.inventory_quantity !== undefined && ` [${variant.inventory_quantity} in stock]`}
                         </option>
                       ))}
@@ -228,7 +228,7 @@ export default function ProductsTestPage() {
         <div className="fixed bottom-4 right-4 bg-white rounded-lg shadow-lg p-4 max-w-sm">
           <h4 className="font-semibold mb-2">Cart Status</h4>
           <p className="text-sm">Items: {medusaCart?.items?.length || 0}</p>
-          <p className="text-sm">Total: ${(medusaCart?.total || 0).toFixed(2)}</p>
+          <p className="text-sm">Total: ${((medusaCart?.total || 0) / 100).toFixed(2)}</p>
           {medusaCart?.items?.length > 0 && (
             <div className="mt-2 text-xs">
               {medusaCart.items.map((item: any) => (
