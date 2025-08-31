@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { useMedusaCart } from '@/hooks/useMedusaCart'
-import { medusa } from '@/lib/medusa/client'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, CreditCard, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
@@ -60,7 +59,20 @@ function PaymentForm({ clientSecret, cartId, onSuccess }: PaymentFormProps) {
       }
 
       // Complete the cart to create order
-      const { order } = await medusa.store.cart.complete(cartId)
+      const completeResponse = await fetch(`${process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL}/store/carts/${cartId}/complete`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || ''
+        }
+      })
+      
+      if (!completeResponse.ok) {
+        const errorData = await completeResponse.json().catch(() => ({}))
+        throw new Error(errorData.message || 'Failed to complete cart')
+      }
+      
+      const { order } = await completeResponse.json()
       
       if (order) {
         onSuccess()
@@ -146,25 +158,37 @@ export default function SimpleCheckoutPage() {
       // Update cart with customer info
       // For guest checkout, we just set the email on the cart
       try {
-        await medusa.store.cart.update(medusaCart.id, {
-          email: customerInfo.email,
-          billing_address: {
-            first_name: customerInfo.firstName,
-            last_name: customerInfo.lastName,
-            address_1: '123 Test St',
-            city: 'Test City',
-            country_code: 'us',
-            postal_code: '12345',
+        const updateResponse = await fetch(`${process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL}/store/carts/${medusaCart.id}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || ''
           },
-          shipping_address: {
-            first_name: customerInfo.firstName,
-            last_name: customerInfo.lastName,
-            address_1: '123 Test St',
-            city: 'Test City',
-            country_code: 'us',
-            postal_code: '12345',
-          }
+          body: JSON.stringify({
+            email: customerInfo.email,
+            billing_address: {
+              first_name: customerInfo.firstName,
+              last_name: customerInfo.lastName,
+              address_1: '123 Test St',
+              city: 'Test City',
+              country_code: 'us',
+              postal_code: '12345',
+            },
+            shipping_address: {
+              first_name: customerInfo.firstName,
+              last_name: customerInfo.lastName,
+              address_1: '123 Test St',
+              city: 'Test City',
+              country_code: 'us',
+              postal_code: '12345',
+            }
+          })
         })
+        
+        if (!updateResponse.ok) {
+          const errorData = await updateResponse.json().catch(() => ({}))
+          throw new Error(errorData.message || 'Failed to update cart')
+        }
       } catch (updateError: any) {
         // If email already exists, continue anyway - guest checkout allows this
         console.log('Cart update response:', updateError)
@@ -176,9 +200,17 @@ export default function SimpleCheckoutPage() {
       // Initialize payment session with Stripe
       console.log('Fetching payment providers for region:', medusaCart.region_id)
       
-      const paymentProviders = await medusa.store.payment.listPaymentProviders({
-        region_id: medusaCart.region_id
+      const providersResponse = await fetch(`${process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL}/store/payment-providers?region_id=${medusaCart.region_id}`, {
+        headers: {
+          'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || ''
+        }
       })
+      
+      if (!providersResponse.ok) {
+        throw new Error('Failed to fetch payment providers')
+      }
+      
+      const paymentProviders = await providersResponse.json()
 
       console.log('Payment providers response:', paymentProviders)
       console.log('Available providers:', paymentProviders?.payment_providers)
@@ -210,7 +242,21 @@ export default function SimpleCheckoutPage() {
       if (!medusaCart.payment_collection) {
         console.log('Creating payment collection for cart...')
         try {
-          const { cart } = await medusa.store.cart.createPaymentCollection(medusaCart.id)
+          // Use direct API call instead of SDK method
+          const response = await fetch(`${process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL}/store/carts/${medusaCart.id}/payment-collection`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || ''
+            }
+          })
+          
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}))
+            throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`)
+          }
+          
+          const { cart } = await response.json()
           cartWithPaymentCollection = cart
           console.log('Payment collection created:', cart.payment_collection)
         } catch (collectionError: any) {
@@ -231,17 +277,28 @@ export default function SimpleCheckoutPage() {
       
       let paymentCollection
       try {
-        // Initialize payment session using the cart object
-        const response = await medusa.store.payment.initiatePaymentSession(
-          cartWithPaymentCollection,
-          {
+        // Initialize payment session using REST API
+        const sessionResponse = await fetch(`${process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL}/store/payment-collections/${cartWithPaymentCollection.payment_collection.id}/payment-sessions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || ''
+          },
+          body: JSON.stringify({
             provider_id: stripeProvider.id,
             data: {},
             context: {
               cart_id: cartWithPaymentCollection.id
             }
-          }
-        )
+          })
+        })
+        
+        if (!sessionResponse.ok) {
+          const errorData = await sessionResponse.json().catch(() => ({}))
+          throw new Error(errorData.message || 'Failed to initialize payment session')
+        }
+        
+        const response = await sessionResponse.json()
         paymentCollection = response.payment_collection
         console.log('Payment session response:', response)
       } catch (paymentError: any) {
