@@ -196,16 +196,18 @@ export default function SimpleCheckoutPage() {
       // Initialize payment session with the correct provider ID
       console.log('Initializing payment session with provider:', stripeProvider.id)
       console.log('Cart ID:', cartWithPaymentCollection.id)
+      console.log('Payment collection:', cartWithPaymentCollection.payment_collection)
       
-      let updatedCart
+      let paymentCollection
       try {
+        // The initiatePaymentSession expects the payment collection, not the cart
         const response = await medusa.store.payment.initiatePaymentSession(
-          cartWithPaymentCollection,
+          cartWithPaymentCollection.payment_collection?.id || cartWithPaymentCollection.id,
           {
             provider_id: stripeProvider.id
           }
         )
-        updatedCart = response.cart
+        paymentCollection = response.payment_collection
         console.log('Payment session response:', response)
       } catch (paymentError: any) {
         console.error('Payment session initialization failed:', paymentError)
@@ -219,14 +221,18 @@ export default function SimpleCheckoutPage() {
       }
 
       // Get client secret from payment session
-      const paymentSession = updatedCart?.payment_collection?.payment_sessions?.find(
-        session => session.provider_id === stripeProvider.id
+      const paymentSession = paymentCollection?.payment_sessions?.find(
+        (session: any) => session.provider_id === stripeProvider.id
       )
       
       console.log('Payment session data:', paymentSession)
       
       if (paymentSession?.data?.client_secret) {
         setClientSecret(paymentSession.data.client_secret as string)
+        setStep('payment')
+      } else if (paymentSession?.payment_intent_client_secret) {
+        // Sometimes the client secret is directly on the session
+        setClientSecret(paymentSession.payment_intent_client_secret as string)
         setStep('payment')
       } else {
         console.error('No client secret in payment session:', paymentSession)
