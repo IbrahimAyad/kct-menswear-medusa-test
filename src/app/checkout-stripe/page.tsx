@@ -183,7 +183,7 @@ export default function StripeCheckoutPage() {
     state: '',
     zipCode: '',
     phone: '',
-    country: 'US'
+    country: 'us'
   })
 
   // Available payment providers (for demo - in real app this would be fetched)
