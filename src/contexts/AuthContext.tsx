@@ -2,7 +2,6 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
-import { medusa } from '@/lib/medusa/client'
 
 interface User {
   id: string
@@ -73,42 +72,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
-      // Use Medusa SDK for authentication
-      const token = await medusa.auth.login('customer', 'emailpass', {
-        email,
-        password
+      // Use direct API call for now - SDK method having issues
+      const response = await fetch(`${process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || 'https://backend-production-7441.up.railway.app'}/auth/customer/emailpass`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password })
       })
 
-      // Verify token is a string
-      if (typeof token !== 'string') {
-        throw new Error('Authentication failed')
+      if (!response.ok) {
+        throw new Error('Invalid email or password')
       }
+
+      const { token } = await response.json()
 
       // Store token
       localStorage.setItem('medusa_auth_token', token)
+      localStorage.setItem('medusa_user_email', email)
       
-      // Retrieve customer details
+      // Set user immediately for UI to update
+      setUser({
+        id: 'customer',
+        email: email,
+        has_account: true,
+        created_at: new Date().toISOString()
+      })
+      
+      // Try to get more details (but don't block login)
       try {
-        const { customer } = await medusa.store.customer.retrieve({
-          fields: '+email,+first_name,+last_name,+phone'
+        const response = await fetch(`${process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || 'https://backend-production-7441.up.railway.app'}/store/customers/me`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'x-publishable-api-key': process.env.NEXT_PUBLIC_PUBLISHABLE_KEY || 'pk_4c24b336db3f8819867bec16f4b51db9654e557abbcfbbe003f7ffd8463c3c81'
+          }
         })
-        setUser({
-          id: customer.id,
-          email: customer.email || email,
-          first_name: customer.first_name,
-          last_name: customer.last_name,
-          phone: customer.phone,
-          has_account: true,
-          created_at: customer.created_at
-        })
+        
+        if (response.ok) {
+          const { customer } = await response.json()
+          setUser({
+            id: customer.id || 'customer',
+            email: customer.email || email,
+            first_name: customer.first_name,
+            last_name: customer.last_name,
+            phone: customer.phone,
+            has_account: true,
+            created_at: customer.created_at || new Date().toISOString()
+          })
+        }
       } catch (error) {
-        // If customer retrieve fails, set basic user info
-        setUser({
-          id: 'customer',
-          email: email,
-          has_account: true,
-          created_at: new Date().toISOString()
-        })
+        console.log('Could not fetch full customer details, using basic info')
       }
       
       // Refresh cart to link it to the user
@@ -135,55 +148,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = async (email: string, password: string, firstName?: string, lastName?: string) => {
     try {
-      // Register using Medusa SDK
-      const token = await medusa.auth.register('customer', 'emailpass', {
-        email,
-        password
-      })
-
-      if (typeof token !== 'string') {
-        throw new Error('Registration failed')
-      }
-
-      // Create customer profile
-      try {
-        const { customer } = await medusa.store.customer.create({
+      // Use direct API call for registration
+      const response = await fetch(`${process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || 'https://backend-production-7441.up.railway.app'}/auth/customer/emailpass/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           email,
+          password,
           first_name: firstName,
           last_name: lastName
         })
-      } catch (error) {
-        // Customer might already be created during registration
-        console.log('Customer profile might already exist')
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.message || 'Failed to create account')
       }
+
+      const { token } = await response.json()
 
       // Store token - user is immediately logged in
       localStorage.setItem('medusa_auth_token', token)
+      localStorage.setItem('medusa_user_email', email)
       
-      // Retrieve customer details
-      try {
-        const { customer } = await medusa.store.customer.retrieve({
-          fields: '+email,+first_name,+last_name'
-        })
-        setUser({
-          id: customer.id,
-          email: customer.email || email,
-          first_name: customer.first_name || firstName,
-          last_name: customer.last_name || lastName,
-          has_account: true,
-          created_at: customer.created_at
-        })
-      } catch (error) {
-        // Fallback to provided data
-        setUser({
-          id: 'customer',
-          email: email,
-          first_name: firstName,
-          last_name: lastName,
-          has_account: true,
-          created_at: new Date().toISOString()
-        })
-      }
+      // Set user immediately
+      setUser({
+        id: 'customer',
+        email: email,
+        first_name: firstName,
+        last_name: lastName,
+        has_account: true,
+        created_at: new Date().toISOString()
+      })
       
       // No email confirmation needed!
     } catch (error: any) {
