@@ -157,9 +157,10 @@ export default function SimpleCheckoutPage() {
       console.log('Payment providers response:', paymentProviders)
       console.log('Available providers:', paymentProviders?.payment_providers)
 
-      // Check for different possible Stripe provider IDs
+      // Look for Stripe provider - it should be pp_stripe_stripe based on backend config
       const stripeProvider = paymentProviders?.payment_providers?.find(
-        p => p.id.startsWith('pp_stripe_') || 
+        p => p.id === 'pp_stripe_stripe' || 
+             p.id.startsWith('pp_stripe_') || 
              p.id === 'stripe' || 
              p.id.includes('stripe')
       )
