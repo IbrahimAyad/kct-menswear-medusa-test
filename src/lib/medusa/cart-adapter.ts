@@ -61,6 +61,11 @@ export class CartAdapter {
         const response = await medusa.store.cart.create({
           region_id: MEDUSA_CONFIG.regionId,
           sales_channel_id: MEDUSA_CONFIG.salesChannelId,
+          // Add context for inventory management
+          context: {
+            ip: typeof window !== 'undefined' ? window.location.hostname : undefined,
+            user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
+          }
         })
         
         console.log('Cart create response:', response)
@@ -128,15 +133,38 @@ export class CartAdapter {
         throw new Error(`Cart id not found: ${this.medusaCartId}`)
       }
       
-      const { cart: updatedCart } = await medusa.store.cart.createLineItem(
-        this.medusaCartId,
-        {
-          variant_id: variantId,
-          quantity,
+      try {
+        const response = await medusa.store.cart.createLineItem(
+          this.medusaCartId,
+          {
+            variant_id: variantId,
+            quantity,
+          }
+        )
+        
+        console.log('Add to cart response:', response)
+        
+        if (!response || !response.cart) {
+          throw new Error('Invalid response from createLineItem')
         }
-      )
-
-      this.medusaCart = updatedCart as unknown as MedusaCart
+        
+        const updatedCart = response.cart
+        this.medusaCart = updatedCart as unknown as MedusaCart
+      } catch (error: any) {
+        console.error('Detailed error from createLineItem:', error)
+        
+        // Check if it's an inventory error and provide more context
+        if (error?.message?.includes('inventory')) {
+          console.error('Inventory error details:', {
+            variantId,
+            quantity,
+            cartId: this.medusaCartId,
+            error: error.message
+          })
+          throw new Error(`Inventory issue: ${error.message}. This variant (${variantId}) may not have stock available.`)
+        }
+        throw error
+      }
 
       // Also add to Zustand for immediate UI update
       const cartStore = useCartStore.getState()
