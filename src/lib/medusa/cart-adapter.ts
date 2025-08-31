@@ -36,20 +36,17 @@ export class CartAdapter {
     try {
       // Try to retrieve existing cart
       if (this.medusaCartId) {
-        console.log('Attempting to retrieve cart:', this.medusaCartId)
         try {
           const response = await medusa.store.cart.retrieve(this.medusaCartId)
-          console.log('Cart retrieve response:', response)
           
           if (!response || !response.cart) {
             throw new Error('Invalid cart response')
           }
           
           this.medusaCart = response.cart as unknown as MedusaCart
-          console.log('Successfully retrieved existing cart')
           return this.medusaCart
         } catch (error) {
-          console.log('Existing cart not found, creating new one. Error:', error)
+          // Cart not found, create new one
           this.medusaCartId = null
           localStorage.removeItem('medusa_cart_id')
         }
@@ -57,18 +54,10 @@ export class CartAdapter {
 
       // Create new cart if needed
       if (!this.medusaCartId) {
-        console.log('Creating new cart with config:', MEDUSA_CONFIG)
         const response = await medusa.store.cart.create({
           region_id: MEDUSA_CONFIG.regionId,
           sales_channel_id: MEDUSA_CONFIG.salesChannelId,
-          // Add context for inventory management
-          context: {
-            ip: typeof window !== 'undefined' ? window.location.hostname : undefined,
-            user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
-          }
         })
-        
-        console.log('Cart create response:', response)
         
         if (!response || !response.cart) {
           throw new Error('Failed to create cart - invalid response')
@@ -76,8 +65,6 @@ export class CartAdapter {
         
         this.medusaCart = response.cart as unknown as MedusaCart
         this.medusaCartId = this.medusaCart.id
-        
-        console.log('Created new cart with ID:', this.medusaCartId)
         
         // Persist cart ID
         if (typeof window !== 'undefined') {
@@ -99,7 +86,6 @@ export class CartAdapter {
     try {
       // Ensure cart exists
       if (!this.medusaCartId) {
-        console.log('No cart ID found, initializing...')
         await this.initialize()
         
         // Check again after initialization
@@ -127,44 +113,15 @@ export class CartAdapter {
 
       // Add to Medusa cart using variant ID directly
       // SDK v2 uses createLineItem method
-      console.log('Adding to cart - Cart ID:', this.medusaCartId, 'Variant ID:', variantId, 'Quantity:', quantity)
-      
-      if (!this.medusaCartId) {
-        throw new Error(`Cart id not found: ${this.medusaCartId}`)
-      }
-      
-      try {
-        const response = await medusa.store.cart.createLineItem(
-          this.medusaCartId,
-          {
-            variant_id: variantId,
-            quantity,
-          }
-        )
-        
-        console.log('Add to cart response:', response)
-        
-        if (!response || !response.cart) {
-          throw new Error('Invalid response from createLineItem')
+      const { cart: updatedCart } = await medusa.store.cart.createLineItem(
+        this.medusaCartId!,
+        {
+          variant_id: variantId,
+          quantity,
         }
-        
-        const updatedCart = response.cart
-        this.medusaCart = updatedCart as unknown as MedusaCart
-      } catch (error: any) {
-        console.error('Detailed error from createLineItem:', error)
-        
-        // Check if it's an inventory error and provide more context
-        if (error?.message?.includes('inventory')) {
-          console.error('Inventory error details:', {
-            variantId,
-            quantity,
-            cartId: this.medusaCartId,
-            error: error.message
-          })
-          throw new Error(`Inventory issue: ${error.message}. This variant (${variantId}) may not have stock available.`)
-        }
-        throw error
-      }
+      )
+      
+      this.medusaCart = updatedCart as unknown as MedusaCart
 
       // Also add to Zustand for immediate UI update
       const cartStore = useCartStore.getState()
