@@ -72,26 +72,30 @@ export class CartAdapter {
   /**
    * Add item to both Zustand and Medusa carts
    */
-  async addItem(product: Product, size: string, quantity: number = 1) {
+  async addItem(product: Product, variantIdOrSize: string, quantity: number = 1) {
     try {
       // Ensure cart exists
       if (!this.medusaCartId) {
         await this.initialize()
       }
 
-      // Find the variant for this size
-      // For menswear sizes like "40R", "42L", etc.
-      const variant = await this.findVariantBySize(product.id, size)
+      let variantId = variantIdOrSize
       
-      if (!variant) {
-        throw new Error(`Size ${size} not available for this product`)
+      // Check if this is already a variant ID (starts with "var_")
+      if (!variantIdOrSize.startsWith('var_')) {
+        // It's a size, try to find the variant
+        const variant = await this.findVariantBySize(product.id, variantIdOrSize)
+        if (!variant) {
+          throw new Error(`Size ${variantIdOrSize} not available for this product`)
+        }
+        variantId = variant.id
       }
 
-      // Add to Medusa cart
+      // Add to Medusa cart using variant ID directly
       const updatedCart = await medusa.store.cart.lineItem.create(
         this.medusaCartId!,
         {
-          variant_id: variant.id,
+          variant_id: variantId,
           quantity,
         }
       )
@@ -100,7 +104,7 @@ export class CartAdapter {
 
       // Also add to Zustand for immediate UI update
       const cartStore = useCartStore.getState()
-      cartStore.addItem(product, size, quantity)
+      cartStore.addItem(product, variantIdOrSize, quantity)
 
       return this.medusaCart
     } catch (error) {

@@ -79,8 +79,8 @@ export default function ProductsTestPage() {
         images: [product.thumbnail || ''],
       }
 
-      // Add using variant ID directly
-      const result = await addItem(productForCart as any, variant.title, 1)
+      // Add using variant ID directly (not title)
+      const result = await addItem(productForCart as any, variantId, 1)
       
       if (result.success) {
         alert(`Added ${product.title} (${variant.title}) to cart!`)
@@ -142,7 +142,7 @@ export default function ProductsTestPage() {
                     alt={product.title}
                     className="w-full h-48 object-cover"
                     onError={(e) => {
-                      e.currentTarget.src = 'https://via.placeholder.com/300x200?text=' + encodeURIComponent(product.title)
+                      e.currentTarget.style.display = 'none'
                     }}
                   />
                 </div>
