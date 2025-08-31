@@ -211,13 +211,7 @@ export default function SimpleCheckoutPage() {
         console.log('Payment session response:', response)
       } catch (paymentError: any) {
         console.error('Payment session initialization failed:', paymentError)
-        
-        // Check if it's a 500 error - might need backend restart
-        if (paymentError?.status === 500 || paymentError?.message?.includes('500')) {
-          throw new Error('Payment service error - the backend may need to be restarted after Stripe configuration. Please try again in a moment.')
-        }
-        
-        throw new Error(`Failed to initialize payment: ${paymentError?.message || 'Unknown error'}`)
+        throw new Error(`Failed to initialize payment: ${paymentError?.message || 'Unable to connect to payment service'}`)
       }
 
       // Get client secret from payment session
