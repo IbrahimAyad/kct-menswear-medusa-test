@@ -37,7 +37,7 @@ export class CartAdapter {
       // Try to retrieve existing cart
       if (this.medusaCartId) {
         try {
-          const cart = await medusa.store.cart.retrieve(this.medusaCartId)
+          const { cart } = await medusa.store.cart.retrieve(this.medusaCartId)
           this.medusaCart = cart as unknown as MedusaCart
           return this.medusaCart
         } catch (error) {
@@ -48,7 +48,7 @@ export class CartAdapter {
 
       // Create new cart if needed
       if (!this.medusaCartId) {
-        const cart = await medusa.store.cart.create({
+        const { cart } = await medusa.store.cart.create({
           region_id: MEDUSA_CONFIG.regionId,
           sales_channel_id: MEDUSA_CONFIG.salesChannelId,
         })
@@ -97,8 +97,8 @@ export class CartAdapter {
       }
 
       // Add to Medusa cart using variant ID directly
-      // SDK v2 uses different method structure
-      const updatedCart = await medusa.store.cart.addLineItem(
+      // SDK v2 uses createLineItem method
+      const { cart: updatedCart } = await medusa.store.cart.createLineItem(
         this.medusaCartId!,
         {
           variant_id: variantId,
@@ -129,7 +129,7 @@ export class CartAdapter {
       }
 
       // Remove from Medusa (SDK v2 method)
-      const updatedCart = await medusa.store.cart.deleteLineItem(
+      const { cart: updatedCart, parent } = await medusa.store.cart.deleteLineItem(
         this.medusaCartId,
         lineItemId
       )
@@ -159,7 +159,7 @@ export class CartAdapter {
       }
 
       // Update in Medusa (SDK v2 method)
-      const updatedCart = await medusa.store.cart.updateLineItem(
+      const { cart: updatedCart } = await medusa.store.cart.updateLineItem(
         this.medusaCartId,
         lineItemId,
         { quantity }
@@ -223,7 +223,7 @@ export class CartAdapter {
    */
   private async findVariantBySize(productId: string, size: string) {
     try {
-      const product = await medusa.store.product.retrieve(productId, {
+      const { product } = await medusa.store.product.retrieve(productId, {
         fields: "*variants",
       })
 
@@ -279,7 +279,7 @@ export class CartAdapter {
       throw new Error('No cart initialized')
     }
 
-    const updatedCart = await medusa.store.cart.update(this.medusaCartId, {
+    const { cart: updatedCart } = await medusa.store.cart.update(this.medusaCartId, {
       email,
     })
 
@@ -305,7 +305,7 @@ export class CartAdapter {
       throw new Error('No cart initialized')
     }
 
-    const updatedCart = await medusa.store.cart.update(this.medusaCartId, {
+    const { cart: updatedCart } = await medusa.store.cart.update(this.medusaCartId, {
       shipping_address: address,
     })
 
