@@ -36,25 +36,43 @@ export class CartAdapter {
     try {
       // Try to retrieve existing cart
       if (this.medusaCartId) {
+        console.log('Attempting to retrieve cart:', this.medusaCartId)
         try {
-          const { cart } = await medusa.store.cart.retrieve(this.medusaCartId)
-          this.medusaCart = cart as unknown as MedusaCart
+          const response = await medusa.store.cart.retrieve(this.medusaCartId)
+          console.log('Cart retrieve response:', response)
+          
+          if (!response || !response.cart) {
+            throw new Error('Invalid cart response')
+          }
+          
+          this.medusaCart = response.cart as unknown as MedusaCart
+          console.log('Successfully retrieved existing cart')
           return this.medusaCart
         } catch (error) {
-          console.log('Existing cart not found, creating new one')
+          console.log('Existing cart not found, creating new one. Error:', error)
           this.medusaCartId = null
+          localStorage.removeItem('medusa_cart_id')
         }
       }
 
       // Create new cart if needed
       if (!this.medusaCartId) {
-        const { cart } = await medusa.store.cart.create({
+        console.log('Creating new cart with config:', MEDUSA_CONFIG)
+        const response = await medusa.store.cart.create({
           region_id: MEDUSA_CONFIG.regionId,
           sales_channel_id: MEDUSA_CONFIG.salesChannelId,
         })
         
-        this.medusaCart = cart as unknown as MedusaCart
+        console.log('Cart create response:', response)
+        
+        if (!response || !response.cart) {
+          throw new Error('Failed to create cart - invalid response')
+        }
+        
+        this.medusaCart = response.cart as unknown as MedusaCart
         this.medusaCartId = this.medusaCart.id
+        
+        console.log('Created new cart with ID:', this.medusaCartId)
         
         // Persist cart ID
         if (typeof window !== 'undefined') {
@@ -76,7 +94,13 @@ export class CartAdapter {
     try {
       // Ensure cart exists
       if (!this.medusaCartId) {
+        console.log('No cart ID found, initializing...')
         await this.initialize()
+        
+        // Check again after initialization
+        if (!this.medusaCartId) {
+          throw new Error('Failed to initialize cart - no cart ID available')
+        }
       }
 
       let variantId = variantIdOrSize
@@ -98,8 +122,14 @@ export class CartAdapter {
 
       // Add to Medusa cart using variant ID directly
       // SDK v2 uses createLineItem method
+      console.log('Adding to cart - Cart ID:', this.medusaCartId, 'Variant ID:', variantId, 'Quantity:', quantity)
+      
+      if (!this.medusaCartId) {
+        throw new Error(`Cart id not found: ${this.medusaCartId}`)
+      }
+      
       const { cart: updatedCart } = await medusa.store.cart.createLineItem(
-        this.medusaCartId!,
+        this.medusaCartId,
         {
           variant_id: variantId,
           quantity,
