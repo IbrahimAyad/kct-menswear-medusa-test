@@ -175,24 +175,62 @@ export default function SimpleCheckoutPage() {
           (paymentProviders?.payment_providers?.map(p => p.id).join(', ') || 'none'))
       }
 
-      // Initialize payment session with the correct provider ID
-      const { cart: updatedCart } = await medusa.store.payment.initiatePaymentSession(
-        medusaCart,
-        {
-          provider_id: stripeProvider.id
+      // First, check if cart has a payment collection, if not create one
+      console.log('Current cart payment collection:', medusaCart.payment_collection)
+      
+      let cartWithPaymentCollection = medusaCart
+      
+      // If no payment collection, create one first
+      if (!medusaCart.payment_collection) {
+        console.log('Creating payment collection for cart...')
+        try {
+          const { cart } = await medusa.store.cart.createPaymentCollection(medusaCart.id)
+          cartWithPaymentCollection = cart
+          console.log('Payment collection created:', cart.payment_collection)
+        } catch (collectionError: any) {
+          console.error('Failed to create payment collection:', collectionError)
+          throw new Error(`Failed to create payment collection: ${collectionError?.message || 'Unknown error'}`)
         }
-      )
+      }
+      
+      // Initialize payment session with the correct provider ID
+      console.log('Initializing payment session with provider:', stripeProvider.id)
+      console.log('Cart ID:', cartWithPaymentCollection.id)
+      
+      let updatedCart
+      try {
+        const response = await medusa.store.payment.initiatePaymentSession(
+          cartWithPaymentCollection,
+          {
+            provider_id: stripeProvider.id
+          }
+        )
+        updatedCart = response.cart
+        console.log('Payment session response:', response)
+      } catch (paymentError: any) {
+        console.error('Payment session initialization failed:', paymentError)
+        
+        // Check if it's a 500 error - might need backend restart
+        if (paymentError?.status === 500 || paymentError?.message?.includes('500')) {
+          throw new Error('Payment service error - the backend may need to be restarted after Stripe configuration. Please try again in a moment.')
+        }
+        
+        throw new Error(`Failed to initialize payment: ${paymentError?.message || 'Unknown error'}`)
+      }
 
       // Get client secret from payment session
       const paymentSession = updatedCart?.payment_collection?.payment_sessions?.find(
         session => session.provider_id === stripeProvider.id
       )
       
+      console.log('Payment session data:', paymentSession)
+      
       if (paymentSession?.data?.client_secret) {
         setClientSecret(paymentSession.data.client_secret as string)
         setStep('payment')
       } else {
-        throw new Error('Failed to get payment session')
+        console.error('No client secret in payment session:', paymentSession)
+        throw new Error('Payment session created but no client secret received')
       }
     } catch (err: any) {
       console.error('Setup error:', err)
