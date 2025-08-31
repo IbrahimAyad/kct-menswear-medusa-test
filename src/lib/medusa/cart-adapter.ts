@@ -352,6 +352,162 @@ export class CartAdapter {
     this.medusaCart = updatedCart as unknown as MedusaCart
     return this.medusaCart
   }
+
+  /**
+   * Add billing address
+   */
+  async setBillingAddress(address: {
+    first_name: string
+    last_name: string
+    address_1: string
+    address_2?: string
+    city: string
+    province?: string
+    postal_code: string
+    country_code: string
+  }) {
+    if (!this.medusaCartId) {
+      throw new Error('No cart initialized')
+    }
+
+    const { cart: updatedCart } = await medusa.store.cart.update(this.medusaCartId, {
+      billing_address: address,
+    })
+
+    this.medusaCart = updatedCart as unknown as MedusaCart
+    return this.medusaCart
+  }
+
+  /**
+   * Add shipping method to cart
+   */
+  async addShippingMethod(shippingOptionId: string) {
+    if (!this.medusaCartId) {
+      throw new Error('No cart initialized')
+    }
+
+    const { cart: updatedCart } = await medusa.store.cart.addShippingMethod(
+      this.medusaCartId,
+      {
+        option_id: shippingOptionId,
+      }
+    )
+
+    this.medusaCart = updatedCart as unknown as MedusaCart
+    return this.medusaCart
+  }
+
+  /**
+   * Get available shipping options for the cart
+   */
+  async getShippingOptions() {
+    if (!this.medusaCartId) {
+      throw new Error('No cart initialized')
+    }
+
+    const shippingOptions = await medusa.store.shipping.listCartOptions(this.medusaCartId)
+    return shippingOptions
+  }
+
+  /**
+   * Initialize payment session
+   */
+  async initializePaymentSession(providerId: string = 'stripe') {
+    if (!this.medusaCartId) {
+      throw new Error('No cart initialized')
+    }
+
+    try {
+      // Initialize payment session with specified provider
+      const paymentCollection = await medusa.store.payment.initiatePaymentSession(
+        this.medusaCartId,
+        {
+          provider_id: providerId,
+        }
+      )
+
+      return {
+        success: true,
+        paymentCollection,
+        clientSecret: paymentCollection.payment_sessions?.find(
+          (session: any) => session.provider_id === providerId
+        )?.data?.client_secret,
+        paymentSessionId: paymentCollection.payment_sessions?.find(
+          (session: any) => session.provider_id === providerId
+        )?.id,
+      }
+    } catch (error) {
+      console.error('Failed to initialize payment session:', error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to initialize payment session',
+      }
+    }
+  }
+
+  /**
+   * Get available payment providers
+   */
+  async getPaymentProviders() {
+    try {
+      const providers = await medusa.store.payment.listPaymentProviders()
+      return {
+        success: true,
+        providers: providers.map((p: any) => ({
+          id: p.id,
+          is_enabled: p.is_enabled,
+        })),
+      }
+    } catch (error) {
+      console.error('Failed to get payment providers:', error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to get payment providers',
+        providers: [],
+      }
+    }
+  }
+
+  /**
+   * Complete the cart and create an order
+   */
+  async completeCheckout() {
+    if (!this.medusaCartId) {
+      throw new Error('No cart initialized')
+    }
+
+    try {
+      const result = await medusa.store.cart.complete(this.medusaCartId)
+      
+      // Clear local cart after successful order
+      if (result.order?.id) {
+        // Clear Zustand
+        const cartStore = useCartStore.getState()
+        cartStore.clearCart()
+        
+        // Clear Medusa cart ID from storage
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('medusa_cart_id')
+        }
+
+        // Reset internal state
+        this.medusaCart = null
+        this.medusaCartId = null
+      }
+
+      return {
+        success: true,
+        order: result.order,
+        orderId: result.order?.id,
+      }
+    } catch (error) {
+      console.error('Failed to complete checkout:', error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to complete checkout',
+      }
+    }
+  }
 }
 
 // Singleton instance

@@ -143,6 +143,185 @@ export function useMedusaCart() {
     }
   }, [])
 
+  // Set customer email
+  const setCustomerEmail = useCallback(async (email: string) => {
+    try {
+      setIsLoading(true)
+      setError(null)
+      
+      const updatedCart = await cartAdapter.setCustomerEmail(email)
+      setMedusaCart(updatedCart)
+      
+      return { success: true, cart: updatedCart }
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to set email'
+      setError(errorMsg)
+      return { success: false, error: errorMsg }
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  // Set shipping address
+  const setShippingAddress = useCallback(async (address: {
+    first_name: string
+    last_name: string
+    address_1: string
+    address_2?: string
+    city: string
+    province?: string
+    postal_code: string
+    country_code: string
+    phone?: string
+  }) => {
+    try {
+      setIsLoading(true)
+      setError(null)
+      
+      const updatedCart = await cartAdapter.setShippingAddress(address)
+      setMedusaCart(updatedCart)
+      
+      return { success: true, cart: updatedCart }
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to set shipping address'
+      setError(errorMsg)
+      return { success: false, error: errorMsg }
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  // Set billing address
+  const setBillingAddress = useCallback(async (address: {
+    first_name: string
+    last_name: string
+    address_1: string
+    address_2?: string
+    city: string
+    province?: string
+    postal_code: string
+    country_code: string
+  }) => {
+    try {
+      setIsLoading(true)
+      setError(null)
+      
+      const updatedCart = await cartAdapter.setBillingAddress(address)
+      setMedusaCart(updatedCart)
+      
+      return { success: true, cart: updatedCart }
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to set billing address'
+      setError(errorMsg)
+      return { success: false, error: errorMsg }
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  // Get shipping options
+  const getShippingOptions = useCallback(async () => {
+    try {
+      setIsLoading(true)
+      setError(null)
+      
+      const options = await cartAdapter.getShippingOptions()
+      
+      return { success: true, options }
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to get shipping options'
+      setError(errorMsg)
+      return { success: false, error: errorMsg, options: [] }
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  // Add shipping method
+  const addShippingMethod = useCallback(async (shippingOptionId: string) => {
+    try {
+      setIsLoading(true)
+      setError(null)
+      
+      const updatedCart = await cartAdapter.addShippingMethod(shippingOptionId)
+      setMedusaCart(updatedCart)
+      
+      return { success: true, cart: updatedCart }
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to add shipping method'
+      setError(errorMsg)
+      return { success: false, error: errorMsg }
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  // Get payment providers
+  const getPaymentProviders = useCallback(async () => {
+    try {
+      setError(null)
+      
+      const result = await cartAdapter.getPaymentProviders()
+      
+      if (!result.success) {
+        setError(result.error || 'Failed to get payment providers')
+      }
+      
+      return result
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to get payment providers'
+      setError(errorMsg)
+      return { success: false, error: errorMsg, providers: [] }
+    }
+  }, [])
+
+  // Initialize payment session
+  const initializePaymentSession = useCallback(async (providerId: string = 'stripe') => {
+    try {
+      setIsLoading(true)
+      setError(null)
+      
+      const result = await cartAdapter.initializePaymentSession(providerId)
+      
+      if (!result.success) {
+        setError(result.error || 'Failed to initialize payment session')
+      }
+      
+      return result
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to initialize payment session'
+      setError(errorMsg)
+      return { success: false, error: errorMsg }
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  // Complete checkout
+  const completeCheckout = useCallback(async () => {
+    try {
+      setIsLoading(true)
+      setError(null)
+      
+      const result = await cartAdapter.completeCheckout()
+      
+      if (result.success) {
+        // Clear local state as well
+        setMedusaCart(null)
+      } else {
+        setError(result.error || 'Failed to complete checkout')
+      }
+      
+      return result
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to complete checkout'
+      setError(errorMsg)
+      return { success: false, error: errorMsg }
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
   return {
     // State
     isInitialized,
@@ -159,9 +338,21 @@ export function useMedusaCart() {
     syncFromZustand,
     refreshCart,
     
+    // Checkout actions
+    setCustomerEmail,
+    setShippingAddress,
+    setBillingAddress,
+    getShippingOptions,
+    addShippingMethod,
+    getPaymentProviders,
+    initializePaymentSession,
+    completeCheckout,
+    
     // Cart info
     itemCount: medusaCart?.items?.length || 0,
     subtotal: medusaCart?.subtotal || 0,
     total: medusaCart?.total || 0,
+    shipping_total: medusaCart?.shipping_total || 0,
+    tax_total: medusaCart?.tax_total || 0,
   }
 }

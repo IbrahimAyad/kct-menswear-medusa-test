@@ -77,6 +77,37 @@ export default function TestCartMigration() {
     }
   }
 
+  // Test Stripe checkout flow
+  const testStripeCheckout = async () => {
+    if (!medusaCart?.id || itemCount === 0) {
+      setTestResults(prev => [...prev, '❌ Need items in cart to test Stripe checkout'])
+      return
+    }
+
+    try {
+      // Test payment providers
+      const providersResult = await fetch('/api/checkout/payment-providers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cartId: medusaCart.id })
+      })
+      
+      if (providersResult.ok) {
+        const providers = await providersResult.json()
+        setTestResults(prev => [...prev, `✅ Payment providers: ${providers.providers?.map((p: any) => p.id).join(', ') || 'None'}`])
+      } else {
+        setTestResults(prev => [...prev, `❌ Failed to get payment providers`])
+      }
+
+      // Redirect to Stripe checkout page
+      setTestResults(prev => [...prev, `🔄 Redirecting to Stripe checkout...`])
+      window.open('/checkout-stripe', '_blank')
+      
+    } catch (error) {
+      setTestResults(prev => [...prev, `❌ Stripe checkout test failed: ${error}`])
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-6xl mx-auto">
@@ -186,7 +217,15 @@ export default function TestCartMigration() {
               className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
               disabled={isLoading || !isInitialized || itemCount === 0}
             >
-              Test Checkout
+              Test Checkout (Basic)
+            </button>
+            
+            <button
+              onClick={testStripeCheckout}
+              className="px-4 py-2 bg-green-800 text-white rounded hover:bg-green-900"
+              disabled={isLoading || !isInitialized || itemCount === 0}
+            >
+              Test Stripe Checkout
             </button>
           </div>
         </div>
