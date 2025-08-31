@@ -405,7 +405,7 @@ export class CartAdapter {
       throw new Error('No cart initialized')
     }
 
-    const shippingOptions = await medusa.store.shipping.listCartOptions(this.medusaCartId)
+    const shippingOptions = await medusa.store.fulfillment.listCartOptions({ cart_id: this.medusaCartId })
     return shippingOptions
   }
 
