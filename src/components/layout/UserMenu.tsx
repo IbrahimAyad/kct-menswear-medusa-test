@@ -1,12 +1,12 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { useAuth } from '@/hooks/useAuth'
+import { useAuth } from '@/contexts/AuthContext'
 import Link from 'next/link'
 import { User, ChevronDown, Heart, Sparkles } from 'lucide-react'
 
 export default function UserMenu() {
-  const { user, signOut, loading } = useAuth()
+  const { user, logout, isLoading } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -24,7 +24,7 @@ export default function UserMenu() {
     }
   }, [])
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse" />
     )
@@ -33,7 +33,7 @@ export default function UserMenu() {
   if (!user) {
     return (
       <Link
-        href="/auth/login"
+        href="/login"
         className="flex items-center gap-2 text-gray-700 hover:text-black transition-colors"
       >
         <User className="w-5 h-5" />
@@ -98,7 +98,7 @@ export default function UserMenu() {
           <div className="px-1 py-1">
             <button
               onClick={() => {
-                signOut()
+                logout()
                 setIsOpen(false)
               }}
               className="group flex w-full items-center rounded-md px-3 py-2 text-sm hover:bg-gray-100 transition-colors text-left"
