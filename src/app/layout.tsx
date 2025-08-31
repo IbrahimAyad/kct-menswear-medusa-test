@@ -17,7 +17,8 @@ import { Suspense } from "react";
 import { socialMediaSchema } from "./layout/social-schema";
 import { SkipLinks } from "@/components/accessibility/SkipLinks";
 import MobileBottomNav from "@/components/mobile/MobileBottomNav";
-import { ServiceWorkerRegistry } from "@/components/pwa/ServiceWorkerRegistry";
+// Service worker temporarily disabled - unregistering old ones
+import { ServiceWorkerUnregister } from "@/components/pwa/ServiceWorkerUnregister";
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -103,7 +104,7 @@ export default function RootLayout({
               {/* <StyleConsultantButton /> */}
               <SimpleCartDrawer />
               <MobileBottomNav />
-              <ServiceWorkerRegistry />
+              <ServiceWorkerUnregister />
               <Suspense fallback={null}>
                 {/* <PostHogPageview /> */}
                 <GoogleAnalytics />
