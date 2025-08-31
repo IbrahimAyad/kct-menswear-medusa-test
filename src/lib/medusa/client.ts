@@ -1,10 +1,13 @@
 import Medusa from "@medusajs/js-sdk"
 
-// Medusa client configuration
+// Medusa client configuration with proper auth setup
 export const medusa = new Medusa({
   baseUrl: process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "https://backend-production-7441.up.railway.app",
   maxRetries: 3,
   publishableKey: process.env.NEXT_PUBLIC_PUBLISHABLE_KEY || "pk_4c24b336db3f8819867bec16f4b51db9654e557abbcfbbe003f7ffd8463c3c81",
+  auth: {
+    type: "jwt" // Using JWT token authentication
+  }
 })
 
 // Configuration constants
