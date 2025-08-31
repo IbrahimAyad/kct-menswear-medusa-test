@@ -35,7 +35,7 @@ export default function ProductsTestPage() {
   const [error, setError] = useState<string | null>(null)
   const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({})
   
-  const { addItem, medusaCart, isLoading: cartLoading } = useMedusaCart()
+  const { addItem, medusaCart, isLoading: cartLoading, refreshCart } = useMedusaCart()
 
   // Fetch products on mount
   useEffect(() => {
@@ -84,6 +84,8 @@ export default function ProductsTestPage() {
       
       if (result.success) {
         alert(`Added ${product.title} (${variant.title}) to cart!`)
+        // Refresh cart to update the UI
+        await refreshCart()
       } else {
         alert(`Failed to add: ${result.error}`)
       }
@@ -223,13 +225,20 @@ export default function ProductsTestPage() {
         </div>
 
         {/* Cart Status */}
-        {medusaCart && (
-          <div className="fixed bottom-4 right-4 bg-white rounded-lg shadow-lg p-4 max-w-sm">
-            <h4 className="font-semibold mb-2">Cart Status</h4>
-            <p className="text-sm">Items: {medusaCart.items?.length || 0}</p>
-            <p className="text-sm">Total: ${((medusaCart.total || 0) / 100).toFixed(2)}</p>
-          </div>
-        )}
+        <div className="fixed bottom-4 right-4 bg-white rounded-lg shadow-lg p-4 max-w-sm">
+          <h4 className="font-semibold mb-2">Cart Status</h4>
+          <p className="text-sm">Items: {medusaCart?.items?.length || 0}</p>
+          <p className="text-sm">Total: ${((medusaCart?.total || 0) / 100).toFixed(2)}</p>
+          {medusaCart?.items?.length > 0 && (
+            <div className="mt-2 text-xs">
+              {medusaCart.items.map((item: any) => (
+                <div key={item.id}>
+                  {item.quantity}x {item.variant?.product?.title || item.title || 'Item'}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
