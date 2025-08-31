@@ -125,6 +125,15 @@ export default function SimpleCheckoutPage() {
     firstName: '',
     lastName: '',
   })
+  
+  // Generate a unique test email for guest checkout
+  useEffect(() => {
+    const timestamp = Date.now()
+    setCustomerInfo(prev => ({
+      ...prev,
+      email: prev.email || `guest_${timestamp}@test.com`
+    }))
+  }, [])
 
   const handleCustomerInfo = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -135,17 +144,34 @@ export default function SimpleCheckoutPage() {
       }
 
       // Update cart with customer info
-      await medusa.store.cart.update(medusaCart.id, {
-        email: customerInfo.email,
-        billing_address: {
-          first_name: customerInfo.firstName,
-          last_name: customerInfo.lastName,
-          address_1: '123 Test St',
-          city: 'Test City',
-          country_code: 'us',
-          postal_code: '12345',
+      // For guest checkout, we just set the email on the cart
+      try {
+        await medusa.store.cart.update(medusaCart.id, {
+          email: customerInfo.email,
+          billing_address: {
+            first_name: customerInfo.firstName,
+            last_name: customerInfo.lastName,
+            address_1: '123 Test St',
+            city: 'Test City',
+            country_code: 'us',
+            postal_code: '12345',
+          },
+          shipping_address: {
+            first_name: customerInfo.firstName,
+            last_name: customerInfo.lastName,
+            address_1: '123 Test St',
+            city: 'Test City',
+            country_code: 'us',
+            postal_code: '12345',
+          }
+        })
+      } catch (updateError: any) {
+        // If email already exists, continue anyway - guest checkout allows this
+        console.log('Cart update response:', updateError)
+        if (!updateError?.message?.includes('already exists')) {
+          throw updateError
         }
-      })
+      }
 
       // Initialize payment session with Stripe
       console.log('Fetching payment providers for region:', medusaCart.region_id)
@@ -196,15 +222,24 @@ export default function SimpleCheckoutPage() {
       // Initialize payment session with the correct provider ID
       console.log('Initializing payment session with provider:', stripeProvider.id)
       console.log('Cart ID:', cartWithPaymentCollection.id)
-      console.log('Payment collection:', cartWithPaymentCollection.payment_collection)
+      console.log('Payment collection ID:', cartWithPaymentCollection.payment_collection?.id)
+      
+      // Make sure we have a payment collection ID
+      if (!cartWithPaymentCollection.payment_collection?.id) {
+        throw new Error('Payment collection was not created properly')
+      }
       
       let paymentCollection
       try {
-        // The initiatePaymentSession expects the payment collection, not the cart
+        // Initialize payment session using the cart object
         const response = await medusa.store.payment.initiatePaymentSession(
-          cartWithPaymentCollection.payment_collection?.id || cartWithPaymentCollection.id,
+          cartWithPaymentCollection,
           {
-            provider_id: stripeProvider.id
+            provider_id: stripeProvider.id,
+            data: {},
+            context: {
+              cart_id: cartWithPaymentCollection.id
+            }
           }
         )
         paymentCollection = response.payment_collection
