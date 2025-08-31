@@ -450,13 +450,24 @@ export class CartAdapter {
    */
   async getPaymentProviders() {
     try {
-      const providers = await medusa.store.payment.listPaymentProviders()
+      // First ensure we have a cart with a region
+      if (!this.medusaCart?.region_id) {
+        await this.initialize()
+      }
+
+      console.log('Getting payment providers for region:', this.medusaCart?.region_id)
+      
+      // Try to get providers for the specific region
+      const providers = await medusa.store.payment.listPaymentProviders({
+        region_id: this.medusaCart?.region_id
+      })
+      
+      console.log('Payment providers response:', providers)
+      
       return {
         success: true,
-        providers: providers.map((p: any) => ({
-          id: p.id,
-          is_enabled: p.is_enabled,
-        })),
+        providers: providers?.payment_providers || [],
+        raw: providers, // Include raw response for debugging
       }
     } catch (error) {
       console.error('Failed to get payment providers:', error)

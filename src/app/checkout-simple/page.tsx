@@ -148,16 +148,30 @@ export default function SimpleCheckoutPage() {
       })
 
       // Initialize payment session with Stripe
+      console.log('Fetching payment providers for region:', medusaCart.region_id)
+      
       const paymentProviders = await medusa.store.payment.listPaymentProviders({
         region_id: medusaCart.region_id
       })
 
+      console.log('Payment providers response:', paymentProviders)
+      console.log('Available providers:', paymentProviders?.payment_providers)
+
+      // Check for different possible Stripe provider IDs
       const stripeProvider = paymentProviders?.payment_providers?.find(
-        p => p.id.startsWith('pp_stripe_')
+        p => p.id.startsWith('pp_stripe_') || 
+             p.id === 'stripe' || 
+             p.id.includes('stripe')
       )
 
+      console.log('Found Stripe provider:', stripeProvider)
+
       if (!stripeProvider) {
-        throw new Error('Stripe payment provider not available')
+        // Log all available providers for debugging
+        console.error('No Stripe provider found. Available providers:', 
+          paymentProviders?.payment_providers?.map(p => p.id))
+        throw new Error('Stripe payment provider not available. Available: ' + 
+          (paymentProviders?.payment_providers?.map(p => p.id).join(', ') || 'none'))
       }
 
       // Initialize payment session with the correct provider ID
