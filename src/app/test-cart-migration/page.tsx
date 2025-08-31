@@ -49,15 +49,15 @@ export default function TestCartMigration() {
 
   // Test adding a product
   const testAddProduct = async () => {
-    // Sample product based on your data
+    // Real product from your Medusa backend
     const testProduct = {
-      id: 'prod_01K3SNVX0C91W6Y9Y5S5YBE39M', // You'll need a real product ID
-      name: 'Charcoal Double Breasted Suit',
-      price: 799,
+      id: 'prod_005c0708a48e4e1d', // Mint Vest - confirmed exists
+      name: 'Mint Vest',
+      price: 89.99,
       images: [],
     }
     
-    const result = await addItem(testProduct as any, '40R', 1)
+    const result = await addItem(testProduct as any, 'M', 1) // Using size M which exists
     
     if (result.success) {
       setTestResults(prev => [...prev, '✅ Added product to cart'])
