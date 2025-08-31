@@ -3,6 +3,7 @@ import "./globals.css";
 import { Navigation } from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
 import { Providers } from "@/components/providers/Providers";
+import { AuthProvider } from "@/contexts/AuthContext";
 import { SmartChatLauncher } from "@/components/chat/SmartChatLauncher";
 import { ChatWidget } from "@/components/ai/ChatWidget";
 import { SimpleCartDrawer } from "@/components/cart/SimpleCartDrawer";
@@ -92,23 +93,25 @@ export default function RootLayout({
         <SkipLinks />
         {/* <PostHogProvider> */}
           <Providers>
-            <Navigation />
-            <main id="main-content" className="pt-16 min-h-screen" role="main" aria-label="Main content">
-              {children}
-            </main>
-            <Footer />
-            <SmartChatLauncher />
-            {/* <StyleConsultantButton /> */}
-            <SimpleCartDrawer />
-            <MobileBottomNav />
-            <ServiceWorkerRegistry />
-            <Suspense fallback={null}>
-              {/* <PostHogPageview /> */}
-              <GoogleAnalytics />
-              <FacebookPixel />
-            </Suspense>
-            {/* <FacebookMessenger /> */}
-            {process.env.NODE_ENV === 'development' && <AnalyticsDashboard />}
+            <AuthProvider>
+              <Navigation />
+              <main id="main-content" className="pt-16 min-h-screen" role="main" aria-label="Main content">
+                {children}
+              </main>
+              <Footer />
+              <SmartChatLauncher />
+              {/* <StyleConsultantButton /> */}
+              <SimpleCartDrawer />
+              <MobileBottomNav />
+              <ServiceWorkerRegistry />
+              <Suspense fallback={null}>
+                {/* <PostHogPageview /> */}
+                <GoogleAnalytics />
+                <FacebookPixel />
+              </Suspense>
+              {/* <FacebookMessenger /> */}
+              {process.env.NODE_ENV === 'development' && <AnalyticsDashboard />}
+            </AuthProvider>
           </Providers>
         {/* </PostHogProvider> */}
       </body>
