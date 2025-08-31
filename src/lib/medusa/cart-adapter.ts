@@ -81,9 +81,14 @@ export class CartAdapter {
 
       let variantId = variantIdOrSize
       
-      // Check if this is already a variant ID (starts with "var_")
-      if (!variantIdOrSize.startsWith('var_')) {
-        // It's a size, try to find the variant
+      // Check if this is already a variant ID (contains "var" or looks like an ID)
+      // Variant IDs can be like "var_xxx" or "variant_xxx" or just short IDs
+      const isVariantId = variantIdOrSize.includes('var') || 
+                          variantIdOrSize.includes('-') ||
+                          variantIdOrSize.length > 10
+      
+      if (!isVariantId) {
+        // It's a size name, try to find the variant
         const variant = await this.findVariantBySize(product.id, variantIdOrSize)
         if (!variant) {
           throw new Error(`Size ${variantIdOrSize} not available for this product`)
@@ -92,7 +97,8 @@ export class CartAdapter {
       }
 
       // Add to Medusa cart using variant ID directly
-      const updatedCart = await medusa.store.cart.lineItem.create(
+      // SDK v2 uses different method structure
+      const updatedCart = await medusa.store.cart.addLineItem(
         this.medusaCartId!,
         {
           variant_id: variantId,
@@ -122,8 +128,8 @@ export class CartAdapter {
         throw new Error('No cart initialized')
       }
 
-      // Remove from Medusa
-      const updatedCart = await medusa.store.cart.lineItem.delete(
+      // Remove from Medusa (SDK v2 method)
+      const updatedCart = await medusa.store.cart.deleteLineItem(
         this.medusaCartId,
         lineItemId
       )
@@ -152,8 +158,8 @@ export class CartAdapter {
         throw new Error('No cart initialized')
       }
 
-      // Update in Medusa
-      const updatedCart = await medusa.store.cart.lineItem.update(
+      // Update in Medusa (SDK v2 method)
+      const updatedCart = await medusa.store.cart.updateLineItem(
         this.medusaCartId,
         lineItemId,
         { quantity }
