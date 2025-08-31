@@ -9,7 +9,7 @@ import { formatPrice, getSizeLabel } from "@/lib/utils/format";
 import { cn } from "@/lib/utils/cn";
 import Image from "next/image";
 import Link from "next/link";
-import { CheckoutButton } from "@/components/cart/CheckoutButton";
+import { MedusaCheckoutButton } from "@/components/cart/MedusaCheckoutButton";
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -179,7 +179,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
               </div>
               
               <div className="space-y-2">
-                <CheckoutButton />
+                <MedusaCheckoutButton />
                 <Button 
                   variant="outline" 
                   className="w-full" 
