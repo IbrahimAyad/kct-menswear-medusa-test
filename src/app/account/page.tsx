@@ -1,22 +1,22 @@
 'use client'
 
-import { useAuth } from '@/hooks/useAuth'
+import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import Link from 'next/link'
 import { Package, Heart, User, CreditCard, MapPin, LogOut, Sparkles, ArrowRight } from 'lucide-react'
 
 export default function AccountPage() {
-  const { user, loading, signOut } = useAuth()
+  const { user, isLoading, isAuthenticated, logout } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/auth/login?redirectTo=/account')
+    if (!isLoading && !isAuthenticated) {
+      router.push('/login?redirect=/account')
     }
-  }, [user, loading, router])
+  }, [isAuthenticated, isLoading, router])
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div>
@@ -72,7 +72,7 @@ export default function AccountPage() {
               <p className="text-gray-600 mt-1">{user.email}</p>
             </div>
             <button
-              onClick={() => signOut()}
+              onClick={() => logout()}
               className="flex items-center gap-2 text-gray-600 hover:text-black transition-colors"
             >
               <LogOut className="w-5 h-5" />

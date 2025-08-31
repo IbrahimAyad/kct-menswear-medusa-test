@@ -1,7 +1,6 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import { medusa } from '@/lib/medusa/client'
 import { useRouter } from 'next/navigation'
 
 interface User {
@@ -51,15 +50,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return
       }
 
-      // Set auth header for the request
-      const { customer } = await medusa.store.customer.retrieve({
-        fields: '*',
-      }, {
+      // Get customer details using the token
+      const response = await fetch(`${process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || 'https://backend-production-7441.up.railway.app'}/store/customers/me`, {
         headers: {
-          Authorization: `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       })
 
+      if (!response.ok) {
+        throw new Error('Failed to fetch user')
+      }
+
+      const { customer } = await response.json()
       setUser(customer as User)
     } catch (error) {
       console.error('Failed to fetch user:', error)
@@ -98,10 +101,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const cartId = localStorage.getItem('medusa_cart_id')
       if (cartId) {
         try {
-          await medusa.store.cart.update(cartId, {}, {
+          await fetch(`${process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || 'https://backend-production-7441.up.railway.app'}/store/carts/${cartId}`, {
+            method: 'POST',
             headers: {
-              Authorization: `Bearer ${token}`
-            }
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({})
           })
         } catch (error) {
           console.error('Failed to link cart to user:', error)
@@ -163,12 +169,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const token = localStorage.getItem('medusa_auth_token')
       if (!token) throw new Error('Not authenticated')
 
-      const { customer } = await medusa.store.customer.update(data, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || 'https://backend-production-7441.up.railway.app'}/store/customers/me`, {
+        method: 'POST',
         headers: {
-          Authorization: `Bearer ${token}`
-        }
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
       })
 
+      if (!response.ok) {
+        throw new Error('Failed to update profile')
+      }
+
+      const { customer } = await response.json()
       setUser(customer as User)
     } catch (error: any) {
       console.error('Failed to update profile:', error)
