@@ -168,7 +168,7 @@ self.addEventListener('fetch', (event) => {
               }
               return response;
             })
-            .catch(() => {
+            .catch((error) => {
               // Return placeholder for failed images
               if (url.pathname.match(/\.(png|jpg|jpeg|gif|webp)$/)) {
                 return new Response(
