@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useMedusaCart } from '@/contexts/MedusaCartContext'
 import { useMedusaAuth } from '@/contexts/MedusaAuthContext'
 import { useRouter } from 'next/navigation'
@@ -9,6 +9,7 @@ const API_URL = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || 'https://backend-p
 const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_PUBLISHABLE_KEY || 'pk_4c24b336db3f8819867bec16f4b51db9654e557abbcfbbe003f7ffd8463c3c81'
 
 export default function MedusaCheckoutPage() {
+  const [mounted, setMounted] = useState(false)
   const { cart } = useMedusaCart()
   const { user } = useMedusaAuth()
   const router = useRouter()
@@ -17,15 +18,27 @@ export default function MedusaCheckoutPage() {
   const [error, setError] = useState<string | null>(null)
   
   const [shippingInfo, setShippingInfo] = useState({
-    email: user?.email || '',
-    first_name: user?.first_name || '',
-    last_name: user?.last_name || '',
+    email: '',
+    first_name: '',
+    last_name: '',
     address_1: '',
     city: '',
     country_code: 'us',
     postal_code: '',
     phone: ''
   })
+
+  useEffect(() => {
+    setMounted(true)
+    if (user) {
+      setShippingInfo(prev => ({
+        ...prev,
+        email: user.email || '',
+        first_name: user.first_name || '',
+        last_name: user.last_name || ''
+      }))
+    }
+  }, [user])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -101,6 +114,14 @@ export default function MedusaCheckoutPage() {
       style: 'currency',
       currency: 'USD'
     }).format(amount / 100)
+  }
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
+      </div>
+    )
   }
 
   if (!cart || cart.items.length === 0) {
