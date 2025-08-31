@@ -4,7 +4,7 @@ import Medusa from "@medusajs/js-sdk"
 export const medusa = new Medusa({
   baseUrl: process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "https://backend-production-7441.up.railway.app",
   maxRetries: 3,
-  publishableApiKey: process.env.NEXT_PUBLIC_PUBLISHABLE_KEY || "pk_58348c0c95bd27ad28bce27481ac65396899a29c70b3b86bc129318bdef8ce14",
+  publishableKey: process.env.NEXT_PUBLIC_PUBLISHABLE_KEY || "pk_4c24b336db3f8819867bec16f4b51db9654e557abbcfbbe003f7ffd8463c3c81",
 })
 
 // Configuration constants
