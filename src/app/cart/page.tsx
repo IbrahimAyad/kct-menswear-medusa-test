@@ -9,13 +9,13 @@ import { ShoppingBag, Plus, Minus, X, Shield, Clock, Star, Lock, Truck } from "l
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { loadStripe } from "@stripe/stripe-js";
 import { CheckoutBenefits } from "@/components/checkout/CheckoutBenefits";
 import { useCartPersistence } from "@/hooks/useCartPersistence";
 import { trackBeginCheckout, trackRemoveFromCart, trackViewCart } from "@/lib/analytics/google-analytics";
 import { trackInitiateCheckout } from "@/lib/analytics/facebook-pixel";
-import { createClient } from '@/lib/supabase/client';
+// Removed Supabase client import - no longer needed
 import { getCoreProductById, isCoreProduct } from '@/lib/config/coreProducts';
 import { useState, useEffect } from "react";
 
