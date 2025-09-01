@@ -1,313 +1,196 @@
 'use client'
 
-import React, { useState, useEffect, useMemo } from 'react'
-import { loadStripe } from '@stripe/stripe-js'
-import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
+import { useState, useEffect } from 'react'
 import { useMedusaCart } from '@/hooks/useMedusaCart'
-import { medusa } from '@/lib/medusa/client'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Shield, Lock, CreditCard, CheckCircle, Loader2 } from 'lucide-react'
+import { loadStripe } from '@stripe/stripe-js'
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
+import { ArrowLeft, CreditCard, AlertCircle, Truck } from 'lucide-react'
 import Link from 'next/link'
-import Image from 'next/image'
-import { motion } from 'framer-motion'
+import { medusa } from '@/lib/medusa/client'
 
 // Initialize Stripe
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '')
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
-// Card Element styling
-const cardElementOptions = {
-  style: {
-    base: {
-      fontSize: '16px',
-      color: '#424770',
-      '::placeholder': {
-        color: '#aab7c4',
-      },
-    },
-    invalid: {
-      color: '#9e2146',
-    },
-  },
-}
-
-interface PaymentFormProps {
-  clientSecret: string
-  cartId: string
-  onSuccess: (orderId: string) => void
-  onError: (error: string) => void
-}
-
-function PaymentForm({ clientSecret, cartId, onSuccess, onError }: PaymentFormProps) {
+// Payment Form Component
+function CheckoutForm({ clientSecret, cartId }: { clientSecret: string, cartId: string }) {
   const stripe = useStripe()
   const elements = useElements()
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [paymentError, setPaymentError] = useState<string | null>(null)
+  const router = useRouter()
+  const [error, setError] = useState<string | null>(null)
+  const [processing, setProcessing] = useState(false)
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault()
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
 
     if (!stripe || !elements) {
-      setPaymentError('Stripe is not loaded properly. Please refresh and try again.')
       return
     }
 
-    const cardElement = elements.getElement(CardElement)
-    if (!cardElement) {
-      setPaymentError('Card element not found. Please refresh and try again.')
-      return
-    }
+    setProcessing(true)
+    setError(null)
 
-    setIsProcessing(true)
-    setPaymentError(null)
+    const { error: submitError } = await stripe.confirmPayment({
+      elements,
+      confirmParams: {
+        return_url: `${window.location.origin}/checkout/success?cart_id=${cartId}`,
+      },
+    })
 
-    try {
-      // Confirm payment with Stripe
-      const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(
-        clientSecret,
-        {
-          payment_method: {
-            card: cardElement,
-          },
-        }
-      )
-
-      if (stripeError) {
-        console.error('Stripe payment error:', stripeError)
-        setPaymentError(stripeError.message || 'Payment failed. Please try again.')
-        onError(stripeError.message || 'Payment failed')
-        return
-      }
-
-      if (paymentIntent?.status === 'succeeded') {
-        // Complete the order in Medusa
-        try {
-          const completeResponse = await medusa.store.cart.complete(cartId)
-          console.log('Order completed successfully:', completeResponse)
-          
-          if (completeResponse?.order?.id) {
-            onSuccess(completeResponse.order.id)
-          } else {
-            throw new Error('Order completion failed - no order ID returned')
-          }
-        } catch (medusaError) {
-          console.error('Medusa order completion error:', medusaError)
-          setPaymentError('Payment succeeded but order completion failed. Please contact support.')
-          onError('Order completion failed')
-        }
-      }
-    } catch (error) {
-      console.error('Payment processing error:', error)
-      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred'
-      setPaymentError(errorMessage)
-      onError(errorMessage)
-    } finally {
-      setIsProcessing(false)
+    if (submitError) {
+      setError(submitError.message || 'Payment failed')
+      setProcessing(false)
     }
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="p-6 border border-gray-200 rounded-lg bg-gray-50">
-        <div className="flex items-center gap-2 mb-4">
-          <CreditCard className="h-5 w-5 text-blue-600" />
-          <h3 className="text-lg font-medium text-gray-900">Payment Information</h3>
+      <PaymentElement />
+      
+      {error && (
+        <div className="p-4 bg-red-50 text-red-700 rounded-lg flex items-start gap-2">
+          <AlertCircle className="h-5 w-5 mt-0.5" />
+          <p className="text-sm">{error}</p>
         </div>
-        
-        <div className="bg-white p-4 rounded-md border">
-          <CardElement options={cardElementOptions} />
-        </div>
-        
-        {paymentError && (
-          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
-            <p className="text-red-800 text-sm">{paymentError}</p>
-          </div>
-        )}
-      </div>
+      )}
 
       <button
         type="submit"
-        disabled={!stripe || isProcessing}
-        className="w-full py-4 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+        disabled={!stripe || processing}
+        className="w-full py-3 bg-black text-white rounded-lg hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
       >
-        {isProcessing ? (
-          <>
-            <Loader2 className="h-5 w-5 animate-spin" />
-            Processing Payment...
-          </>
+        {processing ? (
+          'Processing...'
         ) : (
           <>
-            <Lock className="h-5 w-5" />
+            <CreditCard className="h-5 w-5" />
             Complete Payment
           </>
         )}
       </button>
-
-      <div className="text-center text-sm text-gray-500">
-        <div className="flex items-center justify-center gap-2">
-          <Shield className="h-4 w-4" />
-          <span>Your payment is secured by Stripe</span>
-        </div>
-      </div>
     </form>
   )
-}
-
-interface CheckoutFormData {
-  email: string
-  firstName: string
-  lastName: string
-  address: string
-  city: string
-  state: string
-  zipCode: string
-  phone: string
-  country: string
 }
 
 export default function StripeCheckoutPage() {
   const router = useRouter()
   const { medusaCart, isLoading } = useMedusaCart()
-  const [step, setStep] = useState<'shipping' | 'payment' | 'success'>('shipping')
   const [clientSecret, setClientSecret] = useState<string | null>(null)
-  const [paymentSessionId, setPaymentSessionId] = useState<string | null>(null)
-  const [orderId, setOrderId] = useState<string | null>(null)
-  const [isInitiatingPayment, setIsInitiatingPayment] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  
-  const [formData, setFormData] = useState<CheckoutFormData>({
+  const [isInitializing, setIsInitializing] = useState(false)
+  const [customerInfo, setCustomerInfo] = useState({
     email: '',
     firstName: '',
     lastName: '',
     address: '',
     city: '',
     state: '',
-    zipCode: '',
-    phone: '',
-    country: 'us'
+    postalCode: '',
+    phone: ''
   })
+  const [step, setStep] = useState<'info' | 'payment'>('info')
 
-  // Available payment providers (for demo - in real app this would be fetched)
-  const [paymentProviders, setPaymentProviders] = useState<string[]>(['stripe'])
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }))
-  }
-
-  const handleShippingSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-    setIsInitiatingPayment(true)
-
+  const initializePayment = async () => {
     if (!medusaCart?.id) {
-      setError('No cart found. Please add items to your cart first.')
-      setIsInitiatingPayment(false)
+      setError('No cart available')
       return
     }
 
+    setIsInitializing(true)
+    setError(null)
+
     try {
-      // Step 1: Update cart with customer info
+      // Step 1: Update cart with customer information
       await medusa.store.cart.update(medusaCart.id, {
-        email: formData.email,
+        email: customerInfo.email,
         shipping_address: {
-          first_name: formData.firstName,
-          last_name: formData.lastName,
-          address_1: formData.address,
-          city: formData.city,
-          province: formData.state,
-          postal_code: formData.zipCode,
-          country_code: formData.country,
-          phone: formData.phone,
+          first_name: customerInfo.firstName,
+          last_name: customerInfo.lastName,
+          address_1: customerInfo.address,
+          city: customerInfo.city,
+          province: customerInfo.state,
+          postal_code: customerInfo.postalCode,
+          country_code: 'us',
+          phone: customerInfo.phone
         },
         billing_address: {
-          first_name: formData.firstName,
-          last_name: formData.lastName,
-          address_1: formData.address,
-          city: formData.city,
-          province: formData.state,
-          postal_code: formData.zipCode,
-          country_code: formData.country,
+          first_name: customerInfo.firstName,
+          last_name: customerInfo.lastName,
+          address_1: customerInfo.address,
+          city: customerInfo.city,
+          province: customerInfo.state,
+          postal_code: customerInfo.postalCode,
+          country_code: 'us',
+          phone: customerInfo.phone
         }
       })
 
-      // Step 2: Get available shipping options
-      const shippingOptions = await medusa.store.shipping.listCartOptions(medusaCart.id)
-      
-      if (shippingOptions.length > 0) {
-        // Add first available shipping option
-        await medusa.store.cart.addShippingMethod(medusaCart.id, {
-          option_id: shippingOptions[0].id,
+      // Step 2: Create payment collection
+      const paymentCollectionResponse = await fetch(`${process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL}/store/payment-collections`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY!
+        },
+        body: JSON.stringify({
+          region_id: medusaCart.region_id,
+          cart_id: medusaCart.id,
+          amount: medusaCart.total
         })
+      })
+
+      if (!paymentCollectionResponse.ok) {
+        const errorData = await paymentCollectionResponse.json()
+        throw new Error(errorData.message || 'Failed to create payment collection')
       }
 
-      // Step 3: List available payment providers
-      const providers = await medusa.store.payment.listPaymentProviders()
-      console.log('Available payment providers:', providers)
-      setPaymentProviders(providers.map((p: any) => p.id))
+      const paymentCollection = await paymentCollectionResponse.json()
 
-      // Step 4: Initialize payment session with Stripe
-      if (providers.some((p: any) => p.id === 'stripe')) {
-        const paymentCollection = await medusa.store.payment.initiatePaymentSession(
-          medusaCart.id,
-          {
-            provider_id: 'stripe'
-          }
-        )
+      // Step 3: Initialize Stripe payment session
+      const sessionResponse = await fetch(`${process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL}/store/payment-collections/${paymentCollection.payment_collection.id}/payment-sessions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY!
+        },
+        body: JSON.stringify({
+          provider_id: 'stripe'
+        })
+      })
 
-        console.log('Payment session initialized:', paymentCollection)
-
-        // Extract client secret from payment session
-        const stripeSession = paymentCollection.payment_sessions?.find(
-          (session: any) => session.provider_id === 'stripe'
-        )
-
-        if (stripeSession?.data?.client_secret) {
-          setClientSecret(stripeSession.data.client_secret)
-          setPaymentSessionId(stripeSession.id)
-          setStep('payment')
-        } else {
-          throw new Error('Failed to initialize Stripe payment session - no client secret received')
-        }
-      } else {
-        throw new Error('Stripe payment provider not available')
+      if (!sessionResponse.ok) {
+        const errorData = await sessionResponse.json()
+        throw new Error(errorData.message || 'Failed to create payment session')
       }
-    } catch (err) {
-      console.error('Error setting up payment:', err)
-      setError(err instanceof Error ? err.message : 'Failed to set up payment. Please try again.')
+
+      const sessionData = await sessionResponse.json()
+      
+      // Get client secret from payment session
+      const stripeClientSecret = sessionData.payment_collection?.payment_sessions?.[0]?.data?.client_secret
+
+      if (!stripeClientSecret) {
+        throw new Error('No client secret received from payment session')
+      }
+
+      setClientSecret(stripeClientSecret)
+      setStep('payment')
+    } catch (err: any) {
+      console.error('Payment initialization error:', err)
+      setError(err?.message || 'Failed to initialize payment')
     } finally {
-      setIsInitiatingPayment(false)
+      setIsInitializing(false)
     }
   }
 
-  const handlePaymentSuccess = (newOrderId: string) => {
-    setOrderId(newOrderId)
-    setStep('success')
-    
-    // Clear cart from localStorage
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('medusa_cart_id')
-    }
+  const handleCustomerInfoSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    initializePayment()
   }
-
-  const handlePaymentError = (errorMessage: string) => {
-    setError(errorMessage)
-  }
-
-  // Calculate totals
-  const subtotal = medusaCart?.subtotal || 0
-  const shippingTotal = medusaCart?.shipping_total || 0
-  const taxTotal = medusaCart?.tax_total || 0
-  const total = medusaCart?.total || 0
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
-          <div className="text-lg">Loading checkout...</div>
-        </div>
+        <div className="text-2xl">Loading checkout...</div>
       </div>
     )
   }
@@ -315,314 +198,218 @@ export default function StripeCheckoutPage() {
   if (!medusaCart || !medusaCart.items?.length) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center">
-        <div className="text-center max-w-md mx-auto">
-          <h1 className="text-2xl font-semibold mb-4">Your cart is empty</h1>
-          <p className="text-gray-600 mb-6">Add some items to your cart before checking out.</p>
-          <Link 
-            href="/products" 
-            className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Continue Shopping
-          </Link>
-        </div>
+        <h1 className="text-2xl mb-4">Your cart is empty</h1>
+        <Link href="/kct-shop" className="text-blue-600 hover:underline">
+          Continue Shopping
+        </Link>
       </div>
     )
   }
 
-  if (step === 'success') {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-green-50">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="text-center max-w-md mx-auto bg-white p-8 rounded-xl shadow-lg"
-        >
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle className="h-10 w-10 text-green-600" />
-          </div>
-          <h1 className="text-2xl font-semibold mb-2">Payment Successful!</h1>
-          <p className="text-gray-600 mb-6">
-            Thank you for your order. You will receive a confirmation email shortly.
-          </p>
-          {orderId && (
-            <p className="text-sm text-gray-500 mb-6">
-              Order ID: {orderId}
-            </p>
-          )}
-          <div className="space-y-3">
-            <button
-              onClick={() => router.push('/orders')}
-              className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              View Orders
-            </button>
-            <Link 
-              href="/products"
-              className="block w-full text-blue-600 py-2 px-6 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors text-center"
-            >
-              Continue Shopping
-            </Link>
-          </div>
-        </motion.div>
-      </div>
-    )
+  const appearance = {
+    theme: 'stripe' as const,
+    variables: {
+      colorPrimary: '#000000',
+    }
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <Link href="/cart" className="flex items-center gap-2 text-gray-600 hover:text-gray-900">
-              <ArrowLeft className="h-4 w-4" />
-              Back to Cart
-            </Link>
-            <div className="flex items-center gap-2">
-              <Shield className="h-4 w-4 text-green-600" />
-              <span className="text-sm text-gray-600">Secure Checkout</span>
+    <div className="min-h-screen bg-gray-50 py-12">
+      <div className="max-w-4xl mx-auto px-6">
+        <Link href="/cart" className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-8">
+          <ArrowLeft className="h-4 w-4" />
+          Back to Cart
+        </Link>
+
+        <h1 className="text-3xl font-bold mb-8">Secure Checkout</h1>
+
+        <div className="grid md:grid-cols-2 gap-8">
+          {/* Order Summary */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
+            
+            <div className="space-y-4 mb-6">
+              {medusaCart.items.map((item: any) => (
+                <div key={item.id} className="flex justify-between py-2 border-b">
+                  <div>
+                    <p className="font-medium">
+                      {item.title || item.variant?.product?.title || 'Product'}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      {item.variant?.title && `Size: ${item.variant.title}`}
+                      {item.quantity > 1 && ` • Qty: ${item.quantity}`}
+                    </p>
+                  </div>
+                  <p className="font-medium">
+                    ${((item.unit_price || 0) * item.quantity / 100).toFixed(2)}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <div className="space-y-2 border-t pt-4">
+              <div className="flex justify-between text-sm">
+                <span>Subtotal</span>
+                <span>${((medusaCart.subtotal || 0) / 100).toFixed(2)}</span>
+              </div>
+              
+              {medusaCart.tax_total > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span>Tax</span>
+                  <span>${((medusaCart.tax_total || 0) / 100).toFixed(2)}</span>
+                </div>
+              )}
+              
+              <div className="flex justify-between text-sm">
+                <span>Shipping</span>
+                <span>
+                  {medusaCart.shipping_total === 0 ? 'FREE' : `$${(medusaCart.shipping_total / 100).toFixed(2)}`}
+                </span>
+              </div>
+              
+              <div className="flex justify-between text-xl font-bold pt-2 border-t">
+                <span>Total</span>
+                <span>${((medusaCart.total || 0) / 100).toFixed(2)}</span>
+              </div>
+            </div>
+
+            <div className="mt-6 p-3 bg-green-50 rounded text-sm">
+              <p className="font-medium text-green-900">✓ Secure Payment</p>
+              <p className="text-green-700">Powered by Stripe</p>
             </div>
           </div>
-        </div>
-      </div>
 
-      <div className="max-w-4xl mx-auto px-6 py-8">
-        {/* Progress Steps */}
-        <div className="flex items-center justify-center mb-8">
-          <div className="flex items-center space-x-4">
-            <div className={`flex items-center gap-2 ${step === 'shipping' ? 'text-blue-600' : 'text-green-600'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                step === 'shipping' ? 'bg-blue-600 text-white' : 'bg-green-600 text-white'
-              }`}>
-                {step === 'shipping' ? '1' : <CheckCircle className="w-4 h-4" />}
-              </div>
-              <span className="font-medium">Shipping</span>
-            </div>
-            <div className="w-12 h-px bg-gray-300" />
-            <div className={`flex items-center gap-2 ${
-              step === 'payment' ? 'text-blue-600' : step === 'success' ? 'text-green-600' : 'text-gray-400'
-            }`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                step === 'payment' ? 'bg-blue-600 text-white' : 
-                step === 'success' ? 'bg-green-600 text-white' : 'bg-gray-300 text-gray-600'
-              }`}>
-                {step === 'success' ? <CheckCircle className="w-4 h-4" /> : '2'}
-              </div>
-              <span className="font-medium">Payment</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-2">
-            {step === 'shipping' && (
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="bg-white rounded-xl shadow-sm p-8"
-              >
-                <h2 className="text-2xl font-semibold mb-6">Shipping Information</h2>
+          {/* Payment Form */}
+          <div className="bg-white rounded-lg shadow p-6">
+            {step === 'info' ? (
+              <>
+                <h2 className="text-xl font-semibold mb-4">Billing Information</h2>
                 
                 {error && (
-                  <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-red-800">{error}</p>
+                  <div className="mb-4 p-4 bg-red-50 text-red-700 rounded-lg flex items-start gap-2">
+                    <AlertCircle className="h-5 w-5 mt-0.5" />
+                    <p className="text-sm">{error}</p>
                   </div>
                 )}
 
-                <form onSubmit={handleShippingSubmit} className="space-y-6">
+                <form onSubmit={handleCustomerInfoSubmit} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium mb-2">Email Address *</label>
+                    <label className="block text-sm font-medium mb-2">Email</label>
                     <input
                       type="email"
-                      name="email"
                       required
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="your@email.com"
+                      value={customerInfo.email}
+                      onChange={(e) => setCustomerInfo(prev => ({ ...prev, email: e.target.value }))}
+                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="john@example.com"
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium mb-2">First Name *</label>
+                      <label className="block text-sm font-medium mb-2">First Name</label>
                       <input
                         type="text"
-                        name="firstName"
                         required
-                        value={formData.firstName}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="John"
+                        value={customerInfo.firstName}
+                        onChange={(e) => setCustomerInfo(prev => ({ ...prev, firstName: e.target.value }))}
+                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-2">Last Name *</label>
+                      <label className="block text-sm font-medium mb-2">Last Name</label>
                       <input
                         type="text"
-                        name="lastName"
                         required
-                        value={formData.lastName}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Smith"
+                        value={customerInfo.lastName}
+                        onChange={(e) => setCustomerInfo(prev => ({ ...prev, lastName: e.target.value }))}
+                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-2">Address *</label>
+                    <label className="block text-sm font-medium mb-2">Street Address</label>
                     <input
                       type="text"
-                      name="address"
                       required
-                      value={formData.address}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="123 Main Street"
+                      value={customerInfo.address}
+                      onChange={(e) => setCustomerInfo(prev => ({ ...prev, address: e.target.value }))}
+                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="123 Main St"
                     />
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium mb-2">City *</label>
+                      <label className="block text-sm font-medium mb-2">City</label>
                       <input
                         type="text"
-                        name="city"
                         required
-                        value={formData.city}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="New York"
+                        value={customerInfo.city}
+                        onChange={(e) => setCustomerInfo(prev => ({ ...prev, city: e.target.value }))}
+                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-2">State *</label>
+                      <label className="block text-sm font-medium mb-2">State</label>
                       <input
                         type="text"
-                        name="state"
                         required
-                        value={formData.state}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="NY"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">ZIP Code *</label>
-                      <input
-                        type="text"
-                        name="zipCode"
-                        required
-                        value={formData.zipCode}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="10001"
+                        maxLength={2}
+                        value={customerInfo.state}
+                        onChange={(e) => setCustomerInfo(prev => ({ ...prev, state: e.target.value.toUpperCase() }))}
+                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="CA"
                       />
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Phone Number</label>
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="(555) 123-4567"
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">ZIP Code</label>
+                      <input
+                        type="text"
+                        required
+                        value={customerInfo.postalCode}
+                        onChange={(e) => setCustomerInfo(prev => ({ ...prev, postalCode: e.target.value }))}
+                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Phone</label>
+                      <input
+                        type="tel"
+                        value={customerInfo.phone}
+                        onChange={(e) => setCustomerInfo(prev => ({ ...prev, phone: e.target.value }))}
+                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
                   </div>
 
                   <button
                     type="submit"
-                    disabled={isInitiatingPayment}
-                    className="w-full py-4 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                    disabled={isInitializing}
+                    className="w-full py-3 bg-black text-white rounded-lg hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
                   >
-                    {isInitiatingPayment ? (
-                      <>
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                        Setting up payment...
-                      </>
-                    ) : (
-                      'Continue to Payment'
-                    )}
+                    {isInitializing ? 'Initializing Payment...' : 'Continue to Payment'}
                   </button>
                 </form>
-              </motion.div>
-            )}
-
-            {step === 'payment' && clientSecret && (
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="bg-white rounded-xl shadow-sm p-8"
-              >
-                <h2 className="text-2xl font-semibold mb-6">Payment Details</h2>
-                
-                {error && (
-                  <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-red-800">{error}</p>
-                  </div>
+              </>
+            ) : (
+              <>
+                <h2 className="text-xl font-semibold mb-4">Payment Details</h2>
+                {clientSecret && (
+                  <Elements stripe={stripePromise} options={{ clientSecret, appearance }}>
+                    <CheckoutForm clientSecret={clientSecret} cartId={medusaCart.id} />
+                  </Elements>
                 )}
-
-                <Elements stripe={stripePromise}>
-                  <PaymentForm
-                    clientSecret={clientSecret}
-                    cartId={medusaCart.id}
-                    onSuccess={handlePaymentSuccess}
-                    onError={handlePaymentError}
-                  />
-                </Elements>
-              </motion.div>
+              </>
             )}
-          </div>
 
-          {/* Order Summary */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl shadow-sm p-6 sticky top-24">
-              <h3 className="text-lg font-semibold mb-4">Order Summary</h3>
-              
-              {/* Cart Items */}
-              <div className="space-y-3 mb-6 max-h-64 overflow-y-auto">
-                {medusaCart.items.map((item: any) => (
-                  <div key={item.id} className="flex gap-3 p-3 bg-gray-50 rounded-lg">
-                    <div className="w-12 h-12 bg-gray-200 rounded-md"></div>
-                    <div className="flex-1">
-                      <p className="font-medium text-sm">
-                        {item.variant?.product?.title || item.title || 'Product'}
-                      </p>
-                      <p className="text-xs text-gray-600">
-                        Size: {item.variant?.title || 'N/A'} • Qty: {item.quantity}
-                      </p>
-                      <p className="text-sm font-medium">
-                        ${((item.unit_price || 0) * item.quantity / 100).toFixed(2)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Pricing */}
-              <div className="space-y-2 border-t pt-4">
-                <div className="flex justify-between text-sm">
-                  <span>Subtotal</span>
-                  <span>${(subtotal / 100).toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>Shipping</span>
-                  <span>${(shippingTotal / 100).toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>Tax</span>
-                  <span>${(taxTotal / 100).toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-lg font-semibold border-t pt-2">
-                  <span>Total</span>
-                  <span>${(total / 100).toFixed(2)}</span>
-                </div>
-              </div>
+            <div className="flex items-center gap-2 text-sm text-gray-600 justify-center mt-6">
+              <Truck className="h-4 w-4" />
+              <span>Free shipping on orders over $100</span>
             </div>
           </div>
         </div>

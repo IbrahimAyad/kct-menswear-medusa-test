@@ -70,8 +70,8 @@ export default function CartPage() {
   }, [validCartItems.length]);
 
   const handleCheckout = async () => {
-    // Redirect to the working direct Stripe checkout
-    router.push('/checkout-direct-stripe');
+    // Redirect to the new Stripe checkout with Medusa payment collections
+    router.push('/checkout-stripe');
   };
 
   const handleGuestCheckout = async () => {
