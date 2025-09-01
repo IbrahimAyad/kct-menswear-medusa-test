@@ -1,12 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { AtelierAICore } from '@/lib/ai/atelier-ai-core'
 import { RecommendationContext } from '@/lib/ai/types'
-import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+// TEMPORARILY DISABLED - Supabase disabled during migration to Medusa
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,8 +17,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get user profile if userId provided
+    // Get user profile if userId provided - disabled during migration
     let userProfile = null
+    /*
     if (userId) {
       const { data: profile } = await supabase
         .from('user_style_profiles')
@@ -45,6 +42,7 @@ export async function POST(request: NextRequest) {
         }
       }
     }
+    */
 
     // Get AI instance
     const ai = AtelierAICore.getInstance()
@@ -52,7 +50,8 @@ export async function POST(request: NextRequest) {
     // Generate recommendations
     const recommendations = await ai.generateOutfitRecommendations(context, userProfile)
 
-    // Store recommendations for analytics
+    // Store recommendations for analytics - disabled during migration
+    /*
     if (userId) {
       await supabase.from('ai_recommendations').insert({
         user_id: userId,
@@ -62,6 +61,7 @@ export async function POST(request: NextRequest) {
         conversion_tracked: false
       })
     }
+    */
 
     return NextResponse.json({
       success: true,
@@ -94,6 +94,9 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    // Disabled during migration - return empty array
+    const data: any[] = []
+    /*
     const { data, error } = await supabase
       .from('ai_recommendations')
       .select('*')
@@ -103,6 +106,7 @@ export async function GET(request: NextRequest) {
       .limit(10)
 
     if (error) throw error
+    */
 
     return NextResponse.json({ recommendations: data })
   } catch (error) {
