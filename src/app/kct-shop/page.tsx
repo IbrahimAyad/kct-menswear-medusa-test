@@ -196,7 +196,7 @@ export default function KCTShopPage() {
                   </div>
                 )}
                 <Link
-                  href="/checkout-simple"
+                  href="/checkout-direct-stripe"
                   className="px-4 py-2 bg-white text-black rounded hover:bg-gray-100 flex items-center gap-2 text-sm font-medium"
                 >
                   <ShoppingCart className="h-4 w-4" />
@@ -233,8 +233,9 @@ export default function KCTShopPage() {
               <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {categoryProducts.map((product) => (
                   <div key={product.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-                    {/* Product Image */}
-                    <div className="relative h-48 bg-gray-100">
+                    {/* Product Image - Clickable */}
+                    <Link href={`/products/${product.handle || product.id}`}>
+                      <div className="relative h-48 bg-gray-100 cursor-pointer hover:opacity-90 transition-opacity">
                       {product.thumbnail || product.images?.[0] ? (
                         <Image
                           src={product.thumbnail || product.images[0].url}
@@ -255,11 +256,14 @@ export default function KCTShopPage() {
                           <Check className="h-12 w-12 text-white" />
                         </div>
                       )}
-                    </div>
+                      </div>
+                    </Link>
 
                     {/* Product Info */}
                     <div className="p-4">
-                      <h3 className="font-semibold mb-2 line-clamp-2">{product.title}</h3>
+                      <Link href={`/products/${product.handle || product.id}`}>
+                        <h3 className="font-semibold mb-2 line-clamp-2 hover:text-blue-600 cursor-pointer">{product.title}</h3>
+                      </Link>
                       
                       {/* Variant/Size Selector */}
                       {product.variants && product.variants.length > 1 ? (
