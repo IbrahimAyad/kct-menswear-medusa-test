@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import SmartCollectionPage from '@/components/collections/SmartCollectionPage';
+import MedusaCollectionPage from '@/components/collections/MedusaCollectionPage';
 
 function LoadingState() {
   return (
@@ -12,7 +12,7 @@ function LoadingState() {
 export default function VestsPage() {
   return (
     <Suspense fallback={<LoadingState />}>
-      <SmartCollectionPage collectionId="vests" />
+      <MedusaCollectionPage collectionId="vests" />
     </Suspense>
   );
 }

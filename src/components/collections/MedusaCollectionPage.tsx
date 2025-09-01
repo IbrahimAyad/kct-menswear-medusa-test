@@ -1,60 +1,97 @@
 'use client';
 
-import { useEffect, useState, useMemo, Suspense } from 'react';
-import { useUnifiedShop } from '@/hooks/useUnifiedShop';
-import { getDbFiltersFromMarketing, getCollectionById } from '@/lib/config/collection-mapping';
-import { UnifiedProduct } from '@/types/unified-shop';
+import { useEffect, useState } from 'react';
+import { medusa, MEDUSA_CONFIG } from '@/lib/medusa/client';
+import { getCollectionById } from '@/lib/config/collection-mapping';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Heart, ShoppingBag, Grid3X3, Filter } from 'lucide-react';
+import { Heart, ShoppingBag, Grid3X3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-interface SmartCollectionPageProps {
+interface MedusaCollectionPageProps {
   collectionId: string;
-  showFilters?: boolean;
 }
 
-export default function SmartCollectionPage({ collectionId, showFilters = true }: SmartCollectionPageProps) {
+export default function MedusaCollectionPage({ collectionId }: MedusaCollectionPageProps) {
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState('featured');
-  const collection = getCollectionById(collectionId);
   
-  // Get the database filters for this marketing collection
-  const dbFilters = useMemo(() => {
-    return getDbFiltersFromMarketing(collectionId);
+  const collection = getCollectionById(collectionId);
+
+  useEffect(() => {
+    fetchProducts();
   }, [collectionId]);
 
-  // Fetch products using the smart filters
-  const { 
-    products, 
-    loading, 
-    error,
-    totalCount 
-  } = useUnifiedShop({
-    initialFilters: {
-      category: dbFilters.categories,
-      tags: dbFilters.tags,
-      includeIndividual: true,
-      includeBundles: collectionId === 'complete-looks'
-    },
-    autoFetch: true
-  });
-
-  // Sort products
-  const sortedProducts = useMemo(() => {
-    const sorted = [...products];
-    switch (sortBy) {
-      case 'price-low':
-        return sorted.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
-      case 'price-high':
-        return sorted.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
-      case 'name':
-        return sorted.sort((a, b) => a.name.localeCompare(b.name));
-      default:
-        return sorted;
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Fetch all products from Medusa
+      const response = await medusa.store.product.list({
+        limit: 100,
+        region_id: MEDUSA_CONFIG.regionId,
+        fields: "*variants,*variants.prices,*images,*collection"
+      });
+      
+      if (response.products) {
+        // Filter products based on collection
+        let filteredProducts = response.products;
+        
+        // Filter by collection title if needed
+        if (collectionId === 'vests') {
+          filteredProducts = response.products.filter(p => 
+            p.title?.toLowerCase().includes('vest') ||
+            p.collection?.title?.toLowerCase().includes('vest') ||
+            p.tags?.some((tag: any) => tag.value?.toLowerCase().includes('vest'))
+          );
+        } else if (collectionId === 'suits') {
+          filteredProducts = response.products.filter(p => 
+            p.title?.toLowerCase().includes('suit') ||
+            p.collection?.title?.toLowerCase().includes('suit')
+          );
+        } else if (collectionId === 'shirts') {
+          filteredProducts = response.products.filter(p => 
+            p.title?.toLowerCase().includes('shirt') ||
+            p.collection?.title?.toLowerCase().includes('shirt')
+          );
+        }
+        
+        // Sort products
+        const sorted = [...filteredProducts];
+        switch (sortBy) {
+          case 'price-low':
+            sorted.sort((a, b) => {
+              const priceA = a.variants?.[0]?.prices?.[0]?.amount || 0;
+              const priceB = b.variants?.[0]?.prices?.[0]?.amount || 0;
+              return priceA - priceB;
+            });
+            break;
+          case 'price-high':
+            sorted.sort((a, b) => {
+              const priceA = a.variants?.[0]?.prices?.[0]?.amount || 0;
+              const priceB = b.variants?.[0]?.prices?.[0]?.amount || 0;
+              return priceB - priceA;
+            });
+            break;
+          case 'name':
+            sorted.sort((a, b) => a.title.localeCompare(b.title));
+            break;
+        }
+        
+        setProducts(sorted);
+      }
+    } catch (err: any) {
+      console.error('Error fetching products:', err);
+      setError(err?.message || 'Failed to load products');
+    } finally {
+      setLoading(false);
     }
-  }, [products, sortBy]);
+  };
 
   if (!collection) {
     return (
@@ -70,7 +107,7 @@ export default function SmartCollectionPage({ collectionId, showFilters = true }
       <div className="bg-gradient-to-b from-gray-50 to-white py-12 px-4">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            {collection.marketingName} Collection
+            {collection.marketingName}
           </h1>
           <p className="text-lg text-gray-600 mb-6">
             {collection.description}
@@ -124,10 +161,12 @@ export default function SmartCollectionPage({ collectionId, showFilters = true }
       {/* Products Grid */}
       {!loading && !error && (
         <div className="max-w-7xl mx-auto px-4 py-8">
-          {sortedProducts.length === 0 ? (
+          {products.length === 0 ? (
             <div className="text-center py-20">
               <p className="text-xl text-gray-600 mb-4">No products found in this collection</p>
-              <p className="text-gray-500">Please check back later for new arrivals</p>
+              <Link href="/kct-shop">
+                <Button>Browse All Products</Button>
+              </Link>
             </div>
           ) : (
             <div className={cn(
@@ -136,7 +175,7 @@ export default function SmartCollectionPage({ collectionId, showFilters = true }
                 ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4' 
                 : 'grid-cols-1'
             )}>
-              {sortedProducts.map((product) => (
+              {products.map((product) => (
                 <ProductCard 
                   key={product.id} 
                   product={product} 
@@ -152,67 +191,34 @@ export default function SmartCollectionPage({ collectionId, showFilters = true }
 }
 
 // Product Card Component
-function ProductCard({ product, viewMode }: { product: UnifiedProduct; viewMode: 'grid' | 'list' }) {
+function ProductCard({ product, viewMode }: { product: any; viewMode: 'grid' | 'list' }) {
   const [isLiked, setIsLiked] = useState(false);
   const [imageError, setImageError] = useState(false);
 
-  // Handle different image formats from unified products
-  const getProductImage = () => {
-    if (product.imageUrl) return product.imageUrl;
-    if (product.images?.length > 0) {
-      // Check if it's an object with src property (enhanced products)
-      if (typeof product.images[0] === 'object' && product.images[0].src) {
-        return product.images[0].src;
-      }
-      // Otherwise assume it's a direct URL string
-      return product.images[0];
-    }
-    return '/placeholder-product.jpg';
-  };
-  
-  const productImage = getProductImage();
-  const productPrice = typeof product.price === 'string' 
-    ? parseFloat(product.price) 
-    : product.price;
-  
-  // Determine the product link URL - use handle/slug for Medusa products
-  const getProductUrl = () => {
-    // For Medusa products from backend, use handle
-    if ((product as any).handle) {
-      return `/products/${(product as any).handle}`;
-    }
-    // Use slug if available (from UnifiedProduct)
-    if (product.slug) {
-      return `/products/${product.slug}`;
-    }
-    // For enhanced products, use the ID (enhanced_[id] format)
-    if ((product as any).enhanced && product.id.startsWith('enhanced_')) {
-      return `/products/${product.id}`;
-    }
-    // Default to using the product id
-    return `/products/${product.id}`;
-  };
+  const productImage = product.thumbnail || product.images?.[0]?.url || '/placeholder-product.jpg';
+  const productPrice = product.variants?.[0]?.prices?.[0]?.amount || 0;
+  const productUrl = `/products/${product.handle || product.id}`;
 
   if (viewMode === 'list') {
     return (
       <div className="flex gap-6 p-4 border border-gray-200 rounded-lg hover:shadow-lg transition-shadow">
-        <Link href={getProductUrl()} className="relative w-48 h-48 flex-shrink-0">
+        <Link href={productUrl} className="relative w-48 h-48 flex-shrink-0">
           <Image
             src={imageError ? '/placeholder-product.jpg' : productImage}
-            alt={product.name}
+            alt={product.title}
             fill
             className="object-cover rounded-lg"
             onError={() => setImageError(true)}
           />
         </Link>
         <div className="flex-1">
-          <Link href={getProductUrl()}>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2 hover:underline">{product.name}</h3>
+          <Link href={productUrl}>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2 hover:underline">{product.title}</h3>
           </Link>
           <p className="text-gray-600 mb-4 line-clamp-2">{product.description}</p>
-          <p className="text-2xl font-bold text-gray-900 mb-4">${productPrice.toFixed(2)}</p>
+          <p className="text-2xl font-bold text-gray-900 mb-4">${(productPrice / 100).toFixed(2)}</p>
           <div className="flex gap-2">
-            <Link href={getProductUrl()} className="flex-1">
+            <Link href={productUrl} className="flex-1">
               <Button className="w-full">
                 <ShoppingBag className="w-4 h-4 mr-2" />
                 View Details
@@ -233,11 +239,11 @@ function ProductCard({ product, viewMode }: { product: UnifiedProduct; viewMode:
 
   return (
     <div className="group relative">
-      <Link href={getProductUrl()} className="block">
+      <Link href={productUrl} className="block">
         <div className="relative aspect-[3/4] mb-4 overflow-hidden rounded-lg bg-gray-100">
           <Image
             src={imageError ? '/placeholder-product.jpg' : productImage}
-            alt={product.name}
+            alt={product.title}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-300"
             onError={() => setImageError(true)}
@@ -253,13 +259,13 @@ function ProductCard({ product, viewMode }: { product: UnifiedProduct; viewMode:
           </button>
         </div>
         <h3 className="text-sm font-medium text-gray-900 mb-1 line-clamp-2">
-          {product.name}
+          {product.title}
         </h3>
         <p className="text-lg font-bold text-gray-900">
-          ${productPrice.toFixed(2)}
+          ${(productPrice / 100).toFixed(2)}
         </p>
       </Link>
-      <Link href={getProductUrl()}>
+      <Link href={productUrl}>
         <Button 
           className="w-full mt-2 opacity-0 group-hover:opacity-100 transition-opacity"
           size="sm"
