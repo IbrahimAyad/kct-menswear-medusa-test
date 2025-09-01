@@ -105,6 +105,7 @@ export default function StripeCheckoutPage() {
 
     try {
       // Step 1: Update cart with customer information
+      console.log('Updating cart with customer info...')
       await medusa.store.cart.update(medusaCart.id, {
         email: customerInfo.email,
         shipping_address: {
@@ -129,7 +130,21 @@ export default function StripeCheckoutPage() {
         }
       })
 
-      // Step 2: Create payment collection
+      // Step 1.5: Add shipping method (required for payment)
+      console.log('Getting shipping options...')
+      const shippingOptions = await medusa.store.fulfillment.listCartOptions({ 
+        cart_id: medusaCart.id 
+      })
+      
+      if (shippingOptions.shipping_options?.length > 0) {
+        console.log('Adding shipping method:', shippingOptions.shipping_options[0].id)
+        await medusa.store.cart.addShippingMethod(medusaCart.id, {
+          option_id: shippingOptions.shipping_options[0].id
+        })
+      }
+
+      // Step 2: Create payment collection (Medusa 2.0 API)
+      console.log('Creating payment collection for cart:', medusaCart.id)
       const paymentCollectionResponse = await fetch(`${process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL}/store/payment-collections`, {
         method: 'POST',
         headers: {
@@ -137,19 +152,24 @@ export default function StripeCheckoutPage() {
           'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || ''
         },
         body: JSON.stringify({
-          cart_id: medusaCart.id
+          cart_id: medusaCart.id,
+          region_id: medusaCart.region_id // Add region_id for Medusa 2.0
         })
       })
 
       if (!paymentCollectionResponse.ok) {
         const errorData = await paymentCollectionResponse.json()
-        throw new Error(errorData.message || 'Failed to create payment collection')
+        console.error('Payment collection error:', errorData)
+        throw new Error(errorData.message || errorData.error || 'Failed to create payment collection')
       }
 
       const paymentCollection = await paymentCollectionResponse.json()
 
       // Step 3: Initialize Stripe payment session
       const collectionId = paymentCollection.payment_collection?.id || paymentCollection.id
+      console.log('Payment collection created:', collectionId)
+      console.log('Initializing payment session with provider: stripe')
+      
       const sessionResponse = await fetch(`${process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL}/store/payment-collections/${collectionId}/payment-sessions`, {
         method: 'POST',
         headers: {
@@ -163,7 +183,9 @@ export default function StripeCheckoutPage() {
 
       if (!sessionResponse.ok) {
         const errorData = await sessionResponse.json()
-        throw new Error(errorData.message || 'Failed to create payment session')
+        console.error('Payment session error:', errorData)
+        console.error('Status:', sessionResponse.status)
+        throw new Error(errorData.message || errorData.error || 'Failed to create payment session')
       }
 
       const sessionData = await sessionResponse.json()
