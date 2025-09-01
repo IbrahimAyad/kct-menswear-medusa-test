@@ -27,6 +27,8 @@ export function getSupabaseClient() {
   return createClient()
 }
 
-// Export a default client
+// Export a default client and admin client
 const supabase = createClient()
 export default supabase
+export { supabase }
+export const supabaseAdmin = createClient() // Mock admin client
