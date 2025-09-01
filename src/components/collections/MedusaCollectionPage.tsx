@@ -43,6 +43,18 @@ export default function MedusaCollectionPage({ collectionId }: MedusaCollectionP
         console.log('Medusa products received:', response.products.length);
         console.log('First product example:', response.products[0]);
         
+        // Detailed price debugging
+        if (response.products[0]) {
+          const firstProduct = response.products[0];
+          console.log('=== PRICE DEBUG ===');
+          console.log('Product title:', firstProduct.title);
+          console.log('First variant:', firstProduct.variants?.[0]);
+          console.log('First variant prices array:', firstProduct.variants?.[0]?.prices);
+          console.log('First price object:', firstProduct.variants?.[0]?.prices?.[0]);
+          console.log('Price amount:', firstProduct.variants?.[0]?.prices?.[0]?.amount);
+          console.log('===================');
+        }
+        
         // For now, show ALL products to see what we have
         // We'll add filtering once we understand the data structure
         let filteredProducts = response.products;
@@ -204,11 +216,15 @@ function ProductCard({ product, viewMode }: { product: any; viewMode: 'grid' | '
   const [imageError, setImageError] = useState(false);
 
   const productImage = product.thumbnail || product.images?.[0]?.url || '/placeholder-product.jpg';
-  // Medusa stores prices in cents, so divide by 100 for display
-  const productPrice = (product.variants?.[0]?.prices?.[0]?.amount || 0) / 100;
-  const productUrl = `/products/${product.handle || product.id}`;
   
-  console.log('Product:', product.title, 'URL:', productUrl, 'Handle:', product.handle, 'ID:', product.id);
+  // Debug: Log the actual price value from Medusa
+  const rawPrice = product.variants?.[0]?.prices?.[0]?.amount || 0;
+  console.log(`Product: ${product.title}, Raw price from Medusa: ${rawPrice}, Displayed: $${(rawPrice / 100).toFixed(2)}`);
+  console.log('Full variant data:', product.variants?.[0]);
+  
+  // Medusa stores prices in cents, so divide by 100 for display
+  const productPrice = rawPrice / 100;
+  const productUrl = `/products/${product.handle || product.id}`;
 
   if (viewMode === 'list') {
     return (
