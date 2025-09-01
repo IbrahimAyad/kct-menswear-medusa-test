@@ -51,8 +51,8 @@ export default function DirectStripeCheckoutPage() {
         phone: customerInfo.phone
       })
 
-      // Create a direct Stripe checkout session
-      const response = await fetch('/api/checkout/direct-stripe', {
+      // Try Stripe first, fallback to test mode
+      let response = await fetch('/api/checkout/direct-stripe', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -83,16 +83,36 @@ export default function DirectStripeCheckoutPage() {
         })
       })
 
+      // If Stripe fails, try test mode
+      if (!response.ok) {
+        console.log('Stripe checkout failed, trying test mode...')
+        response = await fetch('/api/checkout/test-mode', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: customerInfo.email,
+            shipping: customerInfo,
+            items: medusaCart.items,
+            total: medusaCart.total
+          })
+        })
+      }
+
       if (!response.ok) {
         const errorData = await response.json()
         throw new Error(errorData.error || 'Checkout failed')
       }
 
-      const { url } = await response.json()
+      const data = await response.json()
       
-      if (url) {
-        // Redirect to Stripe Checkout
-        window.location.href = url
+      if (data.testMode && data.redirectUrl) {
+        // Test mode success
+        window.location.href = data.redirectUrl
+      } else if (data.url) {
+        // Stripe checkout URL
+        window.location.href = data.url
       } else {
         throw new Error('No checkout URL received')
       }

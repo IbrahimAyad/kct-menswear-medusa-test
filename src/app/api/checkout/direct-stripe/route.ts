@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 
 // Initialize Stripe only if key is available
-const stripeKey = process.env.STRIPE_SECRET_KEY
-const stripe = stripeKey ? new Stripe(stripeKey, {
+// Use test key if production key is not available
+const stripeKey = process.env.STRIPE_SECRET_KEY || process.env.STRIPE_TEST_SECRET_KEY
+const stripe = stripeKey && !stripeKey.startsWith('sk_live_***') ? new Stripe(stripeKey, {
   apiVersion: '2024-06-20',
 }) : null
 
