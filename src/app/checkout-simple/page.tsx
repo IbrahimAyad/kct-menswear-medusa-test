@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useMedusaCart } from '@/hooks/useMedusaCart'
+import { useMedusaAuth } from '@/contexts/MedusaAuthContext'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, CreditCard, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
@@ -128,6 +129,7 @@ function PaymentForm({ clientSecret, cartId, onSuccess }: PaymentFormProps) {
 export default function SimpleCheckoutPage() {
   const router = useRouter()
   const { medusaCart, isLoading } = useMedusaCart()
+  const { user } = useMedusaAuth()
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [step, setStep] = useState<'info' | 'payment' | 'success'>('info')
@@ -138,14 +140,15 @@ export default function SimpleCheckoutPage() {
     lastName: '',
   })
   
-  // Generate a unique test email for guest checkout
+  // Use logged-in user's email or allow guest checkout
   useEffect(() => {
-    const timestamp = Date.now()
-    setCustomerInfo(prev => ({
-      ...prev,
-      email: prev.email || `guest_${timestamp}@test.com`
-    }))
-  }, [])
+    if (user?.email) {
+      setCustomerInfo(prev => ({
+        ...prev,
+        email: user.email
+      }))
+    }
+  }, [user])
 
   const handleCustomerInfo = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -293,10 +296,7 @@ export default function SimpleCheckoutPage() {
           },
           body: JSON.stringify({
             provider_id: stripeProvider.id,
-            data: {},
-            context: {
-              cart_id: cartWithPaymentCollection.id
-            }
+            data: {}
           })
         })
         

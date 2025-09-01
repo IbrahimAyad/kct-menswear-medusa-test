@@ -4,6 +4,7 @@ import { useCart } from "@/lib/hooks/useCart";
 import { useProductStore } from "@/lib/store/productStore";
 import { formatPrice, getSizeLabel } from "@/lib/utils/format";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { ShoppingBag, Plus, Minus, X, Shield, Clock, Star, Lock, Truck } from "lucide-react";
 import Image from "next/image";
@@ -22,6 +23,7 @@ import { useState, useEffect } from "react";
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 export default function CartPage() {
+  const router = useRouter();
   const { items, cartSummary, updateQuantity, removeFromCart, clearCart } = useCart();
   const { products } = useProductStore();
   const { user } = useAuth();
@@ -67,103 +69,9 @@ export default function CartPage() {
   }, [validCartItems.length]);
 
   const handleCheckout = async () => {
-    setIsProcessingCheckout(true);
-
-    // Track begin checkout
-    const checkoutItems = validCartItems.map(item => ({
-      productId: item.product!.id,
-      name: item.product!.name,
-      category: item.product!.category,
-      price: item.product!.price / 100,
-      quantity: item.quantity,
-      size: item.size,
-    }));
-
-    // Google Analytics tracking
-    trackBeginCheckout(checkoutItems, cartSummary.totalPrice / 100);
-
-    // Facebook Pixel tracking
-    const fbContentIds = validCartItems.map(item => item.product!.id);
-    trackInitiateCheckout({
-      content_ids: fbContentIds,
-      content_category: 'Apparel & Accessories > Clothing',
-      num_items: validCartItems.reduce((sum, item) => sum + item.quantity, 0),
-      value: cartSummary.totalPrice / 100,
-      currency: 'USD'
-    });
-
-    try {
-      // Format items for unified checkout API
-      const formattedItems = items.map(item => {
-        const coreProduct = getCoreProductById(item.productId);
-        
-        // Check if it's an enhanced product (ID starts with 'enhanced_')
-        const isEnhanced = item.productId.startsWith('enhanced_');
-        
-        if (coreProduct && coreProduct.stripe_price_id) {
-          // Core product - use Stripe price ID
-          return {
-            id: item.productId,
-            name: coreProduct.name,
-            price: coreProduct.price, // Price in cents
-            quantity: item.quantity,
-            selectedSize: item.size,
-            stripePriceId: coreProduct.stripe_price_id,
-            enhanced: isEnhanced
-          };
-        } else {
-          // Enhanced or catalog product
-          const product = products.find(p => p.id === item.productId);
-          return {
-            id: item.productId,
-            name: product?.name || 'Unknown Product',
-            price: item.price || 0, // Price already in cents
-            quantity: item.quantity,
-            selectedSize: item.size,
-            enhanced: isEnhanced
-          };
-        }
-      });
-
-      // Call unified checkout API
-      const response = await fetch('/api/checkout/unified', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          items: formattedItems,
-          successUrl: `${window.location.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-          cancelUrl: `${window.location.origin}/cart`
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to create checkout session');
-      }
-
-      if (data.url) {
-        // Redirect to Stripe Checkout
-        window.location.href = data.url;
-      } else if (data.sessionId) {
-        // Fallback to client-side redirect
-        const stripe = await stripePromise;
-        if (stripe) {
-          const { error } = await stripe.redirectToCheckout({ sessionId: data.sessionId });
-          if (error) {
-            console.error('Stripe redirect error:', error);
-            alert('Unable to redirect to checkout. Please try again.');
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Checkout error:', error);
-      alert('Something went wrong. Please try again.');
-    } finally {
-      setIsProcessingCheckout(false);
-    }
+    // Simply redirect to our checkout page for now
+    // The checkout page will handle the Medusa cart and payment
+    router.push('/checkout-simple');
   };
 
   const handleGuestCheckout = async () => {
