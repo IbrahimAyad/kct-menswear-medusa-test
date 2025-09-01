@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { medusa, MEDUSA_CONFIG } from '@/lib/medusa/client';
 import { getCollectionById } from '@/lib/config/collection-mapping';
 import Image from 'next/image';
-import Link from 'next/link';
+import SafeLink from '@/components/ui/SafeLink';
 import { Button } from '@/components/ui/button';
 import { Heart, ShoppingBag, Grid3X3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -164,9 +164,9 @@ export default function MedusaCollectionPage({ collectionId }: MedusaCollectionP
           {products.length === 0 ? (
             <div className="text-center py-20">
               <p className="text-xl text-gray-600 mb-4">No products found in this collection</p>
-              <Link href="/kct-shop">
+              <SafeLink href="/kct-shop">
                 <Button>Browse All Products</Button>
-              </Link>
+              </SafeLink>
             </div>
           ) : (
             <div className={cn(
@@ -205,7 +205,7 @@ function ProductCard({ product, viewMode }: { product: any; viewMode: 'grid' | '
   if (viewMode === 'list') {
     return (
       <div className="flex gap-6 p-4 border border-gray-200 rounded-lg hover:shadow-lg transition-shadow">
-        <Link href={productUrl} className="relative w-48 h-48 flex-shrink-0">
+        <SafeLink href={productUrl} className="relative w-48 h-48 flex-shrink-0">
           <Image
             src={imageError ? '/placeholder-product.jpg' : productImage}
             alt={product.title}
@@ -213,20 +213,20 @@ function ProductCard({ product, viewMode }: { product: any; viewMode: 'grid' | '
             className="object-cover rounded-lg"
             onError={() => setImageError(true)}
           />
-        </Link>
+        </SafeLink>
         <div className="flex-1">
-          <Link href={productUrl}>
+          <SafeLink href={productUrl}>
             <h3 className="text-lg font-semibold text-gray-900 mb-2 hover:underline">{product.title}</h3>
-          </Link>
+          </SafeLink>
           <p className="text-gray-600 mb-4 line-clamp-2">{product.description}</p>
           <p className="text-2xl font-bold text-gray-900 mb-4">${productPrice.toFixed(2)}</p>
           <div className="flex gap-2">
-            <Link href={productUrl} className="flex-1">
+            <SafeLink href={productUrl} className="flex-1">
               <Button className="w-full">
                 <ShoppingBag className="w-4 h-4 mr-2" />
                 View Details
               </Button>
-            </Link>
+            </SafeLink>
             <Button
               variant="outline"
               size="icon"
@@ -242,7 +242,7 @@ function ProductCard({ product, viewMode }: { product: any; viewMode: 'grid' | '
 
   return (
     <div className="group relative">
-      <Link href={productUrl} className="block cursor-pointer">
+      <SafeLink href={productUrl} className="block cursor-pointer">
         <div className="relative aspect-[3/4] mb-4 overflow-hidden rounded-lg bg-gray-100">
           <Image
             src={imageError ? '/placeholder-product.jpg' : productImage}
@@ -268,15 +268,15 @@ function ProductCard({ product, viewMode }: { product: any; viewMode: 'grid' | '
         <p className="text-lg font-bold text-gray-900">
           ${productPrice.toFixed(2)}
         </p>
-      </Link>
-      <Link href={productUrl}>
+      </SafeLink>
+      <SafeLink href={productUrl}>
         <Button 
           className="w-full mt-2 opacity-0 group-hover:opacity-100 transition-opacity"
           size="sm"
         >
           View Details
         </Button>
-      </Link>
+      </SafeLink>
     </div>
   );
 }
