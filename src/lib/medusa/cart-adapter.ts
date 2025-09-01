@@ -139,20 +139,10 @@ export class CartAdapter {
       
       this.medusaCart = updatedCart as unknown as MedusaCart
 
-      // Find the newly added item to get the real price from Medusa
-      const newItem = updatedCart.items?.find((item: any) => 
-        item.variant_id === variantId
-      )
-      
-      // Update the product with the actual price from Medusa (unit_price is in dollars)
-      const productWithCorrectPrice = {
-        ...product,
-        price: newItem?.unit_price || product.price
-      }
-
-      // Also add to Zustand for immediate UI update with the correct size name and price
+      // Also add to Zustand for immediate UI update with the correct size name
+      // Don't override price - let backend handle it
       const cartStore = useCartStore.getState()
-      cartStore.addItem(productWithCorrectPrice, sizeForZustand, quantity)
+      cartStore.addItem(product, sizeForZustand, quantity)
 
       return this.medusaCart
     } catch (error) {

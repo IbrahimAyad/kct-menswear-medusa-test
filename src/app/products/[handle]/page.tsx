@@ -84,19 +84,22 @@ export default function ProductDetailPage() {
       }
 
       // Create product data for cart
+      // Don't include price - let Medusa backend handle pricing
       const productData = {
         id: product.id,
         name: product.title,
         title: product.title,
         description: product.description,
-        price: variant.prices?.[0]?.amount || 0,
+        // Let Medusa backend determine the price
+        price: 0, // Will be set by Medusa
         images: product.images?.map((img: any) => img.url) || [],
         category: product.collection?.title || 'General',
         variants: product.variants.map((v: any) => ({
           id: v.id,
           size: v.title || 'Default',
           stock: v.inventory_quantity || 10,
-          price: v.prices?.[0]?.amount || 0
+          // Don't set price here - Medusa will handle it
+          price: 0
         })),
         slug: product.handle,
         inStock: true
