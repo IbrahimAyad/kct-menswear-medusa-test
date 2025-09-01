@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSimpleCart } from '@/hooks/useSimpleCart';
+import { useMedusaCart } from '@/hooks/useMedusaCart';
 import { X, ShoppingCart, Trash2, Plus, Minus } from 'lucide-react';
 import { MedusaCheckoutButton } from './MedusaCheckoutButton';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
@@ -9,7 +9,12 @@ import { cn } from '@/lib/utils';
 import { useUIStore } from '@/store/uiStore';
 
 export function SimpleCartDrawer() {
-  const { items, cartSummary, removeFromCart, clearCart, updateQuantity } = useSimpleCart();
+  const { cart: medusaCart, removeItem, clearCart, updateQuantity, isLoading } = useMedusaCart();
+  const items = medusaCart?.items || [];
+  const cartSummary = {
+    totalPrice: medusaCart?.total || 0,
+    itemCount: items.length
+  };
   const { isCartOpen, setIsCartOpen } = useUIStore();
   const [dragProgress, setDragProgress] = useState(0);
 
@@ -171,17 +176,21 @@ export function SimpleCartDrawer() {
                           {/* Product Info */}
                           <div className="flex-1 min-w-0">
                             <h3 className="font-medium text-gray-900 truncate">
-                              {item.name || `Product ${item.productId}`}
+                              {item.title || item.variant?.product?.title || 'Product'}
                             </h3>
-                            <p className="text-sm text-gray-600">Size: {item.size}</p>
-                            <p className="text-sm font-semibold text-gray-900">{item.displayPrice || `$${((item.price || 0) / 100).toFixed(2)}`}</p>
+                            <p className="text-sm text-gray-600">
+                              {item.variant?.title && `Size: ${item.variant.title}`}
+                            </p>
+                            <p className="text-sm font-semibold text-gray-900">
+                              ${((item.unit_price || 0) / 100).toFixed(2)}
+                            </p>
                             
                             {/* Quantity Controls */}
                             <div className="flex items-center gap-2 mt-2">
                               <button
                                 onClick={() => {
                                   if (item.quantity > 1) {
-                                    updateQuantity?.(item.productId, item.size, item.quantity - 1);
+                                    updateQuantity(item.id, item.quantity - 1);
                                   }
                                   triggerHaptic();
                                 }}
@@ -194,7 +203,7 @@ export function SimpleCartDrawer() {
                               <span className="w-8 text-center text-sm font-medium">{item.quantity}</span>
                               <button
                                 onClick={() => {
-                                  updateQuantity?.(item.productId, item.size, item.quantity + 1);
+                                  updateQuantity(item.id, item.quantity + 1);
                                   triggerHaptic();
                                 }}
                                 className="p-1.5 hover:bg-burgundy-50 hover:text-burgundy-700 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-burgundy-300"
@@ -206,22 +215,18 @@ export function SimpleCartDrawer() {
                             
                             {/* Status */}
                             <div className="text-xs mt-1">
-                              {item.stripePriceId ? (
-                                <span className="text-green-600">✓ Ready for checkout</span>
-                              ) : (
-                                <span className="text-red-600">✗ Missing checkout data</span>
-                              )}
+                              <span className="text-green-600">✓ Ready for checkout</span>
                             </div>
                           </div>
                           
                           {/* Remove Button */}
                           <button
                             onClick={() => {
-                              removeFromCart(item.productId, item.size);
+                              removeItem(item.id);
                               triggerHaptic([10, 50, 10]);
                             }}
                             className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full transition-colors"
-                            aria-label={`Remove ${item.name || `Product ${item.productId}`} from cart`}
+                            aria-label={`Remove ${item.title || 'item'} from cart`}
                           >
                             <Trash2 size={16} aria-hidden="true" />
                           </button>
@@ -236,7 +241,7 @@ export function SimpleCartDrawer() {
               {/* Footer */}
               <div className="border-t bg-gray-50 p-4 space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-lg font-semibold">Total: {cartSummary.totalPriceFormatted}</span>
+                  <span className="text-lg font-semibold">Total: ${((cartSummary.totalPrice || 0) / 100).toFixed(2)}</span>
                   <button
                     onClick={() => {
                       clearCart();
