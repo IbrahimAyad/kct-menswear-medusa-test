@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+// TEMPORARILY DISABLED - Supabase disabled during migration to Medusa
 import type { 
   SizeRecommendation, 
   FitPrediction, 
@@ -7,11 +7,6 @@ import type {
   BrandAdjustment,
   BodyMeasurements
 } from '../types'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
 
 interface ProductDetails {
   id: string
@@ -404,14 +399,15 @@ export class SizePredictionService {
     recommendation: SizeRecommendation
   ): Promise<void> {
     try {
-      await supabase.from('size_recommendations').insert({
+      // Disabled during migration
+      /* await supabase.from('size_recommendations').insert({
         user_id: userId,
         product_id: productId,
         recommended_size: recommendation.recommendedSize,
         confidence_score: recommendation.confidence,
         fit_prediction: recommendation.fitPrediction,
         brand_adjustment: recommendation.brandAdjustment
-      })
+      }) */
     } catch (error) {
       console.error('Failed to store size recommendation:', error)
     }
