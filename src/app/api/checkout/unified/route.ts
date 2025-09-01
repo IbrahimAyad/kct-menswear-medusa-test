@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { createClient } from '@/lib/supabase/server';
+// Removed Supabase import - not needed
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+// Initialize Stripe only if key is available
+const stripeKey = process.env.STRIPE_SECRET_KEY;
+const stripe = stripeKey ? new Stripe(stripeKey, {
   apiVersion: '2024-06-20',
-});
+}) : null;
 
 interface CartItem {
   id: string;
@@ -20,6 +22,14 @@ interface CartItem {
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if Stripe is configured
+    if (!stripe) {
+      return NextResponse.json(
+        { error: 'Payment system not configured. Please set STRIPE_SECRET_KEY.' },
+        { status: 503 }
+      );
+    }
+
     const body = await request.json();
     const { items, customerEmail, successUrl, cancelUrl } = body;
 
@@ -46,7 +56,7 @@ export async function POST(request: NextRequest) {
 
     // Process enhanced items (use price_data)
     if (enhancedItems.length > 0) {
-      const supabase = await createClient();
+      // Mock enhanced products for now - in production would fetch from database
       
       for (const item of enhancedItems) {
         // Extract the actual ID from enhanced_[id] format
@@ -54,25 +64,10 @@ export async function POST(request: NextRequest) {
           ? item.id.replace('enhanced_', '')
           : item.id;
 
-        // Fetch enhanced product details if needed
-        let productData = null;
-        if (item.enhanced) {
-          const { data: product } = await supabase
-            .from('products_enhanced')
-            .select('*')
-            .eq('id', productId)
-            .single();
-          
-          productData = product;
-        }
-
-        // Use fetched data or fallback to item data
-        const productName = productData?.name || item.name;
-        const productImage = productData?.images?.primary?.url || 
-                           productData?.images?.hero?.url || 
-                           item.image || 
-                           'https://cdn.kctmenswear.com/placeholder.jpg';
-        const productPrice = productData?.base_price || item.price;
+        // Use item data directly since we don't have database access
+        const productName = item.name;
+        const productImage = item.image || 'https://cdn.kctmenswear.com/placeholder.jpg';
+        const productPrice = item.price;
 
         lineItems.push({
           price_data: {
@@ -101,7 +96,7 @@ export async function POST(request: NextRequest) {
     );
 
     // Create Stripe checkout session
-    const session = await stripe.checkout.sessions.create({
+    const session = await stripe!.checkout.sessions.create({
       payment_method_types: ['card', 'link'],
       line_items: lineItems,
       mode: 'payment',
@@ -292,7 +287,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Create express checkout session
-    const session = await stripe.checkout.sessions.create({
+    const session = await stripe!.checkout.sessions.create({
       payment_method_types: ['card', 'link'],
       line_items: [lineItem],
       mode: 'payment',

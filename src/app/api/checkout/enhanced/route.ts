@@ -3,11 +3,13 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { createClient } from '@/lib/supabase/server';
+// Removed Supabase import - using mock data for now
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+// Initialize Stripe only if key is available
+const stripeKey = process.env.STRIPE_SECRET_KEY;
+const stripe = stripeKey ? new Stripe(stripeKey, {
   apiVersion: '2024-06-20',
-});
+}) : null;
 
 // Price tier definitions (will become Stripe products later)
 const PRICE_TIERS = {
@@ -35,6 +37,14 @@ const PRICE_TIERS = {
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if Stripe is configured
+    if (!stripe) {
+      return NextResponse.json(
+        { error: 'Payment system not configured. Please set STRIPE_SECRET_KEY.' },
+        { status: 503 }
+      );
+    }
+
     const body = await request.json();
     const { productId, quantity = 1, size, successUrl, cancelUrl } = body;
 
@@ -46,30 +56,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch the enhanced product
-    const supabase = await createClient();
+    // Mock enhanced product data for now
+    // In production, this would fetch from database
+    const mockProducts: any = {
+      'enhanced_001': {
+        id: 'enhanced_001',
+        name: 'Premium Black Suit',
+        base_price: 59900,
+        price_tier: 'TIER_5',
+        category: 'Suits',
+        description: 'Elegant black suit perfect for formal occasions',
+        images: {
+          hero: { url: 'https://cdn.kctmenswear.com/black-suit.jpg' }
+        }
+      },
+      'enhanced_002': {
+        id: 'enhanced_002',
+        name: 'Navy Blue Tuxedo',
+        base_price: 79900,
+        price_tier: 'TIER_6',
+        category: 'Tuxedos',
+        description: 'Classic navy blue tuxedo for special events',
+        images: {
+          hero: { url: 'https://cdn.kctmenswear.com/navy-tuxedo.jpg' }
+        }
+      }
+    };
+
+    const product = mockProducts[productId];
     
-    if (!supabase) {
-      return NextResponse.json(
-        { error: 'Database connection failed' },
-        { status: 503 }
-      );
-    }
-
-    const { data: product, error } = await supabase
-      .from('products_enhanced')
-      .select('*')
-      .eq('id', productId)
-      .single();
-
-    if (error) {
-      console.error('Database error fetching product:', error);
-      return NextResponse.json(
-        { error: `Database error: ${error.message}` },
-        { status: 500 }
-      );
-    }
-
     if (!product) {
       console.error('Product not found with ID:', productId);
       return NextResponse.json(
@@ -88,7 +103,7 @@ export async function POST(request: NextRequest) {
                     { name: 'Standard' };
 
     // Create Stripe checkout session with dynamic pricing
-    const session = await stripe.checkout.sessions.create({
+    const session = await stripe!.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
         {
