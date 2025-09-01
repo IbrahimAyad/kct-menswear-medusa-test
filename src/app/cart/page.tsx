@@ -19,6 +19,7 @@ import { trackInitiateCheckout } from "@/lib/analytics/facebook-pixel";
 // Removed Supabase client import - no longer needed
 import { getCoreProductById, isCoreProduct } from '@/lib/config/coreProducts';
 import { useState, useEffect } from "react";
+import { clearAllCartData } from '@/lib/utils/clearCartData';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
@@ -69,9 +70,8 @@ export default function CartPage() {
   }, [validCartItems.length]);
 
   const handleCheckout = async () => {
-    // Simply redirect to our checkout page for now
-    // The checkout page will handle the Medusa cart and payment
-    router.push('/checkout-simple');
+    // Redirect to the working direct Stripe checkout
+    router.push('/checkout-direct-stripe');
   };
 
   const handleGuestCheckout = async () => {
@@ -175,6 +175,20 @@ export default function CartPage() {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-4">
+            {/* Clear Cart Button - for debugging */}
+            <div className="flex justify-end mb-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  clearAllCartData();
+                  window.location.reload();
+                }}
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              >
+                Clear All Cart Data
+              </Button>
+            </div>
             {validCartItems.map((item) => {
               if (!item.product) return null;
 

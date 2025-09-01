@@ -175,8 +175,12 @@ function ProductCard({ product, viewMode }: { product: UnifiedProduct; viewMode:
     ? parseFloat(product.price) 
     : product.price;
   
-  // Determine the product link URL
+  // Determine the product link URL - use handle for Medusa products
   const getProductUrl = () => {
+    // For Medusa products from backend, use handle
+    if (product.handle) {
+      return `/products/${product.handle}`;
+    }
     // For enhanced products, use the ID (enhanced_[id] format)
     if (product.enhanced && product.id.startsWith('enhanced_')) {
       return `/products/${product.id}`;
@@ -204,10 +208,12 @@ function ProductCard({ product, viewMode }: { product: UnifiedProduct; viewMode:
           <p className="text-gray-600 mb-4 line-clamp-2">{product.description}</p>
           <p className="text-2xl font-bold text-gray-900 mb-4">${productPrice.toFixed(2)}</p>
           <div className="flex gap-2">
-            <Button className="flex-1">
-              <ShoppingBag className="w-4 h-4 mr-2" />
-              Add to Cart
-            </Button>
+            <Link href={getProductUrl()} className="flex-1">
+              <Button className="w-full">
+                <ShoppingBag className="w-4 h-4 mr-2" />
+                View Details
+              </Button>
+            </Link>
             <Button
               variant="outline"
               size="icon"
@@ -249,12 +255,14 @@ function ProductCard({ product, viewMode }: { product: UnifiedProduct; viewMode:
           ${productPrice.toFixed(2)}
         </p>
       </Link>
-      <Button 
-        className="w-full mt-2 opacity-0 group-hover:opacity-100 transition-opacity"
-        size="sm"
-      >
-        Quick Add
-      </Button>
+      <Link href={getProductUrl()}>
+        <Button 
+          className="w-full mt-2 opacity-0 group-hover:opacity-100 transition-opacity"
+          size="sm"
+        >
+          View Details
+        </Button>
+      </Link>
     </div>
   );
 }
