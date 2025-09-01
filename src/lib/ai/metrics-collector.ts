@@ -1,12 +1,6 @@
 // AI Metrics Collection System
 // Tracks performance, learns from interactions, and optimizes responses
-
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+// TEMPORARILY DISABLED - Supabase disabled during migration to Medusa
 
 export interface ConversationMetric {
   sessionId: string

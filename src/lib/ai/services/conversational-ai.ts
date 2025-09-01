@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+// TEMPORARILY DISABLED - Supabase disabled during migration to Medusa
 import { getConversationalResponse, STYLE_DISCOVERY_QUESTIONS } from '@/lib/ai/knowledge-base'
 import { getShortResponse, formatChatResponse } from '../chat-responses'
 import { conversationEngine } from '../conversation-engine'
@@ -12,11 +12,6 @@ import type {
   ExtractedEntity,
   Message
 } from '../types'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
 
 interface ConversationState {
   stage: 'greeting' | 'discovery' | 'consideration' | 'decision' | 'checkout'
@@ -321,9 +316,12 @@ export class ConversationalAI {
 
     try {
       // Build search query based on entities
-      let query = supabase.from('products').select('*').eq('in_stock', true)
+      // Disabled during migration - return empty array
+      const products: any[] = []
+      /* let query = supabase.from('products').select('*').eq('in_stock', true) */
 
-      // Apply filters based on entities
+      // Apply filters based on entities - disabled during migration
+      /*
       intent.entities.forEach(entity => {
         switch (entity.type) {
           case 'category':
@@ -339,6 +337,7 @@ export class ConversationalAI {
       })
 
       const { data: products } = await query.limit(3)
+      */
 
       if (!products || products.length === 0) return []
 

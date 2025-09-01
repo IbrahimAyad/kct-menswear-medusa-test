@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+// TEMPORARILY DISABLED - Supabase disabled during migration to Medusa
 import type { 
   RecommendationContext, 
   OutfitRecommendation,
@@ -7,11 +7,6 @@ import type {
   OccasionType
 } from '../types'
 import { EnhancedProduct } from '@/lib/supabase/types'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
 
 // Occasion-specific outfit templates
 const OUTFIT_TEMPLATES: Record<OccasionType, string[]> = {

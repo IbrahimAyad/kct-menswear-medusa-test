@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+// TEMPORARILY DISABLED - Supabase disabled during migration to Medusa
 import { fashionClipService } from '@/lib/services/fashionClipService'
 import type { 
   StyleAnalysis, 
@@ -8,11 +8,6 @@ import type {
   CompleteOutfit,
   BudgetTier
 } from '../types'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
 
 export class StyleAnalysisService {
   private openaiApiKey: string
