@@ -24,23 +24,29 @@ export default function CheckoutSuccessPage() {
   }, []);
 
   useEffect(() => {
-    if (mounted) {
-      // Simulate order details - in real app, fetch from API
+    if (mounted && sessionId) {
+      // Use sessionId to generate consistent order ID
+      const orderSuffix = sessionId ? sessionId.slice(-9).toUpperCase() : 'DEMO12345';
+      
+      // Generate consistent delivery date based on current date
+      const deliveryDate = new Date();
+      deliveryDate.setDate(deliveryDate.getDate() + 7);
+      
       setTimeout(() => {
         setOrderDetails({
-          id: 'ORDER-2024-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
+          id: `ORDER-2024-${orderSuffix}`,
           total: '$459.00',
           items: [
             { name: 'Premium Navy Suit', size: '40R', quantity: 1, price: '$299.00' },
             { name: 'Italian Silk Tie', size: 'OS', quantity: 2, price: '$80.00' }
           ],
-          estimatedDelivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+          estimatedDelivery: deliveryDate,
           email: 'customer@example.com'
         });
         setLoading(false);
       }, 1000);
     }
-  }, [mounted]);
+  }, [mounted, sessionId]);
 
   if (!mounted || loading) {
     return (
