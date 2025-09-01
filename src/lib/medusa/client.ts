@@ -4,7 +4,7 @@ import Medusa from "@medusajs/js-sdk"
 export const medusa = new Medusa({
   baseUrl: process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "https://backend-production-7441.up.railway.app",
   maxRetries: 3,
-  publishableKey: process.env.NEXT_PUBLIC_PUBLISHABLE_KEY || "pk_4c24b336db3f8819867bec16f4b51db9654e557abbcfbbe003f7ffd8463c3c81",
+  publishableKey: process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || "pk_01K3S6WP4KCEJX26GNPQKTHTBE",
   auth: {
     type: "jwt" // Using JWT token authentication
   }
