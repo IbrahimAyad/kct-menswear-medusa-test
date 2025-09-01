@@ -242,13 +242,19 @@ export default function SimpleCheckoutPage() {
       if (!medusaCart.payment_collection) {
         console.log('Creating payment collection for cart...')
         try {
-          // Use direct API call instead of SDK method
-          const response = await fetch(`${process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL}/store/carts/${medusaCart.id}/payment-collection`, {
+          // Use correct Medusa 2.0 endpoint for payment collections
+          const response = await fetch(`${process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL}/store/payment-collections`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || ''
-            }
+              'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_PUBLISHABLE_KEY || ''
+            },
+            body: JSON.stringify({
+              cart_id: medusaCart.id,
+              region_id: medusaCart.region_id,
+              currency_code: medusaCart.currency_code || 'usd',
+              amount: medusaCart.total || 0
+            })
           })
           
           if (!response.ok) {
@@ -256,9 +262,12 @@ export default function SimpleCheckoutPage() {
             throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`)
           }
           
-          const { cart } = await response.json()
-          cartWithPaymentCollection = cart
-          console.log('Payment collection created:', cart.payment_collection)
+          const { payment_collection } = await response.json()
+          cartWithPaymentCollection = {
+            ...medusaCart,
+            payment_collection: payment_collection
+          }
+          console.log('Payment collection created:', payment_collection)
         } catch (collectionError: any) {
           console.error('Failed to create payment collection:', collectionError)
           throw new Error(`Failed to create payment collection: ${collectionError?.message || 'Unknown error'}`)

@@ -1,9 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+// TEMPORARILY DISABLED - Supabase realtime subscriptions disabled during migration to Medusa
+// TODO: Replace with Medusa configuration API
 
 export interface StoreSettings {
   store: {
@@ -54,7 +50,7 @@ export class SettingsService {
   private static localStorageKey = 'kct-settings-backup';
   private static localStorageTimeout = 24 * 60 * 60 * 1000; // 24 hours
 
-  // Fetch public settings from Edge Function
+  // Fetch public settings - now returns defaults during migration
   static async getPublicSettings(): Promise<StoreSettings> {
     const cacheKey = 'public_settings';
     
@@ -68,8 +64,7 @@ export class SettingsService {
     const localBackup = this.getLocalStorageBackup();
     
     try {
-      // For now, skip Edge Function and use defaults until it's deployed
-      // This prevents 404 errors from crashing the site
+      // Return default settings during migration
       const settings = this.getDefaultSettings();
       
       // Cache the settings
@@ -87,30 +82,6 @@ export class SettingsService {
       // Return localStorage backup if available, otherwise defaults
       return localBackup || this.getDefaultSettings();
     }
-    
-    /* Edge Function code - restore after deployment
-    try {
-      // Call Edge Function
-      const { data, error } = await supabase.functions.invoke('get-public-settings');
-      
-      if (error) throw error;
-      
-      // Transform the flat settings into nested structure
-      const settings = this.transformSettings(data);
-      
-      // Cache the result
-      this.cache.set(cacheKey, {
-        data: settings,
-        timestamp: Date.now()
-      });
-      
-      return settings;
-    } catch (error) {
-      console.error('Failed to fetch settings:', error);
-      // Return defaults if fetch fails
-      return this.getDefaultSettings();
-    }
-    */
   }
 
   // LocalStorage backup methods
@@ -160,40 +131,14 @@ export class SettingsService {
     }
   }
 
-  // Subscribe to real-time settings changes
+  // DISABLED - No real-time subscriptions during migration
   static subscribeToChanges(callback: (settings: StoreSettings) => void) {
+    // Real-time subscriptions disabled during migration
     this.listeners.add(callback);
     
-    const channel = supabase
-      .channel('settings-changes')
-      .on('broadcast', { event: 'settings-update' }, async (payload) => {
-        try {
-          // Update cache instead of clearing it
-          const settings = await this.getPublicSettings();
-          
-          // Update cache timestamp
-          this.cache.set('public_settings', {
-            data: settings,
-            timestamp: Date.now()
-          });
-          
-          // Update localStorage backup
-          this.saveToLocalStorage(settings);
-          
-          // Notify all listeners
-          this.listeners.forEach(listener => listener(settings));
-        } catch (error) {
-          console.error('Failed to update settings:', error);
-          // Don't clear cache on error - keep existing data
-        }
-      })
-      .subscribe();
-
+    // Return unsubscribe function
     return () => {
       this.listeners.delete(callback);
-      if (this.listeners.size === 0) {
-        supabase.removeChannel(channel);
-      }
     };
   }
 
