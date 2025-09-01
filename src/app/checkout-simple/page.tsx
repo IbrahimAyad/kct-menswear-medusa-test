@@ -242,7 +242,7 @@ export default function SimpleCheckoutPage() {
       if (!medusaCart.payment_collection) {
         console.log('Creating payment collection for cart...')
         try {
-          // Use correct Medusa 2.0 endpoint for payment collections
+          // Create payment collection with only cart_id (Medusa v2 format)
           const response = await fetch(`${process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL}/store/payment-collections`, {
             method: 'POST',
             headers: {
@@ -250,10 +250,7 @@ export default function SimpleCheckoutPage() {
               'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_PUBLISHABLE_KEY || ''
             },
             body: JSON.stringify({
-              cart_id: medusaCart.id,
-              region_id: medusaCart.region_id,
-              currency_code: medusaCart.currency_code || 'usd',
-              amount: medusaCart.total || 0
+              cart_id: medusaCart.id
             })
           })
           
@@ -262,7 +259,8 @@ export default function SimpleCheckoutPage() {
             throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`)
           }
           
-          const { payment_collection } = await response.json()
+          const data = await response.json()
+          const payment_collection = data.payment_collection || data
           cartWithPaymentCollection = {
             ...medusaCart,
             payment_collection: payment_collection
