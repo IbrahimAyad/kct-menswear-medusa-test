@@ -52,11 +52,13 @@ export class CartAdapter {
         }
       }
 
-      // Create new cart if needed
+      // Create new cart if needed with correct region for KCT products
       if (!this.medusaCartId) {
         const response = await medusa.store.cart.create({
-          region_id: MEDUSA_CONFIG.regionId,
+          region_id: MEDUSA_CONFIG.regionId, // US region for KCT products
           sales_channel_id: MEDUSA_CONFIG.salesChannelId,
+          // Optional: Include currency to ensure USD pricing
+          currency_code: "usd"
         })
         
         if (!response || !response.cart) {
@@ -265,6 +267,7 @@ export class CartAdapter {
     try {
       const { product } = await medusa.store.product.retrieve(productId, {
         fields: "*variants",
+        region_id: MEDUSA_CONFIG.regionId // Include region to get correct pricing
       })
 
       // Find variant matching the size

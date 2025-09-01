@@ -29,9 +29,11 @@ export default function ShopMedusaPage() {
       setError(null)
       
       // Fetch products with all their variants and prices
+      // IMPORTANT: Include region_id to get KCT products with correct pricing
       const response = await medusa.store.product.list({
         limit: 20,
-        fields: "*variants,*variants.prices,*images"
+        fields: "*variants,*variants.prices,*images",
+        region_id: process.env.NEXT_PUBLIC_MEDUSA_REGION_ID || "reg_01K3S6NDGAC1DSWH9MCZCWBWWD"
       })
       
       console.log('Fetched products:', response)
