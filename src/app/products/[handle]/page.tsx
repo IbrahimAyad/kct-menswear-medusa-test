@@ -178,14 +178,25 @@ export default function ProductDetailPage() {
           {/* Product Images */}
           <div className="space-y-4">
             <div className="relative aspect-square bg-gray-50 rounded-lg overflow-hidden">
-              {product.images && product.images.length > 0 ? (
+              {(product.images && product.images.length > 0) || product.thumbnail ? (
                 <>
                   <Image
-                    src={product.images[currentImageIndex]?.url || product.thumbnail}
+                    src={(() => {
+                      // Handle different image structures from Medusa
+                      if (product.images && product.images[currentImageIndex]) {
+                        const img = product.images[currentImageIndex]
+                        return img.url || img.src || img
+                      }
+                      return product.thumbnail || '/placeholder-product.jpg'
+                    })()}
                     alt={product.title}
                     fill
                     className="object-cover"
                     priority
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement
+                      target.src = '/placeholder-product.jpg'
+                    }}
                   />
                   {addSuccess && (
                     <div className="absolute inset-0 bg-green-500/90 flex items-center justify-center">
@@ -215,10 +226,14 @@ export default function ProductDetailPage() {
                     }`}
                   >
                     <Image
-                      src={image.url}
+                      src={image.url || image.src || image}
                       alt={`${product.title} ${index + 1}`}
                       fill
                       className="object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement
+                        target.src = '/placeholder-product.jpg'
+                      }}
                     />
                   </button>
                 ))}

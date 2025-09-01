@@ -8,8 +8,8 @@ export function MedusaCheckoutButton() {
   const { medusaCart, isLoading } = useMedusaCart();
   
   const handleCheckout = () => {
-    // Redirect to the simplified checkout page
-    router.push('/checkout-simple');
+    // Redirect to the Stripe checkout page
+    router.push('/checkout-stripe');
   };
 
   const total = (medusaCart?.total || 0) / 100;

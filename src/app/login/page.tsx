@@ -146,7 +146,7 @@ export default function LoginPage() {
             <div className="text-center">
               <p className="text-sm text-gray-600 mb-3">Or continue as</p>
               <Link
-                href="/checkout-simple"
+                href="/checkout-stripe"
                 className="inline-block px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
               >
                 Guest Checkout
