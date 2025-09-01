@@ -242,7 +242,18 @@ export default function StripeCheckoutPage() {
         <div className="grid md:grid-cols-2 gap-8">
           {/* Order Summary */}
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Order Summary</h2>
+              <button
+                onClick={async () => {
+                  await clearCart()
+                  window.location.reload()
+                }}
+                className="text-sm text-red-600 hover:text-red-700 underline"
+              >
+                Clear Cart
+              </button>
+            </div>
             
             <div className="space-y-4 mb-6">
               {medusaCart.items.map((item: any) => (
