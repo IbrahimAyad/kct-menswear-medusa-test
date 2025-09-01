@@ -30,10 +30,14 @@ function CheckoutForm({ clientSecret, cartId }: { clientSecret: string, cartId: 
     setProcessing(true)
     setError(null)
 
+    // Use a constant URL to avoid hydration issues
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 
+                   (typeof window !== 'undefined' ? window.location.origin : 'https://kct-minimax-test.vercel.app')
+
     const { error: submitError } = await stripe.confirmPayment({
       elements,
       confirmParams: {
-        return_url: `${window.location.origin}/checkout/success?cart_id=${cartId}`,
+        return_url: `${baseUrl}/checkout/success?cart_id=${cartId}`,
       },
     })
 
@@ -130,12 +134,10 @@ export default function StripeCheckoutPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY!
+          'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || ''
         },
         body: JSON.stringify({
-          region_id: medusaCart.region_id,
-          cart_id: medusaCart.id,
-          amount: medusaCart.total
+          cart_id: medusaCart.id
         })
       })
 
@@ -147,11 +149,12 @@ export default function StripeCheckoutPage() {
       const paymentCollection = await paymentCollectionResponse.json()
 
       // Step 3: Initialize Stripe payment session
-      const sessionResponse = await fetch(`${process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL}/store/payment-collections/${paymentCollection.payment_collection.id}/payment-sessions`, {
+      const collectionId = paymentCollection.payment_collection?.id || paymentCollection.id
+      const sessionResponse = await fetch(`${process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL}/store/payment-collections/${collectionId}/payment-sessions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY!
+          'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || ''
         },
         body: JSON.stringify({
           provider_id: 'stripe'
@@ -164,12 +167,25 @@ export default function StripeCheckoutPage() {
       }
 
       const sessionData = await sessionResponse.json()
+      console.log('Payment session response:', sessionData)
       
-      // Get client secret from payment session
-      const stripeClientSecret = sessionData.payment_collection?.payment_sessions?.[0]?.data?.client_secret
+      // Get client secret from payment session - handle different response formats
+      let stripeClientSecret = null
+      
+      // Try different paths where client_secret might be
+      if (sessionData.payment_collection?.payment_sessions?.[0]?.data?.client_secret) {
+        stripeClientSecret = sessionData.payment_collection.payment_sessions[0].data.client_secret
+      } else if (sessionData.payment_sessions?.[0]?.data?.client_secret) {
+        stripeClientSecret = sessionData.payment_sessions[0].data.client_secret
+      } else if (sessionData.data?.client_secret) {
+        stripeClientSecret = sessionData.data.client_secret
+      } else if (sessionData.client_secret) {
+        stripeClientSecret = sessionData.client_secret
+      }
 
       if (!stripeClientSecret) {
-        throw new Error('No client secret received from payment session')
+        console.error('No client secret found in response:', sessionData)
+        throw new Error('Payment initialization failed - no client secret received')
       }
 
       setClientSecret(stripeClientSecret)

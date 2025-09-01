@@ -311,11 +311,11 @@ export default function ProductDetailPage() {
             )}
 
             {/* Action Buttons */}
-            <div className="flex gap-3">
+            <div className="space-y-3">
               <button
                 onClick={handleAddToCart}
                 disabled={isAdding || cartLoading || !selectedVariant}
-                className="flex-1 py-3 px-6 bg-black text-white rounded-lg hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 font-medium"
+                className="w-full py-3 px-6 bg-black text-white rounded-lg hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 font-medium"
               >
                 {isAdding ? (
                   'Adding...'
@@ -326,10 +326,20 @@ export default function ProductDetailPage() {
                   </>
                 )}
               </button>
+              
+              {/* Buy Now Button */}
               <button
-                onClick={handleBuyNow}
+                onClick={async () => {
+                  // Add to cart first, then go to checkout
+                  await handleAddToCart()
+                  setTimeout(() => {
+                    if (!error) {
+                      router.push('/checkout-stripe')
+                    }
+                  }, 500)
+                }}
                 disabled={isAdding || cartLoading || !selectedVariant}
-                className="flex-1 py-3 px-6 bg-white border-2 border-black text-black rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+                className="w-full py-3 px-6 bg-gold text-black rounded-lg hover:bg-gold/90 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 font-medium border-2 border-gold"
               >
                 Buy Now
               </button>
