@@ -218,12 +218,15 @@ export default function SimpleCheckoutPage() {
       console.log('Payment providers response:', paymentProviders)
       console.log('Available providers:', paymentProviders?.payment_providers)
 
-      // Look for Stripe provider - it should be pp_stripe_stripe based on backend config
+      // Look for Stripe provider - check all providers first
+      console.log('All payment providers:', JSON.stringify(paymentProviders?.payment_providers, null, 2))
+      
       const stripeProvider = paymentProviders?.payment_providers?.find(
         p => p.id === 'pp_stripe_stripe' || 
              p.id.startsWith('pp_stripe_') || 
              p.id === 'stripe' || 
-             p.id.includes('stripe')
+             p.id.includes('stripe') ||
+             p.id.toLowerCase().includes('stripe')
       )
 
       console.log('Found Stripe provider:', stripeProvider)
@@ -288,11 +291,17 @@ export default function SimpleCheckoutPage() {
       let paymentCollection
       try {
         // Initialize payment session using REST API
+        console.log('Initializing payment session with:', {
+          url: `${process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL}/store/payment-collections/${cartWithPaymentCollection.payment_collection.id}/payment-sessions`,
+          provider_id: stripeProvider.id,
+          payment_collection_id: cartWithPaymentCollection.payment_collection.id
+        })
+        
         const sessionResponse = await fetch(`${process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL}/store/payment-collections/${cartWithPaymentCollection.payment_collection.id}/payment-sessions`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || ''
+            'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_PUBLISHABLE_KEY || ''
           },
           body: JSON.stringify({
             provider_id: stripeProvider.id,
@@ -301,8 +310,21 @@ export default function SimpleCheckoutPage() {
         })
         
         if (!sessionResponse.ok) {
-          const errorData = await sessionResponse.json().catch(() => ({}))
-          throw new Error(errorData.message || 'Failed to initialize payment session')
+          const errorText = await sessionResponse.text()
+          console.error('Payment session error response:', {
+            status: sessionResponse.status,
+            statusText: sessionResponse.statusText,
+            body: errorText
+          })
+          
+          let errorData
+          try {
+            errorData = JSON.parse(errorText)
+          } catch {
+            errorData = { message: errorText || `HTTP ${sessionResponse.status}: ${sessionResponse.statusText}` }
+          }
+          
+          throw new Error(errorData.message || errorData.error || 'Failed to initialize payment session')
         }
         
         const response = await sessionResponse.json()
