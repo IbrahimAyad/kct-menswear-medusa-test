@@ -196,8 +196,11 @@ function ProductCard({ product, viewMode }: { product: any; viewMode: 'grid' | '
   const [imageError, setImageError] = useState(false);
 
   const productImage = product.thumbnail || product.images?.[0]?.url || '/placeholder-product.jpg';
-  const productPrice = product.variants?.[0]?.prices?.[0]?.amount || 0;
+  // Medusa stores prices in cents, so divide by 100 for display
+  const productPrice = (product.variants?.[0]?.prices?.[0]?.amount || 0) / 100;
   const productUrl = `/products/${product.handle || product.id}`;
+  
+  console.log('Product:', product.title, 'URL:', productUrl, 'Handle:', product.handle, 'ID:', product.id);
 
   if (viewMode === 'list') {
     return (
@@ -216,7 +219,7 @@ function ProductCard({ product, viewMode }: { product: any; viewMode: 'grid' | '
             <h3 className="text-lg font-semibold text-gray-900 mb-2 hover:underline">{product.title}</h3>
           </Link>
           <p className="text-gray-600 mb-4 line-clamp-2">{product.description}</p>
-          <p className="text-2xl font-bold text-gray-900 mb-4">${(productPrice / 100).toFixed(2)}</p>
+          <p className="text-2xl font-bold text-gray-900 mb-4">${productPrice.toFixed(2)}</p>
           <div className="flex gap-2">
             <Link href={productUrl} className="flex-1">
               <Button className="w-full">
@@ -239,7 +242,7 @@ function ProductCard({ product, viewMode }: { product: any; viewMode: 'grid' | '
 
   return (
     <div className="group relative">
-      <Link href={productUrl} className="block">
+      <Link href={productUrl} className="block cursor-pointer">
         <div className="relative aspect-[3/4] mb-4 overflow-hidden rounded-lg bg-gray-100">
           <Image
             src={imageError ? '/placeholder-product.jpg' : productImage}
@@ -251,18 +254,19 @@ function ProductCard({ product, viewMode }: { product: any; viewMode: 'grid' | '
           <button
             onClick={(e) => {
               e.preventDefault();
+              e.stopPropagation();
               setIsLiked(!isLiked);
             }}
-            className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+            className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity z-10"
           >
             <Heart className={cn('w-5 h-5', isLiked && 'fill-red-500 text-red-500')} />
           </button>
         </div>
-        <h3 className="text-sm font-medium text-gray-900 mb-1 line-clamp-2">
+        <h3 className="text-sm font-medium text-gray-900 mb-1 line-clamp-2 hover:underline">
           {product.title}
         </h3>
         <p className="text-lg font-bold text-gray-900">
-          ${(productPrice / 100).toFixed(2)}
+          ${productPrice.toFixed(2)}
         </p>
       </Link>
       <Link href={productUrl}>

@@ -171,11 +171,12 @@ function ProductCard({ product, viewMode }: { product: UnifiedProduct; viewMode:
   };
   
   const productImage = getProductImage();
+  // Convert price to correct format - already in dollars for unified products
   const productPrice = typeof product.price === 'string' 
     ? parseFloat(product.price) 
     : product.price;
   
-  // Determine the product link URL - use handle/slug for Medusa products
+  // Determine the product link URL - use handle/slug for all products
   const getProductUrl = () => {
     // For Medusa products from backend, use handle
     if ((product as any).handle) {
