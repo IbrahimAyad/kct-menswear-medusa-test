@@ -268,7 +268,7 @@ export default function StripeCheckoutPage() {
                     </p>
                   </div>
                   <p className="font-medium">
-                    ${((item.unit_price || 0) * item.quantity / 100).toFixed(2)}
+                    ${((item.unit_price || 0) * item.quantity).toFixed(2)}
                   </p>
                 </div>
               ))}
@@ -277,26 +277,26 @@ export default function StripeCheckoutPage() {
             <div className="space-y-2 border-t pt-4">
               <div className="flex justify-between text-sm">
                 <span>Subtotal</span>
-                <span>${((medusaCart.subtotal || 0) / 100).toFixed(2)}</span>
+                <span>${(medusaCart.subtotal || 0).toFixed(2)}</span>
               </div>
               
               {medusaCart.tax_total > 0 && (
                 <div className="flex justify-between text-sm">
                   <span>Tax</span>
-                  <span>${((medusaCart.tax_total || 0) / 100).toFixed(2)}</span>
+                  <span>${(medusaCart.tax_total || 0).toFixed(2)}</span>
                 </div>
               )}
               
               <div className="flex justify-between text-sm">
                 <span>Shipping</span>
                 <span>
-                  {medusaCart.shipping_total === 0 ? 'FREE' : `$${(medusaCart.shipping_total / 100).toFixed(2)}`}
+                  {medusaCart.shipping_total === 0 ? 'FREE' : `$${medusaCart.shipping_total.toFixed(2)}`}
                 </span>
               </div>
               
               <div className="flex justify-between text-xl font-bold pt-2 border-t">
                 <span>Total</span>
-                <span>${((medusaCart.total || 0) / 100).toFixed(2)}</span>
+                <span>${(medusaCart.total || 0).toFixed(2)}</span>
               </div>
             </div>
 

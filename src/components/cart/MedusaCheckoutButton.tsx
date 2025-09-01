@@ -12,7 +12,7 @@ export function MedusaCheckoutButton() {
     router.push('/checkout-stripe');
   };
 
-  const total = (medusaCart?.total || 0) / 100;
+  const total = medusaCart?.total || 0; // Medusa 2.0 returns amount in dollars
   const itemCount = medusaCart?.items?.length || 0;
 
   return (

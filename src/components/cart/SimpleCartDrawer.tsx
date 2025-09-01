@@ -182,7 +182,7 @@ export function SimpleCartDrawer() {
                               {item.variant?.title && `Size: ${item.variant.title}`}
                             </p>
                             <p className="text-sm font-semibold text-gray-900">
-                              ${((item.unit_price || 0) / 100).toFixed(2)}
+                              ${(item.unit_price || 0).toFixed(2)}
                             </p>
                             
                             {/* Quantity Controls */}
@@ -241,7 +241,7 @@ export function SimpleCartDrawer() {
               {/* Footer */}
               <div className="border-t bg-gray-50 p-4 space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-lg font-semibold">Total: ${((cartSummary.totalPrice || 0) / 100).toFixed(2)}</span>
+                  <span className="text-lg font-semibold">Total: ${(cartSummary.totalPrice || 0).toFixed(2)}</span>
                   <button
                     onClick={() => {
                       clearCart();

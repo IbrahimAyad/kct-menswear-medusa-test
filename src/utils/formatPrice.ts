@@ -1,10 +1,10 @@
 /**
- * Format price from cents to display currency
- * Medusa stores prices in cents to avoid floating-point errors
+ * Format price for display
+ * IMPORTANT: Medusa 2.0 returns amount field already in DOLLARS, not cents!
  * 
- * @param amount - Price in cents (e.g., 9999 for $99.99)
+ * @param amount - Price in dollars (e.g., 49.99 for $49.99)
  * @param currencyCode - Currency code (default: 'USD')
- * @returns Formatted price string (e.g., "$99.99")
+ * @returns Formatted price string (e.g., "$49.99")
  */
 export const formatPrice = (amount: number | undefined | null, currencyCode: string = 'USD'): string => {
   if (!amount && amount !== 0) return '$0.00';
@@ -17,8 +17,8 @@ export const formatPrice = (amount: number | undefined | null, currencyCode: str
     maximumFractionDigits: 2,
   });
   
-  // IMPORTANT: Divide by 100 to convert cents to dollars
-  return formatter.format(amount / 100);
+  // DO NOT divide by 100 - Medusa 2.0 amount is already in dollars!
+  return formatter.format(amount);
 };
 
 /**
@@ -45,14 +45,16 @@ export const formatPriceRange = (variants: any[]): string => {
 };
 
 /**
- * Convert user input price to cents for backend
- * @param dollarAmount - Price in dollars (e.g., "99.99")
- * @returns Price in cents (e.g., 9999)
+ * Convert user input price for Medusa 2.0
+ * NOTE: Medusa 2.0 expects prices in dollars, not cents
+ * @param dollarAmount - Price in dollars (e.g., "49.99")
+ * @returns Price in dollars (e.g., 49.99)
  */
 export const priceToCents = (dollarAmount: string | number): number => {
   const amount = typeof dollarAmount === 'string' 
     ? parseFloat(dollarAmount) 
     : dollarAmount;
   
-  return Math.round(amount * 100);
+  // Medusa 2.0 expects dollars, not cents - just return the amount
+  return amount;
 };

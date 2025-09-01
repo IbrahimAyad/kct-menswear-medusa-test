@@ -217,13 +217,12 @@ function ProductCard({ product, viewMode }: { product: any; viewMode: 'grid' | '
 
   const productImage = product.thumbnail || product.images?.[0]?.url || '/placeholder-product.jpg';
   
-  // Debug: Log the actual price value from Medusa
+  // Medusa 2.0 returns amount in DOLLARS, not cents!
   const rawPrice = product.variants?.[0]?.prices?.[0]?.amount || 0;
-  console.log(`Product: ${product.title}, Raw price from Medusa: ${rawPrice}, Displayed: $${(rawPrice / 100).toFixed(2)}`);
-  console.log('Full variant data:', product.variants?.[0]);
+  console.log(`Product: ${product.title}, Price from Medusa: ${rawPrice} (already in dollars)`);
   
-  // Medusa stores prices in cents, so divide by 100 for display
-  const productPrice = rawPrice / 100;
+  // DO NOT divide by 100 - amount is already in dollars!
+  const productPrice = rawPrice;
   const productUrl = `/products/${product.handle || product.id}`;
 
   if (viewMode === 'list') {

@@ -131,10 +131,9 @@ export default function ProductDetailPage() {
   }
 
   const formatPrice = (amount: number) => {
-    // Medusa stores prices in cents, so we need to divide by 100
-    // If you're seeing $0.50 instead of $50.00, the backend might be returning inconsistent data
-    console.log('Formatting price:', amount, '→', amount / 100)
-    return `$${(amount / 100).toFixed(2)}`
+    // Medusa 2.0 returns amount in DOLLARS, not cents!
+    console.log('Formatting price:', amount, '(already in dollars)')
+    return `$${amount.toFixed(2)}`
   }
 
   if (loading) {
