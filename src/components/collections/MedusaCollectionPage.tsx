@@ -39,10 +39,17 @@ export default function MedusaCollectionPage({ collectionId }: MedusaCollectionP
       });
       
       if (response.products) {
-        // Filter products based on collection
+        // Log to see what we're getting from Medusa
+        console.log('Medusa products received:', response.products.length);
+        console.log('First product example:', response.products[0]);
+        
+        // For now, show ALL products to see what we have
+        // We'll add filtering once we understand the data structure
         let filteredProducts = response.products;
         
-        // Filter by collection title if needed
+        // Optional: Filter by collection title if needed
+        // Commenting out for now to see all products
+        /*
         if (collectionId === 'vests') {
           filteredProducts = response.products.filter(p => 
             p.title?.toLowerCase().includes('vest') ||
@@ -60,6 +67,7 @@ export default function MedusaCollectionPage({ collectionId }: MedusaCollectionP
             p.collection?.title?.toLowerCase().includes('shirt')
           );
         }
+        */
         
         // Sort products
         const sorted = [...filteredProducts];
