@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { CartDrawer } from "./CartDrawer";
 import { useCart } from "@/lib/hooks/useCart";
 import { SmartSearchBar } from "@/components/search/SmartSearchBar";
-import { InstantSearch } from "@/components/search/InstantSearch";
+// import { InstantSearch } from "@/components/search/InstantSearch"; // Removed in cleanup
 import { MegaMenu } from "./MegaMenu";
 import UserMenu from "./UserMenu";
 import MobileNavigation from "./MobileNavigation";
@@ -162,7 +162,14 @@ export function Navigation() {
     </nav>
     
     {/* Instant Search */}
-    <InstantSearch isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+    {/* InstantSearch removed in cleanup - using SmartSearchBar instead */}
+    {isSearchOpen && (
+      <div className="fixed inset-0 z-50 bg-black/50" onClick={() => setIsSearchOpen(false)}>
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 w-full max-w-2xl p-4">
+          <SmartSearchBar onSelect={() => setIsSearchOpen(false)} />
+        </div>
+      </div>
+    )}
     
     {/* Cart Drawer is now handled by SimpleCartDrawer in layout.tsx using global UI store */}
     </>

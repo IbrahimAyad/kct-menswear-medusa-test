@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { occasionDetails, OccasionType } from "@/lib/types/occasions";
-import { OccasionBundles } from "@/components/shop/OccasionBundles";
+// import { OccasionBundles } from "@/components/shop/OccasionBundles"; // Removed in cleanup
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils/cn";
@@ -351,10 +351,20 @@ export default function OccasionsPage() {
       {/* Occasion Bundles Component */}
       {showBundles && (
         <section className="py-16 bg-gray-50">
-          <OccasionBundles
-            bundles={mockBundles}
-            onAddToCart={handleAddToCart}
-          />
+          <div className="container-main">
+            <h2 className="text-3xl font-bold mb-8">Curated Bundles</h2>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {mockBundles.map((bundle) => (
+                <Card key={bundle.id} className="p-6">
+                  <h3 className="text-xl font-semibold mb-2">{bundle.name}</h3>
+                  <p className="text-gray-600 mb-4">{bundle.description}</p>
+                  <Button onClick={() => handleAddToCart(bundle)}>
+                    Add to Cart
+                  </Button>
+                </Card>
+              ))}
+            </div>
+          </div>
         </section>
       )}
 

@@ -23,7 +23,8 @@ import {
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { OutfitRecommendations } from '@/components/ai/OutfitRecommendations'
+// AI components - commented out as they were removed in cleanup
+// import { OutfitRecommendations } from '@/components/ai/OutfitRecommendations'
 import { StyleMatcher } from '@/components/ai/StyleMatcher'
 import { SizeAssistant } from '@/components/ai/SizeAssistant'
 import { ChatAssistant } from '@/components/ai/ChatAssistant'
@@ -501,7 +502,11 @@ export default function AtelierAIPage() {
 
               {/* Feature Content */}
               <div className="p-8">
-                {activeFeature === 'outfit' && <OutfitRecommendations />}
+                {activeFeature === 'outfit' && (
+                  <div className="text-center py-12">
+                    <p className="text-gray-600">Outfit recommendations feature coming soon...</p>
+                  </div>
+                )}
                 {activeFeature === 'style' && <StyleMatcher />}
                 {activeFeature === 'size' && (
                   <div className="max-w-3xl mx-auto">
