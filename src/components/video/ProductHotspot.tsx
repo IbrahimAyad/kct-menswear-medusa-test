@@ -72,7 +72,7 @@ export function ProductHotspot({
               <div className="flex-1">
                 <h4 className="font-semibold text-sm leading-tight">{product.name}</h4>
                 <p className="text-gold text-lg font-bold">
-                  ${(product.price / 100).toFixed(2)}
+                  ${(product.price).toFixed(2)}
                 </p>
               </div>
             </div>

@@ -149,5 +149,5 @@ export function formatCurrency(amount: number, currency: string = 'USD'): string
     style: 'currency',
     currency,
   })
-  return formatter.format(amount / 100)
+  return formatter.format(amount)
 }

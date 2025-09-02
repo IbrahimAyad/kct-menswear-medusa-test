@@ -96,7 +96,7 @@ export function StyleSwiper({ products, onSwipe, onComplete }: StyleSwiperProps)
               
               <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
                 <h3 className="text-2xl font-serif mb-2">{currentProduct.name}</h3>
-                <p className="text-lg mb-1">${(currentProduct.price / 100).toFixed(2)}</p>
+                <p className="text-lg mb-1">${(currentProduct.price).toFixed(2)}</p>
                 <p className="text-sm opacity-90 capitalize">{currentProduct.category}</p>
               </div>
 

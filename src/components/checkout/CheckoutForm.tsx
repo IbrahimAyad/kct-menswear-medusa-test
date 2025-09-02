@@ -189,7 +189,7 @@ function CheckoutFormInner({ amount, onComplete, isProcessing, setIsProcessing }
         disabled={!stripe || isProcessing}
         className="w-full bg-gold hover:bg-gold/90 text-black font-semibold py-3 px-6 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {isProcessing ? "Processing..." : `Pay $${(amount / 100).toFixed(2)}`}
+        {isProcessing ? "Processing..." : `Pay $${(amount).toFixed(2)}`}
       </button>
     </form>
   );

@@ -634,7 +634,7 @@ export default function WeddingVideoLookbook() {
                   <div className="p-4">
                     <h4 className="font-semibold text-white mb-2">{product.name}</h4>
                     <p className="text-2xl font-bold text-gold mb-3">
-                      ${(product.price / 100).toFixed(2)}
+                      ${(product.price).toFixed(2)}
                     </p>
                     <Button
                       size="sm"

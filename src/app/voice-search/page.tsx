@@ -117,7 +117,7 @@ export default function VoiceSearchPage() {
   };
 
   const formatPrice = (price: number) => {
-    return `$${(price / 100).toFixed(2)}`;
+    return `$${(price).toFixed(2)}`;
   };
 
   return (

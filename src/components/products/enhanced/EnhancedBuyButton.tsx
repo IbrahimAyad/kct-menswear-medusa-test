@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 interface EnhancedBuyButtonProps {
   productId: string;
   productName: string;
-  price: number; // Price in cents
+  price: number; // Price in dollars
   size?: string;
   className?: string;
   variant?: 'primary' | 'secondary' | 'outline';

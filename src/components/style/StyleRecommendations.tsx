@@ -123,7 +123,7 @@ export function StyleRecommendations({
 
                 <div className="p-6">
                   <h3 className="text-xl font-semibold mb-2">{product.name}</h3>
-                  <p className="text-2xl font-bold mb-4">${(product.price / 100).toFixed(2)}</p>
+                  <p className="text-2xl font-bold mb-4">${(product.price).toFixed(2)}</p>
 
                   <div className="space-y-2 mb-4">
                     {product.reasons.slice(0, 2).map((reason, idx) => (
@@ -166,7 +166,7 @@ export function StyleRecommendations({
                   <div className="flex items-start justify-between mb-2">
                     <div>
                       <h3 className="text-xl font-semibold">{product.name}</h3>
-                      <p className="text-2xl font-bold">${(product.price / 100).toFixed(2)}</p>
+                      <p className="text-2xl font-bold">${(product.price).toFixed(2)}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getMatchScoreColor(product.matchScore)}`}>

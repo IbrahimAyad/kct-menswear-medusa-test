@@ -84,17 +84,17 @@ export default function OrdersPage() {
                   order.fulfillment_status === 'fulfilled' ? 'delivered' :
                   order.fulfillment_status === 'shipped' ? 'shipped' :
                   order.payment_status === 'awaiting' ? 'pending' : 'processing',
-          amount_total: order.total / 100,
-          amount_subtotal: order.subtotal / 100,
-          discount: order.discount_total / 100,
+          amount_total: order.total,
+          amount_subtotal: order.subtotal,
+          discount: order.discount_total,
           currency: order.currency_code?.toUpperCase() || 'USD',
           tracking_number: order.fulfillments?.[0]?.tracking_numbers?.[0],
           carrier: order.fulfillments?.[0]?.provider,
           order_items: (order.items || []).map((item: any) => ({
             id: item.id,
             quantity: item.quantity,
-            unit_price: item.unit_price / 100,
-            total_price: item.total / 100,
+            unit_price: item.unit_price,
+            total_price: item.total,
             product_name: item.title,
             product_image: item.thumbnail,
             attributes: {

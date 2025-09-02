@@ -273,7 +273,7 @@ export function WeddingPartyBuilder({
                       <div className="flex-1">
                         <h4 className="font-medium text-sm">{product.name}</h4>
                         <p className="text-gold font-semibold">
-                          ${(product.price / 100).toFixed(2)}
+                          ${(product.price).toFixed(2)}
                         </p>
                       </div>
                     </div>

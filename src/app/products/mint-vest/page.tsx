@@ -135,7 +135,7 @@ export default function MintVestProductPage() {
                 {product.title}
               </h1>
               <p className="text-2xl font-semibold text-blue-600">
-                ${(product.price / 100).toFixed(2)}
+                ${(product.price).toFixed(2)}
               </p>
             </div>
 

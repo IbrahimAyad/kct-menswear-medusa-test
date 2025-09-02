@@ -34,7 +34,7 @@ export default function UniversalLargeCard({
     addItem({
       id: product.id,
       name: product.name,
-      price: priceInCents, // Price in cents for Stripe
+      price: priceInCents, // Price in dollars
       image: product.imageUrl || '/placeholder.jpg',
       quantity: 1,
       category: product.isBundle ? 'bundle' : product.category || 'product',

@@ -61,11 +61,11 @@ export default function CartPage() {
         productId: item.product!.id,
         name: item.product!.name,
         category: item.product!.category,
-        price: item.product!.price / 100,
+        price: item.product!.price,
         quantity: item.quantity,
         size: item.size,
       }));
-      trackViewCart(cartSummary.totalPrice / 100, cartItems);
+      trackViewCart(cartSummary.totalPrice, cartItems);
     }
   }, [validCartItems.length]);
 
@@ -91,7 +91,7 @@ export default function CartPage() {
           return {
             id: item.productId,
             name: coreProduct.name,
-            price: coreProduct.price, // Price in cents
+            price: coreProduct.price, // Price in dollars
             quantity: item.quantity,
             selectedSize: item.size,
             stripePriceId: coreProduct.stripe_price_id,

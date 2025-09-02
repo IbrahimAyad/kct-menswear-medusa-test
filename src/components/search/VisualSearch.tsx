@@ -338,7 +338,7 @@ export function VisualSearch({ onResults, onClose }: VisualSearchProps) {
                             <h4 className="font-semibold mb-1">{result.product.name}</h4>
                             <p className="text-gray-600 text-sm mb-2">SKU: {result.product.sku}</p>
                             <div className="flex items-center justify-between">
-                              <span className="text-lg font-bold">${(result.product.price / 100).toFixed(2)}</span>
+                              <span className="text-lg font-bold">${(result.product.price).toFixed(2)}</span>
                               <div className="text-xs text-gray-500">
                                 {Math.round(result.confidence * 100)}% confidence
                               </div>

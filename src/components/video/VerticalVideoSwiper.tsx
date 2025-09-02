@@ -433,7 +433,7 @@ export function VerticalVideoSwiper({
               />
               <div className="flex-1">
                 <p className="text-2xl font-bold text-burgundy mb-2">
-                  ${(selectedProduct.price / 100).toFixed(2)}
+                  ${(selectedProduct.price).toFixed(2)}
                 </p>
                 <p className="text-gray-600 text-sm mb-4">
                   Available in multiple sizes

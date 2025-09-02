@@ -103,7 +103,7 @@ class AnalyticsClient {
           item_id: data.productId,
           item_name: data.productName,
           item_category: data.category,
-          price: data.price / 100, // Convert cents to dollars
+          price: data.price, // Price in dollars (Medusa 2.0)
           quantity: data.quantity,
           item_variant: data.size,
         }],

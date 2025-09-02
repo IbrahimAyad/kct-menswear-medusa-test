@@ -87,7 +87,7 @@ export function TimelineMarkers({
                     <div className="flex-1">
                       <h4 className="font-semibold text-sm mb-1">{marker.product.name}</h4>
                       <p className="text-gold text-lg font-bold">
-                        ${(marker.product.price / 100).toFixed(2)}
+                        ${(marker.product.price).toFixed(2)}
                       </p>
                       <div className="flex items-center gap-2 mt-2">
                         <Tag className="w-3 h-3" />

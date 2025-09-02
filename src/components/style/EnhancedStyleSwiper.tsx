@@ -255,7 +255,7 @@ export function EnhancedStyleSwiper({
               {product.name}
             </motion.h3>
             <motion.div className="flex items-center gap-4">
-              <span className="text-2xl font-bold">${(product.price / 100).toFixed(0)}</span>
+              <span className="text-2xl font-bold">${(product.price).toFixed(0)}</span>
               <span className="text-sm bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full capitalize">
                 {product.category}
               </span>

@@ -168,7 +168,7 @@ export function ShoppableVideo({ videoId, hotspots, onProductClick, onAddToCart 
               />
 
               <h3 className="text-2xl font-serif mb-2">{selectedProduct.name}</h3>
-              <p className="text-2xl font-bold mb-4">${(selectedProduct.price / 100).toFixed(2)}</p>
+              <p className="text-2xl font-bold mb-4">${(selectedProduct.price).toFixed(2)}</p>
 
               <div className="flex gap-2">
                 <motion.button

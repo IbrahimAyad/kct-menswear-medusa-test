@@ -348,7 +348,7 @@ export function PromHub({
                   </div>
                   <div className="p-4">
                     <h4 className="font-medium text-sm mb-1">{product.name}</h4>
-                    <p className="text-lg font-bold">${(product.price / 100).toFixed(2)}</p>
+                    <p className="text-lg font-bold">${(product.price).toFixed(2)}</p>
                   </div>
                 </motion.div>
               ))}

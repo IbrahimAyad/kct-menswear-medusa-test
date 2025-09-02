@@ -97,7 +97,7 @@ export default function DressShirtsPage() {
                   <h3 className="text-xl font-semibold mb-2">{shirt.displayName}</h3>
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-2xl font-bold text-burgundy">
-                      ${(shirt.price / 100).toFixed(2)}
+                      ${(shirt.price).toFixed(2)}
                     </span>
                   </div>
                   <div className="text-sm text-gray-600 mb-4">

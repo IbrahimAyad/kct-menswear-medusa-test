@@ -320,7 +320,7 @@ export function AIStyleAssistant({ customer, onProductRecommend, onStyleProfileU
                             />
                             <div className="flex-1">
                               <h4 className="font-medium text-sm">{product.name}</h4>
-                              <p className="text-sm text-gray-600">${(product.price / 100).toFixed(2)}</p>
+                              <p className="text-sm text-gray-600">${(product.price).toFixed(2)}</p>
                             </div>
                           </motion.div>
                         ))}

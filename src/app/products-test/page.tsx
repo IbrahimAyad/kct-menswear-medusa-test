@@ -75,7 +75,7 @@ export default function ProductsTestPage() {
       const productForCart = {
         id: product.id,
         name: product.title,
-        price: (variant.prices?.[0]?.amount || 0) / 100, // Convert from cents to dollars
+        price: variant.prices?.[0]?.amount || 0, // Price in dollars (Medusa 2.0)
         images: [product.thumbnail || ''],
       }
 
@@ -188,7 +188,7 @@ export default function ProductsTestPage() {
                         <option key={variant.id} value={variant.id}>
                           {variant.title} 
                           {variant.sku && ` (${variant.sku})`}
-                          {variant.prices?.[0] && ` - $${(variant.prices[0].amount / 100).toFixed(2)}`}
+                          {variant.prices?.[0] && ` - $${(variant.prices[0].amount).toFixed(2)}`}
                           {variant.inventory_quantity !== undefined && ` [${variant.inventory_quantity} in stock]`}
                         </option>
                       ))}
