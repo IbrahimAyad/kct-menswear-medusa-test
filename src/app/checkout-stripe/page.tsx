@@ -78,7 +78,7 @@ function CheckoutForm({ clientSecret, cartId }: { clientSecret: string, cartId: 
 
 export default function StripeCheckoutPage() {
   const router = useRouter()
-  const { medusaCart, isLoading } = useMedusaCart()
+  const { medusaCart, isLoading, refreshCart, clearCart } = useMedusaCart()
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isInitializing, setIsInitializing] = useState(false)
@@ -93,6 +93,48 @@ export default function StripeCheckoutPage() {
     phone: ''
   })
   const [step, setStep] = useState<'info' | 'payment'>('info')
+  const [shippingOptions, setShippingOptions] = useState<any[]>([])
+  const [selectedShipping, setSelectedShipping] = useState<string>('')
+  
+  // Check and set region on mount
+  useEffect(() => {
+    const ensureRegion = async () => {
+      if (medusaCart?.id && !medusaCart.region_id) {
+        console.log('Cart missing region, fetching regions...')
+        try {
+          // Get available regions
+          const regionsResponse = await fetch(`${process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL}/store/regions`, {
+            headers: {
+              'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || ''
+            }
+          })
+          
+          if (regionsResponse.ok) {
+            const { regions } = await regionsResponse.json()
+            console.log('Available regions:', regions)
+            
+            // Find US region or first available
+            const usRegion = regions.find((r: any) => r.currency_code === 'usd') || regions[0]
+            
+            if (usRegion) {
+              console.log('Setting cart region to:', usRegion.id)
+              // Update cart with region
+              await medusa.store.cart.update(medusaCart.id, {
+                region_id: usRegion.id
+              })
+              
+              // Refresh cart to get updated data
+              await refreshCart()
+            }
+          }
+        } catch (err) {
+          console.error('Error setting region:', err)
+        }
+      }
+    }
+    
+    ensureRegion()
+  }, [medusaCart?.id])
 
   const initializePayment = async () => {
     if (!medusaCart?.id) {
@@ -130,17 +172,35 @@ export default function StripeCheckoutPage() {
         }
       })
 
-      // Step 1.5: Add shipping method (required for payment)
-      console.log('Adding shipping method...')
-      // Use the free shipping option provided by admin
-      const freeShippingId = 'so_01K3S6BKMKFTYS3ASAC3HBCSD5'
+      // Step 2: Fetch available shipping options for this cart
+      console.log('Fetching shipping options...')
       try {
-        await medusa.store.cart.addShippingMethod(medusaCart.id, {
-          option_id: freeShippingId
+        const shippingResponse = await fetch(`${process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL}/store/shipping-options?cart_id=${medusaCart.id}`, {
+          headers: {
+            'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || ''
+          }
         })
-        console.log('Shipping method added successfully')
+        
+        if (shippingResponse.ok) {
+          const { shipping_options } = await shippingResponse.json()
+          console.log('Available shipping options:', shipping_options)
+          
+          if (shipping_options && shipping_options.length > 0) {
+            setShippingOptions(shipping_options)
+            // Auto-select first option
+            const firstOption = shipping_options[0]
+            setSelectedShipping(firstOption.id)
+            
+            // Add the shipping method to cart
+            console.log('Adding shipping method:', firstOption.id)
+            await medusa.store.cart.addShippingMethod(medusaCart.id, {
+              option_id: firstOption.id
+            })
+          }
+        }
       } catch (err) {
-        console.log('Shipping method might already be added:', err)
+        console.log('Error fetching shipping options:', err)
+        // Continue without shipping for now
       }
 
       // Step 2: Create payment collection (Medusa 2.0 API)
