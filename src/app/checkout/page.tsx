@@ -79,19 +79,25 @@ export default function ProfessionalCheckout() {
     { id: 'overnight', name: 'Overnight', price: 35, days: '1' }
   ])
 
-  // Auto-save to localStorage
+  // Auto-save to localStorage (SSR-safe)
   useEffect(() => {
-    const savedData = localStorage.getItem('checkoutData')
-    if (savedData) {
-      const data = JSON.parse(savedData)
-      setEmail(data.email || '')
-      setShippingForm(data.shipping || shippingForm)
-      setBillingForm(data.billing || billingForm)
+    if (typeof window !== 'undefined') {
+      const savedData = localStorage.getItem('checkoutData')
+      if (savedData) {
+        try {
+          const data = JSON.parse(savedData)
+          setEmail(data.email || '')
+          setShippingForm(prev => ({ ...prev, ...(data.shipping || {}) }))
+          setBillingForm(prev => ({ ...prev, ...(data.billing || {}) }))
+        } catch (e) {
+          console.error('Failed to parse saved checkout data')
+        }
+      }
     }
   }, [])
 
   useEffect(() => {
-    if (email || shippingForm.firstName) {
+    if (typeof window !== 'undefined' && (email || shippingForm.firstName)) {
       localStorage.setItem('checkoutData', JSON.stringify({
         email,
         shipping: shippingForm,
@@ -500,7 +506,217 @@ export default function ProfessionalCheckout() {
               </div>
             )}
 
-            {/* Other steps continue... */}
+            {/* Billing Step */}
+            {currentStep === 'billing' && (
+              <div className="bg-white rounded-lg shadow p-6">
+                <h2 className="text-2xl font-bold mb-6">Billing Information</h2>
+                <form onSubmit={handleBillingSubmit} className="space-y-4">
+                  <div className="flex items-center mb-4">
+                    <input
+                      type="checkbox"
+                      id="sameAsShipping"
+                      checked={billingForm.sameAsShipping}
+                      onChange={(e) => setBillingForm({...billingForm, sameAsShipping: e.target.checked})}
+                      className="mr-2"
+                    />
+                    <label htmlFor="sameAsShipping" className="text-sm font-medium">
+                      Same as shipping address
+                    </label>
+                  </div>
+
+                  {!billingForm.sameAsShipping && (
+                    <>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium mb-2">First Name</label>
+                          <input
+                            type="text"
+                            required
+                            value={billingForm.firstName}
+                            onChange={(e) => setBillingForm({...billingForm, firstName: e.target.value})}
+                            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-black"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-2">Last Name</label>
+                          <input
+                            type="text"
+                            required
+                            value={billingForm.lastName}
+                            onChange={(e) => setBillingForm({...billingForm, lastName: e.target.value})}
+                            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-black"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Street Address</label>
+                        <input
+                          type="text"
+                          required
+                          value={billingForm.address}
+                          onChange={(e) => setBillingForm({...billingForm, address: e.target.value})}
+                          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-black"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium mb-2">
+                          Apartment, suite, etc. (optional)
+                        </label>
+                        <input
+                          type="text"
+                          value={billingForm.apartment}
+                          onChange={(e) => setBillingForm({...billingForm, apartment: e.target.value})}
+                          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-black"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium mb-2">City</label>
+                          <input
+                            type="text"
+                            required
+                            value={billingForm.city}
+                            onChange={(e) => setBillingForm({...billingForm, city: e.target.value})}
+                            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-black"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-2">State</label>
+                          <input
+                            type="text"
+                            required
+                            maxLength={2}
+                            value={billingForm.state}
+                            onChange={(e) => setBillingForm({...billingForm, state: e.target.value.toUpperCase()})}
+                            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-black"
+                            placeholder="NY"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium mb-2">ZIP Code</label>
+                        <input
+                          type="text"
+                          required
+                          value={billingForm.postalCode}
+                          onChange={(e) => setBillingForm({...billingForm, postalCode: e.target.value})}
+                          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-black"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={isProcessing}
+                    className="w-full bg-black text-white py-3 rounded-lg hover:bg-gray-800 disabled:bg-gray-400"
+                  >
+                    {isProcessing ? 'Processing...' : 'Continue to Delivery'}
+                  </button>
+                </form>
+              </div>
+            )}
+
+            {/* Delivery Step */}
+            {currentStep === 'delivery' && (
+              <div className="bg-white rounded-lg shadow p-6">
+                <h2 className="text-2xl font-bold mb-6">Delivery Method</h2>
+                <form onSubmit={handleDeliverySubmit} className="space-y-4">
+                  <div className="space-y-3">
+                    {shippingOptions.map((option) => (
+                      <label
+                        key={option.id}
+                        className={`flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:bg-gray-50 
+                          ${selectedShipping === option.id ? 'border-black bg-gray-50' : 'border-gray-200'}`}
+                      >
+                        <div className="flex items-center">
+                          <input
+                            type="radio"
+                            name="shipping"
+                            value={option.id}
+                            checked={selectedShipping === option.id}
+                            onChange={(e) => setSelectedShipping(e.target.value)}
+                            className="mr-3"
+                          />
+                          <div>
+                            <p className="font-medium">{option.name}</p>
+                            <p className="text-sm text-gray-600">{option.days} business days</p>
+                          </div>
+                        </div>
+                        <p className="font-medium">
+                          {option.price === 0 ? 'FREE' : `$${option.price.toFixed(2)}`}
+                        </p>
+                      </label>
+                    ))}
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isProcessing || !selectedShipping}
+                    className="w-full bg-black text-white py-3 rounded-lg hover:bg-gray-800 disabled:bg-gray-400"
+                  >
+                    {isProcessing ? 'Initializing Payment...' : 'Continue to Payment'}
+                  </button>
+                </form>
+              </div>
+            )}
+
+            {/* Payment Step */}
+            {currentStep === 'payment' && clientSecret && (
+              <div className="bg-white rounded-lg shadow p-6">
+                <h2 className="text-2xl font-bold mb-6">Payment Information</h2>
+                <div className="p-4 bg-yellow-50 text-yellow-800 rounded-lg mb-4">
+                  <p className="text-sm">Test mode: Use card 4242 4242 4242 4242</p>
+                </div>
+                <Elements stripe={stripePromise} options={{ 
+                  clientSecret,
+                  appearance: {
+                    theme: 'stripe',
+                    variables: {
+                      colorPrimary: '#000000',
+                    }
+                  }
+                }}>
+                  <PaymentForm 
+                    cartId={medusaCart.id} 
+                    onSuccess={(order) => {
+                      setOrderData(order)
+                      handleStepComplete('payment')
+                      goToStep('confirmation')
+                    }}
+                  />
+                </Elements>
+              </div>
+            )}
+
+            {/* Confirmation Step */}
+            {currentStep === 'confirmation' && (
+              <div className="bg-white rounded-lg shadow p-6 text-center">
+                <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+                <h2 className="text-2xl font-bold mb-2">Order Confirmed!</h2>
+                <p className="text-gray-600 mb-6">
+                  Thank you for your order. We've sent a confirmation email to {email}
+                </p>
+                {orderData && (
+                  <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                    <p className="text-sm text-gray-600">Order Number</p>
+                    <p className="font-mono font-bold">{orderData.id}</p>
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <Link href="/account/orders" className="block w-full bg-black text-white py-3 rounded-lg hover:bg-gray-800">
+                    View Order Details
+                  </Link>
+                  <Link href="/kct-shop" className="block w-full border border-black text-black py-3 rounded-lg hover:bg-gray-50">
+                    Continue Shopping
+                  </Link>
+                </div>
+              </div>
+            )}
             
           </div>
 
@@ -574,5 +790,76 @@ export default function ProfessionalCheckout() {
         </div>
       </div>
     </div>
+  )
+}
+
+// Payment Form Component
+function PaymentForm({ cartId, onSuccess }: { cartId: string; onSuccess: (order: any) => void }) {
+  const stripe = useStripe()
+  const elements = useElements()
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!stripe || !elements) return
+
+    setIsProcessing(true)
+    setError(null)
+
+    try {
+      const { error: submitError } = await elements.submit()
+      if (submitError) {
+        throw submitError
+      }
+
+      const { error: confirmError, paymentIntent } = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          return_url: `${window.location.origin}/checkout/success`,
+        },
+        redirect: 'if_required'
+      })
+
+      if (confirmError) {
+        throw confirmError
+      }
+
+      if (paymentIntent?.status === 'succeeded') {
+        // Complete the order
+        const response = await medusa.store.cart.complete(cartId)
+        
+        if (response.type === 'order') {
+          localStorage.removeItem('checkoutData')
+          localStorage.removeItem('medusa_cart_id')
+          onSuccess(response.order)
+        }
+      }
+    } catch (err: any) {
+      setError(err.message || 'Payment failed')
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <PaymentElement />
+      
+      {error && (
+        <div className="mt-4 p-3 bg-red-50 text-red-700 rounded text-sm">
+          {error}
+        </div>
+      )}
+      
+      <button
+        type="submit"
+        disabled={!stripe || isProcessing}
+        className="w-full mt-6 bg-black text-white py-3 rounded-lg hover:bg-gray-800 disabled:bg-gray-400"
+      >
+        {isProcessing ? 'Processing...' : 'Complete Order'}
+      </button>
+    </form>
   )
 }
