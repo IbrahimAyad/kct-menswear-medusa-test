@@ -131,16 +131,16 @@ export default function StripeCheckoutPage() {
       })
 
       // Step 1.5: Add shipping method (required for payment)
-      console.log('Getting shipping options...')
-      const shippingOptions = await medusa.store.fulfillment.listCartOptions({ 
-        cart_id: medusaCart.id 
-      })
-      
-      if (shippingOptions.shipping_options?.length > 0) {
-        console.log('Adding shipping method:', shippingOptions.shipping_options[0].id)
+      console.log('Adding shipping method...')
+      // Use the free shipping option provided by admin
+      const freeShippingId = 'so_01K3S6BKMKFTYS3ASAC3HBCSD5'
+      try {
         await medusa.store.cart.addShippingMethod(medusaCart.id, {
-          option_id: shippingOptions.shipping_options[0].id
+          option_id: freeShippingId
         })
+        console.log('Shipping method added successfully')
+      } catch (err) {
+        console.log('Shipping method might already be added:', err)
       }
 
       // Step 2: Create payment collection (Medusa 2.0 API)
@@ -152,8 +152,7 @@ export default function StripeCheckoutPage() {
           'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || ''
         },
         body: JSON.stringify({
-          cart_id: medusaCart.id,
-          region_id: medusaCart.region_id // Add region_id for Medusa 2.0
+          cart_id: medusaCart.id // ONLY cart_id, no region_id
         })
       })
 
