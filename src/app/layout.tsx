@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { SmartChatLauncher } from "@/components/chat/SmartChatLauncher";
 import { ChatWidget } from "@/components/ai/ChatWidget";
 import { UnifiedCartDrawer } from "@/components/cart/UnifiedCartDrawer";
+import { MixedCartWarning } from "@/components/cart/MixedCartWarning";
 import { StyleConsultantButton } from "@/components/style-consultant/VirtualStyleConsultant";
 import { GoogleAnalytics, GoogleAnalyticsScript } from "@/components/analytics/GoogleAnalytics";
 import { AnalyticsDashboard } from "@/components/analytics/AnalyticsDashboard";
@@ -103,6 +104,7 @@ export default function RootLayout({
               <SmartChatLauncher />
               {/* <StyleConsultantButton /> */}
               <UnifiedCartDrawer />
+              <MixedCartWarning />
               <MobileBottomNav />
               <ServiceWorkerUnregister />
               <Suspense fallback={null}>
