@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactNode, useState } from "react";
 import { NotificationContainer } from "@/components/notifications/NotificationContainer";
 import { SettingsProvider } from "@/contexts/SettingsContext";
+import { CoreCartProvider } from "@/contexts/CoreCartContext";
 
 interface ProvidersProps {
   children: ReactNode;
@@ -22,8 +23,10 @@ export function Providers({ children }: ProvidersProps) {
   return (
     <QueryClientProvider client={queryClient}>
       <SettingsProvider>
-        {children}
-        <NotificationContainer />
+        <CoreCartProvider>
+          {children}
+          <NotificationContainer />
+        </CoreCartProvider>
       </SettingsProvider>
     </QueryClientProvider>
   );

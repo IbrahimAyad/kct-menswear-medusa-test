@@ -1,6 +1,7 @@
 // TEMPORARILY SIMPLIFIED - Supabase auth disabled during migration to Medusa
 import { NextResponse, type NextRequest } from 'next/server'
 import redirectsConfig from '../301-redirects.json'
+import { isCoreProductRoute, isMedusaProductRoute } from '@/lib/config/product-routing'
 
 // Create redirect maps for faster lookups
 const redirectMap = new Map<string, string>();
@@ -35,9 +36,27 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // PRODUCT ROUTING GUARDS
+  // Add headers to indicate product type for the app router
+  const response = NextResponse.next()
+  
+  if (isCoreProductRoute(pathname)) {
+    // Mark as core product route - should NOT use Medusa
+    response.headers.set('x-product-type', 'core')
+    
+    // Special handling for suit detail pages that were hijacked
+    if (pathname.startsWith('/products/suits/') && !pathname.includes('prod_')) {
+      // This is a core suit route, not a Medusa product
+      response.headers.set('x-core-suit', 'true')
+    }
+  } else if (isMedusaProductRoute(pathname)) {
+    // Mark as Medusa product route
+    response.headers.set('x-product-type', 'medusa')
+  }
+
   // Auth functionality disabled during migration
-  // Just pass through all requests
-  return NextResponse.next()
+  // Just pass through all requests with headers
+  return response
 }
 
 export const config = {

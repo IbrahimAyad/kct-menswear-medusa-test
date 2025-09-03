@@ -6,7 +6,7 @@ import { Providers } from "@/components/providers/Providers";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SmartChatLauncher } from "@/components/chat/SmartChatLauncher";
 import { ChatWidget } from "@/components/ai/ChatWidget";
-import { SimpleCartDrawer } from "@/components/cart/SimpleCartDrawer";
+import { UnifiedCartDrawer } from "@/components/cart/UnifiedCartDrawer";
 import { StyleConsultantButton } from "@/components/style-consultant/VirtualStyleConsultant";
 import { GoogleAnalytics, GoogleAnalyticsScript } from "@/components/analytics/GoogleAnalytics";
 import { AnalyticsDashboard } from "@/components/analytics/AnalyticsDashboard";
@@ -102,7 +102,7 @@ export default function RootLayout({
               <Footer />
               <SmartChatLauncher />
               {/* <StyleConsultantButton /> */}
-              <SimpleCartDrawer />
+              <UnifiedCartDrawer />
               <MobileBottomNav />
               <ServiceWorkerUnregister />
               <Suspense fallback={null}>

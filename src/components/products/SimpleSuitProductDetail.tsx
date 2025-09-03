@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Check, Truck, Shield, RefreshCw, Ruler, MessageCircle, Star, Clock, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useCart } from '@/lib/hooks/useCart';
+import { useCoreCart } from '@/contexts/CoreCartContext';
 import { availableSizes } from '@/lib/services/stripeProductService';
 import { getSuitImages } from '@/lib/data/suitImages';
 import SizeGuideModal from './SizeGuideModal';
@@ -19,11 +19,14 @@ interface SimpleSuitProductDetailProps {
     productId: string;
     twoPiece: string;
     threePiece: string;
+    name?: string;
+    twoPiecePrice?: number;
+    threePiecePrice?: number;
   };
 }
 
 export default function SimpleSuitProductDetail({ color, suitData }: SimpleSuitProductDetailProps) {
-  const { addToCart } = useCart();
+  const { addItem } = useCoreCart();
   const [selectedOption, setSelectedOption] = useState<'twoPiece' | 'threePiece'>('twoPiece');
   const [selectedSize, setSelectedSize] = useState('');
   const [showSizeGuide, setShowSizeGuide] = useState(false);
@@ -33,8 +36,8 @@ export default function SimpleSuitProductDetail({ color, suitData }: SimpleSuitP
   const [showAISizeBot, setShowAISizeBot] = useState(false);
   
   // Product details
-  const productName = `${color.charAt(0).toUpperCase() + color.slice(1).replace(/([A-Z])/g, ' $1')} Suit`;
-  const price = selectedOption === 'twoPiece' ? 179.99 : 199.99;
+  const productName = suitData.name || `${color.charAt(0).toUpperCase() + color.slice(1).replace(/([A-Z])/g, ' $1')} Suit`;
+  const price = selectedOption === 'twoPiece' ? (suitData.twoPiecePrice || 179.99) : (suitData.threePiecePrice || 199.99);
   const stripePriceId = selectedOption === 'twoPiece' ? suitData.twoPiece : suitData.threePiece;
   
   // Get suit images
@@ -87,27 +90,20 @@ export default function SimpleSuitProductDetail({ color, suitData }: SimpleSuitP
       return;
     }
     
-    const product = {
-      id: suitData.productId,
+    // Create core cart item
+    const coreCartItem = {
+      id: `suit-${color}-${selectedOption === 'twoPiece' ? '2p' : '3p'}`,
       name: `${productName} - ${selectedOption === 'twoPiece' ? '2 Piece' : '3 Piece'}`,
-      category: 'suits',
-      price,
-      images: [displayImages[0] || suitImageData.main],
-      variants: availableSizes.suits.map(size => ({
-        size,
-        stock: 10,
-        price,
-      })),
-      color,
-      description: `Premium ${color} suit`,
-      metadata: {
-        stripePriceId,
-        suitType: selectedOption,
-        suitColor: color,
-      }
+      price: price,
+      quantity: 1,
+      size: selectedSize,
+      color: color,
+      stripePriceId: stripePriceId,
+      image: displayImages[0] || suitImageData.main,
+      type: selectedOption === 'twoPiece' ? '2p' : '3p'
     };
     
-    addToCart(product as any, selectedSize, 1);
+    addItem(coreCartItem);
     setAddedToCart(true);
     setTimeout(() => setAddedToCart(false), 3000);
   };
