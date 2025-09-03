@@ -18,7 +18,8 @@ const menuStructure = {
       {
         title: 'Suits & Tuxedos',
         items: [
-          { href: '/products/suits', label: 'All Suits', badge: null },
+          { href: '/products/suits', label: 'Premium Suits', badge: null },
+          { href: '/shop/catalog', label: 'Extended Catalog', badge: '201 NEW' },
           { href: '/products/suits/tuxedos', label: 'Tuxedos', badge: null },
           { href: '/custom-suits', label: 'Custom Suits', badge: 'NEW' },
           { href: '/collections/three-piece', label: 'Three Piece Suits', badge: null },
