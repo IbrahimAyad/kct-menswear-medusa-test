@@ -40,11 +40,13 @@ export interface MedusaCart {
 // Fetch all Medusa products
 export async function fetchMedusaProducts(): Promise<MedusaProduct[]> {
   try {
-    // Try with region first (may be required)
+    // Simplified query without expand/fields (not supported by this Medusa version)
     const params = new URLSearchParams({
       limit: '100',
-      expand: 'variants,images',
-      fields: '*variants.prices,*images'
+      // Include region if needed
+      ...(process.env.NEXT_PUBLIC_MEDUSA_REGION_ID && {
+        region_id: process.env.NEXT_PUBLIC_MEDUSA_REGION_ID
+      })
     })
     
     const response = await fetch(`${MEDUSA_URL}/store/products?${params}`, {
@@ -52,7 +54,7 @@ export async function fetchMedusaProducts(): Promise<MedusaProduct[]> {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
-        // Try without key first
+        // Include the publishable key
         ...(process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY && {
           'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY
         })
@@ -83,10 +85,20 @@ export async function createMedusaCart(): Promise<MedusaCart | null> {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        // Include the publishable key
+        ...(process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY && {
+          'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY
+        })
       },
       body: JSON.stringify({
-        // Add region if needed
-        // region_id: 'reg_xxx'
+        // Include region ID from environment
+        ...(process.env.NEXT_PUBLIC_MEDUSA_REGION_ID && {
+          region_id: process.env.NEXT_PUBLIC_MEDUSA_REGION_ID
+        }),
+        // Include sales channel if available
+        ...(process.env.NEXT_PUBLIC_SALES_CHANNEL_ID && {
+          sales_channel_id: process.env.NEXT_PUBLIC_SALES_CHANNEL_ID
+        })
       })
     })
 
@@ -109,6 +121,9 @@ export async function addToMedusaCart(cartId: string, variantId: string, quantit
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...(process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY && {
+          'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY
+        })
       },
       body: JSON.stringify({
         variant_id: variantId,
@@ -135,6 +150,9 @@ export async function updateMedusaCart(cartId: string, updates: any) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...(process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY && {
+          'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY
+        })
       },
       body: JSON.stringify(updates)
     })
@@ -159,6 +177,9 @@ export async function initializeMedusaPayment(cartId: string) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...(process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY && {
+          'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY
+        })
       }
     })
 
@@ -171,6 +192,9 @@ export async function initializeMedusaPayment(cartId: string) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...(process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY && {
+          'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY
+        })
       }
     })
 
@@ -193,6 +217,9 @@ export async function completeMedusaCart(cartId: string) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...(process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY && {
+          'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY
+        })
       }
     })
 
