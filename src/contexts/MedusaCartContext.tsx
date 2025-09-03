@@ -1,202 +1,228 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-
-const API_URL = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || 'https://backend-production-7441.up.railway.app'
-const REGION_ID = process.env.NEXT_PUBLIC_REGION_ID || 'reg_01K3S6NDGAC1DSWH9MCZCWBWWD'
-const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_PUBLISHABLE_KEY || 'pk_4c24b336db3f8819867bec16f4b51db9654e557abbcfbbe003f7ffd8463c3c81'
-
-interface CartItem {
-  id: string
-  variant_id: string
-  quantity: number
-  title: string
-  thumbnail?: string
-  unit_price: number
-}
-
-interface Cart {
-  id: string
-  items: CartItem[]
-  total: number
-  subtotal: number
-  tax_total: number
-  shipping_total: number
-}
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { 
+  createMedusaCart, 
+  addToMedusaCart, 
+  updateMedusaCartItem,
+  removeFromMedusaCart,
+  getMedusaCart,
+  type MedusaCart as MedusaCartType,
+  type MedusaProduct
+} from '@/services/medusaBackendService'
 
 interface MedusaCartContextType {
-  cart: Cart | null
+  cart: MedusaCartType | null
+  cartId: string | null
   isLoading: boolean
-  addItem: (variantId: string, quantity: number) => Promise<void>
-  updateQuantity: (lineItemId: string, quantity: number) => Promise<void>
-  removeItem: (lineItemId: string) => Promise<void>
-  clearCart: () => Promise<void>
   error: string | null
+  
+  // Cart operations
+  initializeCart: (email?: string) => Promise<void>
+  addItem: (variantId: string, quantity?: number, product?: MedusaProduct) => Promise<void>
+  updateQuantity: (itemId: string, quantity: number) => Promise<void>
+  removeItem: (itemId: string) => Promise<void>
+  clearCart: () => void
+  refreshCart: () => Promise<void>
+  
+  // Helpers
+  getItemCount: () => number
+  getSubtotal: () => number
 }
 
 const MedusaCartContext = createContext<MedusaCartContextType | undefined>(undefined)
 
 export function MedusaCartProvider({ children }: { children: ReactNode }) {
-  const [cart, setCart] = useState<Cart | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [cart, setCart] = useState<MedusaCartType | null>(null)
+  const [cartId, setCartId] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Initialize cart on mount
+  // Load cart from localStorage on mount
   useEffect(() => {
-    initializeCart()
+    const savedCartId = localStorage.getItem('medusa_cart_id')
+    if (savedCartId) {
+      setCartId(savedCartId)
+      refreshCartById(savedCartId)
+    }
   }, [])
 
-  const initializeCart = async () => {
-    const cartId = localStorage.getItem('medusa_cart_id')
-    
+  // Save cart ID to localStorage when it changes
+  useEffect(() => {
     if (cartId) {
-      // Try to retrieve existing cart
-      try {
-        const response = await fetch(`${API_URL}/store/carts/${cartId}`, {
-          headers: {
-            'x-publishable-api-key': PUBLISHABLE_KEY
-          }
-        })
-        
-        if (response.ok) {
-          const data = await response.json()
-          setCart(data.cart)
-          setIsLoading(false)
-          return
-        }
-      } catch (err) {
-        console.error('Failed to retrieve cart:', err)
-      }
+      localStorage.setItem('medusa_cart_id', cartId)
+    } else {
+      localStorage.removeItem('medusa_cart_id')
     }
-    
-    // Create new cart
-    await createCart()
-  }
+  }, [cartId])
 
-  const createCart = async () => {
+  const refreshCartById = async (id: string) => {
     try {
-      const response = await fetch(`${API_URL}/store/carts`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-publishable-api-key': PUBLISHABLE_KEY
-        },
-        body: JSON.stringify({
-          region_id: REGION_ID
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to create cart')
+      setIsLoading(true)
+      setError(null)
+      const cartData = await getMedusaCart(id)
+      if (cartData) {
+        setCart(cartData)
+      } else {
+        // Cart might be expired or invalid
+        setCartId(null)
+        setCart(null)
       }
-
-      const data = await response.json()
-      setCart(data.cart)
-      localStorage.setItem('medusa_cart_id', data.cart.id)
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err) {
+      console.error('Failed to refresh cart:', err)
+      setError('Failed to load cart')
     } finally {
       setIsLoading(false)
     }
   }
 
-  const addItem = async (variantId: string, quantity: number = 1) => {
-    if (!cart) return
-    
-    setError(null)
+  const initializeCart = async (email?: string) => {
     try {
-      const response = await fetch(`${API_URL}/store/carts/${cart.id}/line-items`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-publishable-api-key': PUBLISHABLE_KEY
-        },
-        body: JSON.stringify({
-          variant_id: variantId,
-          quantity
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to add item')
+      setIsLoading(true)
+      setError(null)
+      
+      const newCart = await createMedusaCart(email)
+      if (newCart) {
+        setCart(newCart)
+        setCartId(newCart.cart_id || newCart.id)
+      } else {
+        throw new Error('Failed to create cart')
       }
-
-      const data = await response.json()
-      setCart(data.cart)
     } catch (err: any) {
-      setError(err.message)
-      throw err
+      console.error('Failed to initialize cart:', err)
+      setError(err.message || 'Failed to create cart')
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  const updateQuantity = async (lineItemId: string, quantity: number) => {
-    if (!cart) return
-    
-    setError(null)
+  const addItem = async (variantId: string, quantity: number = 1, product?: MedusaProduct) => {
     try {
-      const response = await fetch(`${API_URL}/store/carts/${cart.id}/line-items/${lineItemId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-publishable-api-key': PUBLISHABLE_KEY
-        },
-        body: JSON.stringify({
-          quantity
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to update quantity')
-      }
-
-      const data = await response.json()
-      setCart(data.cart)
-    } catch (err: any) {
-      setError(err.message)
-      throw err
-    }
-  }
-
-  const removeItem = async (lineItemId: string) => {
-    if (!cart) return
-    
-    setError(null)
-    try {
-      const response = await fetch(`${API_URL}/store/carts/${cart.id}/line-items/${lineItemId}`, {
-        method: 'DELETE',
-        headers: {
-          'x-publishable-api-key': PUBLISHABLE_KEY
+      setIsLoading(true)
+      setError(null)
+      
+      let currentCartId = cartId
+      
+      // Create cart if it doesn't exist
+      if (!currentCartId) {
+        const newCart = await createMedusaCart()
+        if (newCart) {
+          currentCartId = newCart.cart_id || newCart.id
+          setCartId(currentCartId)
+          setCart(newCart)
+        } else {
+          throw new Error('Failed to create cart')
         }
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to remove item')
       }
-
-      const data = await response.json()
-      setCart(data.cart)
+      
+      // Add item to cart
+      const updatedCart = await addToMedusaCart(currentCartId, variantId, quantity)
+      if (updatedCart) {
+        setCart(updatedCart)
+      } else {
+        throw new Error('Failed to add item to cart')
+      }
+      
+      // Show success toast/notification (could emit event here)
+      console.log('Item added to cart successfully')
+      
     } catch (err: any) {
-      setError(err.message)
-      throw err
+      console.error('Failed to add item:', err)
+      setError(err.message || 'Failed to add item to cart')
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  const clearCart = async () => {
-    localStorage.removeItem('medusa_cart_id')
+  const updateQuantity = async (itemId: string, quantity: number) => {
+    if (!cartId) {
+      setError('No cart found')
+      return
+    }
+    
+    try {
+      setIsLoading(true)
+      setError(null)
+      
+      if (quantity <= 0) {
+        await removeItem(itemId)
+        return
+      }
+      
+      const updatedCart = await updateMedusaCartItem(cartId, itemId, quantity)
+      if (updatedCart) {
+        setCart(updatedCart)
+      }
+    } catch (err: any) {
+      console.error('Failed to update quantity:', err)
+      setError(err.message || 'Failed to update quantity')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const removeItem = async (itemId: string) => {
+    if (!cartId) {
+      setError('No cart found')
+      return
+    }
+    
+    try {
+      setIsLoading(true)
+      setError(null)
+      
+      const updatedCart = await removeFromMedusaCart(cartId, itemId)
+      if (updatedCart) {
+        setCart(updatedCart)
+      }
+    } catch (err: any) {
+      console.error('Failed to remove item:', err)
+      setError(err.message || 'Failed to remove item')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const clearCart = () => {
     setCart(null)
-    await createCart()
+    setCartId(null)
+    setError(null)
+    localStorage.removeItem('medusa_cart_id')
+  }
+
+  const refreshCart = async () => {
+    if (cartId) {
+      await refreshCartById(cartId)
+    }
+  }
+
+  const getItemCount = () => {
+    if (!cart?.items) return 0
+    return cart.items.reduce((total, item) => total + item.quantity, 0)
+  }
+
+  const getSubtotal = () => {
+    if (!cart?.items) return 0
+    return cart.items.reduce((total, item) => {
+      return total + (item.unit_price * item.quantity)
+    }, 0)
   }
 
   return (
     <MedusaCartContext.Provider
       value={{
         cart,
+        cartId,
         isLoading,
+        error,
+        initializeCart,
         addItem,
         updateQuantity,
         removeItem,
         clearCart,
-        error
+        refreshCart,
+        getItemCount,
+        getSubtotal
       }}
     >
       {children}
