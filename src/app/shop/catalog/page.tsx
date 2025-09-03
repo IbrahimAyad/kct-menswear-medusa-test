@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { 
@@ -20,10 +20,17 @@ export default function CatalogPage() {
   const [selectedTier, setSelectedTier] = useState<string>('all')
   const [gridView, setGridView] = useState<'2x2' | '3x3'>('3x3')
   const [sortBy, setSortBy] = useState<'name' | 'price-low' | 'price-high'>('name')
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    loadProducts()
+    setMounted(true)
   }, [])
+
+  useEffect(() => {
+    if (mounted) {
+      loadProducts()
+    }
+  }, [mounted])
 
   const loadProducts = async () => {
     setLoading(true)
@@ -31,9 +38,15 @@ export default function CatalogPage() {
     try {
       const medusaProducts = await fetchMedusaProducts()
       console.log('Loaded Medusa products:', medusaProducts.length)
-      setProducts(medusaProducts)
+      
+      // If no products, show demo message
+      if (medusaProducts.length === 0) {
+        setError('The Medusa backend is not configured yet. Please set up the backend API connection.')
+      } else {
+        setProducts(medusaProducts)
+      }
     } catch (err: any) {
-      setError(err.message || 'Failed to load products')
+      setError('Unable to connect to Medusa backend. Please ensure the backend is running and accessible.')
       console.error('Error loading products:', err)
     } finally {
       setLoading(false)
@@ -88,12 +101,30 @@ export default function CatalogPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <Package className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-semibold mb-2 text-red-600">Error Loading Catalog</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <Button onClick={loadProducts}>Try Again</Button>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full text-center bg-white rounded-lg shadow-lg p-8">
+          <Package className="h-12 w-12 text-amber-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-semibold mb-2">Catalog Setup Required</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+          
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 text-left">
+            <h3 className="font-medium text-blue-900 mb-2">Backend Configuration:</h3>
+            <p className="text-sm text-blue-700">
+              The Medusa backend at <code className="bg-blue-100 px-1 rounded">backend-production-7441.up.railway.app</code> needs to be configured with:
+            </p>
+            <ul className="text-sm text-blue-700 mt-2 list-disc list-inside">
+              <li>Publishable API key</li>
+              <li>Region configuration</li>
+              <li>Product inventory</li>
+            </ul>
+          </div>
+          
+          <div className="flex gap-3">
+            <Button onClick={loadProducts} className="flex-1">Try Again</Button>
+            <Link href="/products/suits" className="flex-1">
+              <Button variant="outline" className="w-full">View Premium Collection</Button>
+            </Link>
+          </div>
         </div>
       </div>
     )

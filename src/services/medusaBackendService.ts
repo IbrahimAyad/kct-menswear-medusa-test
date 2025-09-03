@@ -40,19 +40,35 @@ export interface MedusaCart {
 // Fetch all Medusa products
 export async function fetchMedusaProducts(): Promise<MedusaProduct[]> {
   try {
-    const response = await fetch(`${MEDUSA_URL}/store/products`, {
+    // Try with region first (may be required)
+    const params = new URLSearchParams({
+      limit: '100',
+      expand: 'variants,images',
+      fields: '*variants.prices,*images'
+    })
+    
+    const response = await fetch(`${MEDUSA_URL}/store/products?${params}`, {
+      method: 'GET',
       headers: {
+        'Accept': 'application/json',
         'Content-Type': 'application/json',
-        // Add key if required
-        // 'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY
+        // Try without key first
+        ...(process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY && {
+          'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY
+        })
       }
     })
 
+    console.log('Medusa API response status:', response.status)
+
     if (!response.ok) {
-      throw new Error(`Failed to fetch products: ${response.status}`)
+      const errorText = await response.text()
+      console.error('Medusa API error:', errorText)
+      throw new Error(`Failed to fetch products: ${response.status} - ${errorText}`)
     }
 
     const data = await response.json()
+    console.log('Medusa products fetched:', data.products?.length || 0)
     return data.products || []
   } catch (error) {
     console.error('Error fetching Medusa products:', error)
