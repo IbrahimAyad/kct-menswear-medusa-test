@@ -1,16 +1,19 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { 
   fetchMedusaProducts, 
   getMedusaDisplayPrice,
   isMedusaProductAvailable,
+  getDefaultVariant,
   type MedusaProduct 
 } from '@/services/medusaBackendService'
-import { ShoppingBag, Filter, Grid2x2, Grid3x3, Search, Package } from 'lucide-react'
+import { useMedusaCart } from '@/contexts/MedusaCartContext'
+import { ShoppingBag, Filter, Grid2x2, Grid3x3, Search, Package, Plus, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 
 export default function CatalogPage() {
   const [products, setProducts] = useState<MedusaProduct[]>([])
@@ -21,6 +24,11 @@ export default function CatalogPage() {
   const [gridView, setGridView] = useState<'2x2' | '3x3'>('3x3')
   const [sortBy, setSortBy] = useState<'name' | 'price-low' | 'price-high'>('name')
   const [mounted, setMounted] = useState(false)
+  const [addingToCart, setAddingToCart] = useState<string | null>(null)
+  const [addedItems, setAddedItems] = useState<Set<string>>(new Set())
+
+  // Get cart context
+  const { addItem, isLoading: cartLoading } = useMedusaCart()
 
   useEffect(() => {
     setMounted(true)
@@ -39,17 +47,52 @@ export default function CatalogPage() {
       const medusaProducts = await fetchMedusaProducts()
       console.log('Loaded Medusa products:', medusaProducts.length)
       
-      // If no products, show demo message
       if (medusaProducts.length === 0) {
-        setError('The Medusa backend is not configured yet. Please set up the backend API connection.')
+        setError('No products available. The catalog is being updated.')
       } else {
         setProducts(medusaProducts)
       }
     } catch (err: any) {
-      setError('Unable to connect to Medusa backend. Please ensure the backend is running and accessible.')
+      setError('Unable to load products. Please try again later.')
       console.error('Error loading products:', err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleAddToCart = async (e: React.MouseEvent, product: MedusaProduct) => {
+    e.preventDefault() // Prevent Link navigation
+    e.stopPropagation()
+    
+    const variant = getDefaultVariant(product)
+    if (!variant) {
+      toast.error('This product is not available')
+      return
+    }
+
+    setAddingToCart(product.id)
+    
+    try {
+      await addItem(variant.id, 1, product)
+      
+      // Show success state
+      setAddedItems(prev => new Set([...prev, product.id]))
+      toast.success(`${product.title} added to cart!`)
+      
+      // Reset success state after 2 seconds
+      setTimeout(() => {
+        setAddedItems(prev => {
+          const newSet = new Set(prev)
+          newSet.delete(product.id)
+          return newSet
+        })
+      }, 2000)
+      
+    } catch (error) {
+      console.error('Failed to add to cart:', error)
+      toast.error('Failed to add item to cart')
+    } finally {
+      setAddingToCart(null)
     }
   }
 
@@ -104,20 +147,8 @@ export default function CatalogPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="max-w-md w-full text-center bg-white rounded-lg shadow-lg p-8">
           <Package className="h-12 w-12 text-amber-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-semibold mb-2">Catalog Setup Required</h2>
+          <h2 className="text-2xl font-semibold mb-2">Catalog Notice</h2>
           <p className="text-gray-600 mb-6">{error}</p>
-          
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 text-left">
-            <h3 className="font-medium text-blue-900 mb-2">Backend Configuration:</h3>
-            <p className="text-sm text-blue-700">
-              The Medusa backend at <code className="bg-blue-100 px-1 rounded">backend-production-7441.up.railway.app</code> needs to be configured with:
-            </p>
-            <ul className="text-sm text-blue-700 mt-2 list-disc list-inside">
-              <li>Publishable API key</li>
-              <li>Region configuration</li>
-              <li>Product inventory</li>
-            </ul>
-          </div>
           
           <div className="flex gap-3">
             <Button onClick={loadProducts} className="flex-1">Try Again</Button>
@@ -139,7 +170,7 @@ export default function CatalogPage() {
             <div>
               <h1 className="text-2xl font-bold">Extended Catalog</h1>
               <p className="text-sm text-gray-600 mt-1">
-                {products.length} products from inventory
+                {filteredProducts.length} of {products.length} products
               </p>
             </div>
             
@@ -217,68 +248,98 @@ export default function CatalogPage() {
             {filteredProducts.map((product) => {
               const price = getMedusaDisplayPrice(product)
               const isAvailable = isMedusaProductAvailable(product)
+              const isAdding = addingToCart === product.id
+              const isAdded = addedItems.has(product.id)
               
               return (
-                <Link
+                <div
                   key={product.id}
-                  href={`/products/medusa/${product.handle || product.id}`}
-                  className="group bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+                  className="group bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow relative"
                 >
-                  {/* Image */}
-                  <div className="relative aspect-[3/4] bg-gray-100">
-                    {product.thumbnail ? (
-                      <Image
-                        src={product.thumbnail}
-                        alt={product.title}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-300"
-                        sizes={gridView === '2x2' ? '(max-width: 768px) 50vw, 25vw' : '(max-width: 768px) 50vw, 16vw'}
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Package className="h-12 w-12 text-gray-300" />
-                      </div>
-                    )}
-                    
-                    {/* Out of Stock Badge */}
-                    {!isAvailable && (
-                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                        <span className="bg-white text-black px-3 py-1 rounded-full text-sm font-medium">
-                          Out of Stock
-                        </span>
-                      </div>
-                    )}
+                  <Link href={`/products/medusa/${product.handle || product.id}`}>
+                    {/* Image */}
+                    <div className="relative aspect-[3/4] bg-gray-100">
+                      {product.thumbnail ? (
+                        <Image
+                          src={product.thumbnail}
+                          alt={product.title}
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
+                          sizes={gridView === '2x2' ? '(max-width: 768px) 50vw, 25vw' : '(max-width: 768px) 50vw, 16vw'}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Package className="h-12 w-12 text-gray-300" />
+                        </div>
+                      )}
+                      
+                      {/* Out of Stock Badge */}
+                      {!isAvailable && (
+                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                          <span className="bg-white text-black px-3 py-1 rounded-full text-sm font-medium">
+                            Out of Stock
+                          </span>
+                        </div>
+                      )}
 
-                    {/* Tier Badge */}
-                    {product.metadata?.pricing_tier && (
-                      <div className="absolute top-2 left-2 bg-black/80 text-white px-2 py-1 rounded text-xs">
-                        {product.metadata.pricing_tier}
-                      </div>
-                    )}
-                  </div>
+                      {/* Tier Badge */}
+                      {product.metadata?.pricing_tier && (
+                        <div className="absolute top-2 left-2 bg-black/80 text-white px-2 py-1 rounded text-xs">
+                          {product.metadata.pricing_tier}
+                        </div>
+                      )}
+                    </div>
 
-                  {/* Content */}
-                  <div className="p-3">
-                    <h3 className={`font-medium mb-1 line-clamp-2 ${gridView === '3x3' ? 'text-sm' : 'text-base'}`}>
-                      {product.title}
-                    </h3>
-                    
-                    {price > 0 ? (
-                      <p className={`font-bold ${gridView === '3x3' ? 'text-sm' : 'text-lg'}`}>
-                        ${price.toFixed(2)}
-                      </p>
-                    ) : (
-                      <p className="text-sm text-gray-500">Price on request</p>
-                    )}
-                    
-                    {/* Variants Count */}
-                    {product.variants && product.variants.length > 1 && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        {product.variants.length} options available
-                      </p>
-                    )}
-                  </div>
-                </Link>
+                    {/* Content */}
+                    <div className="p-3">
+                      <h3 className={`font-medium mb-1 line-clamp-2 ${gridView === '3x3' ? 'text-sm' : 'text-base'}`}>
+                        {product.title}
+                      </h3>
+                      
+                      {price > 0 ? (
+                        <p className={`font-bold ${gridView === '3x3' ? 'text-sm' : 'text-lg'}`}>
+                          ${price.toFixed(2)}
+                        </p>
+                      ) : (
+                        <p className="text-sm text-gray-500">Price on request</p>
+                      )}
+                      
+                      {/* Variants Count */}
+                      {product.variants && product.variants.length > 1 && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          {product.variants.length} options available
+                        </p>
+                      )}
+                    </div>
+                  </Link>
+
+                  {/* Add to Cart Button */}
+                  {isAvailable && price > 0 && (
+                    <div className="absolute bottom-2 right-2">
+                      <button
+                        onClick={(e) => handleAddToCart(e, product)}
+                        disabled={isAdding || cartLoading}
+                        className={`
+                          p-2 rounded-full transition-all duration-200 shadow-lg
+                          ${isAdded 
+                            ? 'bg-green-500 text-white' 
+                            : 'bg-burgundy-600 hover:bg-burgundy-700 text-white'
+                          }
+                          ${(isAdding || cartLoading) ? 'opacity-50 cursor-not-allowed' : ''}
+                        `}
+                        title={isAdded ? 'Added!' : 'Add to Cart'}
+                      >
+                        {isAdded ? (
+                          <Check className="h-4 w-4" />
+                        ) : isAdding ? (
+                          <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <Plus className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </div>
               )
             })}
           </div>

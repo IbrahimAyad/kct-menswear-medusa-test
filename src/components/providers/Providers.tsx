@@ -5,6 +5,8 @@ import { ReactNode, useState } from "react";
 import { NotificationContainer } from "@/components/notifications/NotificationContainer";
 import { SettingsProvider } from "@/contexts/SettingsContext";
 import { CoreCartProvider } from "@/contexts/CoreCartContext";
+import { MedusaCartProvider } from "@/contexts/MedusaCartContext";
+import { Toaster } from "sonner";
 
 interface ProvidersProps {
   children: ReactNode;
@@ -24,8 +26,20 @@ export function Providers({ children }: ProvidersProps) {
     <QueryClientProvider client={queryClient}>
       <SettingsProvider>
         <CoreCartProvider>
-          {children}
-          <NotificationContainer />
+          <MedusaCartProvider>
+            {children}
+            <NotificationContainer />
+            <Toaster 
+              position="bottom-right"
+              toastOptions={{
+                duration: 3000,
+                style: {
+                  background: '#363636',
+                  color: '#fff',
+                },
+              }}
+            />
+          </MedusaCartProvider>
         </CoreCartProvider>
       </SettingsProvider>
     </QueryClientProvider>
