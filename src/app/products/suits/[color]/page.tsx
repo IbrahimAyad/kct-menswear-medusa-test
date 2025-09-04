@@ -59,8 +59,8 @@ export default function SuitDetailPage() {
         twoPiece: twoPiece?.stripePriceId || '',
         threePiece: threePiece?.stripePriceId || '',
         name: `${formattedName} Suit`,
-        twoPiecePrice: 299.99,
-        threePiecePrice: 349.99
+        twoPiecePrice: 179.99,
+        threePiecePrice: 199.99
       })
       
       setLoading(false)
