@@ -44,13 +44,22 @@ export default function CatalogPage() {
     setLoading(true)
     setError(null)
     try {
+      // First load only 40 products for faster initial render
       const medusaProducts = await fetchMedusaProducts()
       console.log('Loaded Medusa products:', medusaProducts.length)
       
       if (medusaProducts.length === 0) {
         setError('No products available. The catalog is being updated.')
       } else {
-        setProducts(medusaProducts)
+        // Show first 40 products immediately, rest will be from cache
+        setProducts(medusaProducts.slice(0, 40))
+        
+        // Then update with all products if more than 40
+        if (medusaProducts.length > 40) {
+          setTimeout(() => {
+            setProducts(medusaProducts)
+          }, 100)
+        }
       }
     } catch (err: any) {
       setError('Unable to load products. Please try again later.')

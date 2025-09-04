@@ -2,6 +2,8 @@
 // Uses CUSTOM endpoints specifically created for this project
 // NOT standard Medusa v2 endpoints
 
+import { medusaProductCache } from './medusaProductCache'
+
 const MEDUSA_URL = 'https://backend-production-7441.up.railway.app'
 
 // Get API headers with publishable key
@@ -62,12 +64,21 @@ export interface MedusaCart {
   client_secret?: string
 }
 
-// Fetch all Medusa products using CUSTOM endpoint
+// Fetch all Medusa products using CUSTOM endpoint with caching
 export async function fetchMedusaProducts(): Promise<MedusaProduct[]> {
+  const limit = 200
+  const offset = 0
+  
+  // Check cache first
+  const cached = medusaProductCache.get(limit, offset)
+  if (cached) {
+    return cached
+  }
+  
   try {
     const params = new URLSearchParams({
-      limit: '200',
-      offset: '0'
+      limit: limit.toString(),
+      offset: offset.toString()
     })
     
     const response = await fetch(`${MEDUSA_URL}/store/products?${params}`, {
@@ -84,11 +95,66 @@ export async function fetchMedusaProducts(): Promise<MedusaProduct[]> {
     }
 
     const data = await response.json()
-    console.log('Medusa products fetched:', data.products?.length || 0)
-    return data.products || []
+    const products = data.products || []
+    console.log('Medusa products fetched:', products.length)
+    
+    // Cache the results
+    medusaProductCache.set(limit, offset, products)
+    
+    return products
   } catch (error) {
     console.error('Error fetching Medusa products:', error)
     return []
+  }
+}
+
+// Fetch Medusa products with pagination
+export async function fetchMedusaProductsPaginated(page: number = 1, pageSize: number = 20): Promise<{
+  products: MedusaProduct[]
+  hasMore: boolean
+  total: number
+}> {
+  const offset = (page - 1) * pageSize
+  
+  // Check cache first
+  const cached = medusaProductCache.get(pageSize, offset)
+  if (cached) {
+    return {
+      products: cached,
+      hasMore: cached.length === pageSize,
+      total: cached.length
+    }
+  }
+  
+  try {
+    const params = new URLSearchParams({
+      limit: pageSize.toString(),
+      offset: offset.toString()
+    })
+    
+    const response = await fetch(`${MEDUSA_URL}/store/products?${params}`, {
+      method: 'GET',
+      headers: getHeaders()
+    })
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch products: ${response.status}`)
+    }
+
+    const data = await response.json()
+    const products = data.products || []
+    
+    // Cache the results
+    medusaProductCache.set(pageSize, offset, products)
+    
+    return {
+      products,
+      hasMore: products.length === pageSize,
+      total: data.count || products.length
+    }
+  } catch (error) {
+    console.error('Error fetching paginated products:', error)
+    return { products: [], hasMore: false, total: 0 }
   }
 }
 
