@@ -1,13 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+// Check if Stripe key exists
+if (!process.env.STRIPE_SECRET_KEY) {
+  console.error('STRIPE_SECRET_KEY is not set in environment variables')
+}
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2024-12-18.acacia' as any,
 })
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if Stripe is configured
+    if (!process.env.STRIPE_SECRET_KEY) {
+      console.error('Stripe is not configured - missing secret key')
+      return NextResponse.json({ 
+        error: 'Payment system not configured' 
+      }, { status: 500 })
+    }
+
     const { items, cartItems } = await request.json()
+    
+    console.log('Checkout request received:', {
+      itemCount: items?.length,
+      cartItemCount: cartItems?.length
+    })
     
     if (!items || items.length === 0) {
       return NextResponse.json({ 
@@ -15,13 +33,23 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
+    // Log the items to debug
+    console.log('Items received:', JSON.stringify(items, null, 2))
+    
     // Filter items to ensure we have valid line items
     const validLineItems = items.filter((item: any) => {
       // Must have either a price ID or price_data
-      return item.price || item.price_data
+      const isValid = item.price || item.price_data
+      if (!isValid) {
+        console.log('Invalid item:', item)
+      }
+      return isValid
     })
 
+    console.log('Valid line items:', validLineItems.length)
+
     if (validLineItems.length === 0) {
+      console.error('No valid items found. Items structure:', items)
       return NextResponse.json({ 
         error: 'No valid items for checkout' 
       }, { status: 400 })
@@ -99,6 +127,21 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Core Stripe checkout error:', error)
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      type: error instanceof Error ? error.constructor.name : typeof error,
+      stack: error instanceof Error ? error.stack : undefined
+    })
+    
+    // Check for specific Stripe errors
+    if (error instanceof Error) {
+      if (error.message.includes('api_key')) {
+        return NextResponse.json({ 
+          error: 'Payment configuration error - please contact support',
+          success: false 
+        }, { status: 500 })
+      }
+    }
     
     return NextResponse.json({ 
       error: error instanceof Error ? error.message : 'Failed to create checkout session',

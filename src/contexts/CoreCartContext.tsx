@@ -120,13 +120,21 @@ export function CoreCartProvider({ children }: { children: React.ReactNode }) {
 
     setIsLoading(true)
     try {
+      // Log what we're sending
+      console.log('Cart items being processed:', items)
+      
       // Create line items for Stripe
-      const lineItems = items.map(item => ({
-        price: item.stripePriceId, // Use the Stripe price ID if available
-        quantity: item.quantity,
-        // If no price ID, use price_data
-        ...((!item.stripePriceId) && {
-          price_data: {
+      const lineItems = items.map(item => {
+        const lineItem: any = {
+          quantity: item.quantity,
+        }
+        
+        if (item.stripePriceId) {
+          // Use the Stripe price ID if available
+          lineItem.price = item.stripePriceId
+        } else {
+          // Otherwise use price_data
+          lineItem.price_data = {
             currency: 'usd',
             product_data: {
               name: item.name,
@@ -135,8 +143,11 @@ export function CoreCartProvider({ children }: { children: React.ReactNode }) {
             },
             unit_amount: Math.round(item.price * 100), // Convert to cents for Stripe
           }
-        })
-      }))
+        }
+        
+        console.log('Created line item:', lineItem)
+        return lineItem
+      })
 
       // Call API to create Stripe checkout session
       const response = await fetch('/api/checkout/core-stripe', {
