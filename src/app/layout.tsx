@@ -9,9 +9,10 @@ import { ChatWidget } from "@/components/ai/ChatWidget";
 import { UnifiedCartDrawer } from "@/components/cart/UnifiedCartDrawer";
 import { MixedCartWarning } from "@/components/cart/MixedCartWarning";
 import { StyleConsultantButton } from "@/components/style-consultant/VirtualStyleConsultant";
-import { GoogleAnalytics, GoogleAnalyticsScript } from "@/components/analytics/GoogleAnalytics";
+import { GoogleAnalyticsScript } from "@/components/analytics/GoogleAnalytics";
 import { AnalyticsDashboard } from "@/components/analytics/AnalyticsDashboard";
-import { FacebookPixel, FacebookPixelScript } from "@/components/analytics/FacebookPixel";
+import { FacebookPixelScript } from "@/components/analytics/FacebookPixel";
+import { ClientOnlyAnalytics } from "@/components/analytics/ClientOnlyAnalytics";
 import { PostHogProvider, PostHogPageview } from "@/components/analytics/PostHogProvider";
 // import { FacebookMessenger } from "@/components/chat/FacebookMessenger";
 import { Suspense } from "react";
@@ -84,11 +85,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <GoogleAnalyticsScript />
-        <FacebookPixelScript />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(socialMediaSchema) }}
+          suppressHydrationWarning
         />
       </head>
       <body className="antialiased">
@@ -96,6 +96,10 @@ export default function RootLayout({
         {/* <PostHogProvider> */}
           <Providers>
             <AuthProvider>
+              <ClientOnlyAnalytics>
+                <GoogleAnalyticsScript />
+                <FacebookPixelScript />
+              </ClientOnlyAnalytics>
               <Navigation />
               <main id="main-content" className="pt-16 min-h-screen" role="main" aria-label="Main content">
                 {children}

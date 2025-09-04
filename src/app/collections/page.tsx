@@ -2,6 +2,7 @@
 
 import { Suspense, useMemo, useState, useEffect } from 'react';
 import { MasterCollectionPage } from '@/components/collections/MasterCollectionPage';
+import { CollectionSkeleton } from '@/components/collections/CollectionSkeleton';
 import { fetchMedusaProductsPaginated, getMedusaDisplayPrice, type MedusaProduct } from '@/services/medusaBackendService';
 
 // All categories with updated images and dynamic counts
@@ -86,29 +87,27 @@ function CollectionsContent() {
         setLoading(true);
         setError(null);
         
-        // Load first page with smaller batch for faster initial load
-        const firstBatch = await fetchMedusaProductsPaginated(1, 30);
+        // Load only 12 products initially for super fast load
+        const firstBatch = await fetchMedusaProductsPaginated(1, 12);
         setProducts(firstBatch.products);
+        setLoading(false); // Show initial products immediately
         
-        // Load second page in background for smoother experience
+        // Load next batch in background
         if (firstBatch.totalPages > 1) {
-          fetchMedusaProductsPaginated(2, 30).then(secondBatch => {
+          setTimeout(async () => {
+            const secondBatch = await fetchMedusaProductsPaginated(2, 24);
             setProducts(prev => [...prev, ...secondBatch.products]);
             
-            // Load remaining pages gradually
+            // Load remaining pages progressively
             if (firstBatch.totalPages > 2) {
-              const loadRemainingPages = async () => {
-                for (let page = 3; page <= Math.min(firstBatch.totalPages, 8); page++) {
-                  const batch = await fetchMedusaProductsPaginated(page, 30);
-                  setProducts(prev => [...prev, ...batch.products]);
-                }
-                setAllProductsLoaded(true);
-              };
-              loadRemainingPages();
-            } else {
-              setAllProductsLoaded(true);
+              for (let page = 3; page <= Math.min(firstBatch.totalPages, 6); page++) {
+                await new Promise(resolve => setTimeout(resolve, 500)); // Small delay between loads
+                const batch = await fetchMedusaProductsPaginated(page, 24);
+                setProducts(prev => [...prev, ...batch.products]);
+              }
             }
-          });
+            setAllProductsLoaded(true);
+          }, 100); // Small delay to ensure UI renders first
         } else {
           setAllProductsLoaded(true);
         }
@@ -116,7 +115,7 @@ function CollectionsContent() {
         console.error('Failed to fetch Medusa products:', err);
         setError('Failed to fetch products');
       } finally {
-        setLoading(false);
+        // Loading is set to false earlier for faster perceived performance
       }
     };
     
@@ -237,19 +236,9 @@ function CollectionsContent() {
     );
   }
 
-  // Show loading state during SSR and initial client load
+  // Show skeleton during SSR and initial load
   if (!mounted || (loading && products.length === 0)) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-white">
-        <div className="text-center">
-          <div className="relative mb-8">
-            <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-black mx-auto"></div>
-          </div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Loading Collections</h2>
-          <p className="text-gray-600 animate-pulse">Preparing your shopping experience...</p>
-        </div>
-      </div>
-    );
+    return <CollectionSkeleton />;
   }
 
   return (

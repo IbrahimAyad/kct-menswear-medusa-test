@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { initGA, trackPageView } from '@/lib/analytics/ga4';
 import Script from 'next/script';
@@ -13,12 +13,12 @@ export function GoogleAnalyticsScript() {
   return (
     <>
       <Script
-        strategy="afterInteractive"
+        strategy="lazyOnload"
         src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
       />
       <Script
         id="google-analytics"
-        strategy="afterInteractive"
+        strategy="lazyOnload"
         dangerouslySetInnerHTML={{
           __html: `
             window.dataLayer = window.dataLayer || [];
@@ -26,6 +26,7 @@ export function GoogleAnalyticsScript() {
             gtag('js', new Date());
             gtag('config', '${GA_MEASUREMENT_ID}', {
               page_path: window.location.pathname,
+              send_page_view: false
             });
           `,
         }}
@@ -37,14 +38,19 @@ export function GoogleAnalyticsScript() {
 export function GoogleAnalytics() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [mounted, setMounted] = useState(false);
 
-  // Track page views on route change
   useEffect(() => {
-    if (pathname && GA_MEASUREMENT_ID) {
+    setMounted(true);
+  }, []);
+
+  // Track page views on route change (only after mount)
+  useEffect(() => {
+    if (mounted && pathname && GA_MEASUREMENT_ID) {
       const url = pathname + (searchParams?.toString() ? `?${searchParams.toString()}` : '');
       trackPageView(url);
     }
-  }, [pathname, searchParams]);
+  }, [mounted, pathname, searchParams]);
 
   return null;
 }
