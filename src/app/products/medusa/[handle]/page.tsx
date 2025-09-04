@@ -82,7 +82,7 @@ function ProductContent() {
 
     setAddingToCart(true)
     try {
-      await addItem(selectedVariant.id, quantity, product!)
+      await addItem(selectedVariant.id, quantity)
       setAdded(true)
       toast.success(`Added ${quantity} item${quantity > 1 ? 's' : ''} to cart!`)
       

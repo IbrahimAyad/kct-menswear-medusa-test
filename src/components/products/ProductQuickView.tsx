@@ -6,6 +6,8 @@ import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from '
 import { X, ChevronLeft, ChevronRight, ShoppingBag, Heart, Check, Truck, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { useCart } from '@/hooks/useCart';
+import { useMedusaCart } from '@/contexts/MedusaCartContext';
+import { toast } from 'sonner';
 
 interface ProductQuickViewProps {
   product: any;
@@ -27,6 +29,8 @@ export default function ProductQuickView({
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const { addItem } = useCart();
+  const { addItem: addMedusaItem } = useMedusaCart();
+  const [selectedVariant, setSelectedVariant] = useState<any>(null);
   
   // Swipe gesture values for mobile
   const y = useMotionValue(0);
@@ -71,39 +75,65 @@ export default function ProductQuickView({
 
   // Handle add to cart
   const handleAddToCart = async () => {
-    if (!selectedSize && sizes.length > 0) {
-      // Highlight size selection
-      document.getElementById('size-selector')?.classList.add('ring-2', 'ring-red-500');
-      setTimeout(() => {
-        document.getElementById('size-selector')?.classList.remove('ring-2', 'ring-red-500');
-      }, 2000);
-      return;
-    }
-
-    setIsAddingToCart(true);
+    // Check if it's a Medusa product (has variants or handle)
+    const isMedusaProduct = product.variants || product.handle;
     
-    // Add to cart
-    addItem({
-      id: product.id,
-      name: product.name || product.title,
-      price: product.price,
-      image: images[0],
-      quantity: 1,
-      size: selectedSize,
-      category: product.category || 'product'
-    });
+    if (isMedusaProduct) {
+      // For Medusa products, need a variant selected
+      if (!selectedVariant) {
+        toast.error('Please select a size/variant');
+        document.getElementById('size-selector')?.classList.add('ring-2', 'ring-red-500');
+        setTimeout(() => {
+          document.getElementById('size-selector')?.classList.remove('ring-2', 'ring-red-500');
+        }, 2000);
+        return;
+      }
+      
+      setIsAddingToCart(true);
+      try {
+        await addMedusaItem(selectedVariant.id, 1);
+        setShowSuccess(true);
+        toast.success('Added to cart!');
+        setTimeout(() => {
+          setShowSuccess(false);
+          if (isMobile) onClose();
+        }, 1500);
+      } catch (error) {
+        console.error('Failed to add to cart:', error);
+        toast.error('Failed to add item to cart');
+      } finally {
+        setIsAddingToCart(false);
+      }
+    } else {
+      // For core products, use the original cart
+      if (!selectedSize && sizes.length > 0) {
+        document.getElementById('size-selector')?.classList.add('ring-2', 'ring-red-500');
+        setTimeout(() => {
+          document.getElementById('size-selector')?.classList.remove('ring-2', 'ring-red-500');
+        }, 2000);
+        return;
+      }
 
-    // Show success state
-    setTimeout(() => {
-      setIsAddingToCart(false);
-      setShowSuccess(true);
+      setIsAddingToCart(true);
+      addItem({
+        id: product.id,
+        name: product.name || product.title,
+        price: product.price,
+        image: images[0],
+        quantity: 1,
+        size: selectedSize,
+        category: product.category || 'product'
+      });
+
       setTimeout(() => {
-        setShowSuccess(false);
-        if (isMobile) {
-          onClose(); // Auto close on mobile after success
-        }
-      }, 1500);
-    }, 500);
+        setIsAddingToCart(false);
+        setShowSuccess(true);
+        setTimeout(() => {
+          setShowSuccess(false);
+          if (isMobile) onClose();
+        }, 1500);
+      }, 500);
+    }
   };
 
   // Handle drag end for mobile
@@ -228,24 +258,45 @@ export default function ProductQuickView({
           {/* Size Selector */}
           <div id="size-selector" className="space-y-2 transition-all">
             <label className="text-sm font-medium text-gray-700">
-              Size {selectedSize && <span className="text-black">: {selectedSize}</span>}
+              Size {(selectedSize || selectedVariant) && <span className="text-black">: {selectedSize || selectedVariant?.title}</span>}
             </label>
-            <div className="grid grid-cols-4 gap-2">
-              {sizes.map((size) => (
-                <button
-                  key={size}
-                  onClick={() => setSelectedSize(size)}
-                  className={cn(
-                    "py-3 px-4 border-2 rounded-lg transition-all",
-                    selectedSize === size
-                      ? "border-black bg-black text-white"
-                      : "border-gray-200 hover:border-gray-400"
-                  )}
-                >
-                  {size}
-                </button>
-              ))}
-            </div>
+            {product?.variants ? (
+              // Medusa product with variants
+              <select
+                value={selectedVariant?.id || ''}
+                onChange={(e) => {
+                  const variant = product.variants?.find((v: any) => v.id === e.target.value);
+                  setSelectedVariant(variant);
+                }}
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black hover:border-gray-400 transition-all"
+              >
+                <option value="">Select Size</option>
+                {product.variants.map((variant: any) => (
+                  <option key={variant.id} value={variant.id}>
+                    {variant.title}
+                    {variant.inventory_quantity === 0 && ' (Out of Stock)'}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              // Core product with simple sizes
+              <div className="grid grid-cols-4 gap-2">
+                {sizes.map((size) => (
+                  <button
+                    key={size}
+                    onClick={() => setSelectedSize(size)}
+                    className={cn(
+                      "py-3 px-4 border-2 rounded-lg transition-all",
+                      selectedSize === size
+                        ? "border-black bg-black text-white"
+                        : "border-gray-200 hover:border-gray-400"
+                    )}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Quick Benefits */}
