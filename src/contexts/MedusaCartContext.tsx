@@ -10,6 +10,7 @@ import {
   type MedusaCart as MedusaCartType,
   type MedusaProduct
 } from '@/services/medusaBackendService'
+import { useLocalStorage } from '@/hooks/useClientSideStorage'
 
 interface MedusaCartContextType {
   cart: MedusaCartType | null
@@ -34,27 +35,18 @@ const MedusaCartContext = createContext<MedusaCartContextType | undefined>(undef
 
 export function MedusaCartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<MedusaCartType | null>(null)
-  const [cartId, setCartId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  
+  // Use the custom hook for safe localStorage access
+  const [cartId, setCartId, mounted] = useLocalStorage<string | null>('medusa_cart_id', null)
 
-  // Load cart from localStorage on mount
+  // Load cart after mount when we have a cart ID
   useEffect(() => {
-    const savedCartId = localStorage.getItem('medusa_cart_id')
-    if (savedCartId) {
-      setCartId(savedCartId)
-      refreshCartById(savedCartId)
+    if (mounted && cartId) {
+      refreshCartById(cartId)
     }
-  }, [])
-
-  // Save cart ID to localStorage when it changes
-  useEffect(() => {
-    if (cartId) {
-      localStorage.setItem('medusa_cart_id', cartId)
-    } else {
-      localStorage.removeItem('medusa_cart_id')
-    }
-  }, [cartId])
+  }, [mounted, cartId])
 
   const refreshCartById = async (id: string) => {
     try {
@@ -66,14 +58,12 @@ export function MedusaCartProvider({ children }: { children: ReactNode }) {
       } else {
         // Cart might be expired or invalid
         console.log('Cart not found, clearing stored ID')
-        localStorage.removeItem('medusa_cart_id')
         setCartId(null)
         setCart(null)
       }
     } catch (err) {
       console.error('Failed to refresh cart, creating new one:', err)
       // Clear invalid cart ID and reset state
-      localStorage.removeItem('medusa_cart_id')
       setCartId(null)
       setCart(null)
       setError(null) // Don't show error for expired carts
@@ -193,7 +183,6 @@ export function MedusaCartProvider({ children }: { children: ReactNode }) {
     setCart(null)
     setCartId(null)
     setError(null)
-    localStorage.removeItem('medusa_cart_id')
   }
 
   const refreshCart = async () => {

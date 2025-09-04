@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { loadStripe } from '@stripe/stripe-js'
 import { isCoreProductId } from '@/lib/config/product-routing'
+import { useLocalStorage } from '@/hooks/useClientSideStorage'
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
@@ -33,28 +34,20 @@ interface CoreCartContextType {
 const CoreCartContext = createContext<CoreCartContextType | undefined>(undefined)
 
 export function CoreCartProvider({ children }: { children: React.ReactNode }) {
-  const [items, setItems] = useState<CoreCartItem[]>([])
   const [isLoading, setIsLoading] = useState(false)
-
-  // Load cart from localStorage on mount
+  
+  // Use the custom hook for safe localStorage access
+  const [items, setItems, mounted] = useLocalStorage<CoreCartItem[]>('core-cart', [])
+  
+  // Filter out non-core products when loading
   useEffect(() => {
-    const savedCart = localStorage.getItem('core-cart')
-    if (savedCart) {
-      try {
-        const parsed = JSON.parse(savedCart)
-        // Only load core products
-        const coreItems = parsed.filter((item: CoreCartItem) => isCoreProductId(item.id))
+    if (mounted && items.length > 0) {
+      const coreItems = items.filter((item: CoreCartItem) => isCoreProductId(item.id))
+      if (coreItems.length !== items.length) {
         setItems(coreItems)
-      } catch (error) {
-        console.error('Failed to load core cart:', error)
       }
     }
-  }, [])
-
-  // Save cart to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem('core-cart', JSON.stringify(items))
-  }, [items])
+  }, [mounted])
 
   const addItem = (newItem: CoreCartItem) => {
     // Only accept core products
