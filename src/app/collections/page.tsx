@@ -65,39 +65,53 @@ const allCategories = [
 ];
 
 function CollectionsContent() {
+  const [mounted, setMounted] = useState(false);
   const [products, setProducts] = useState<MedusaProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [allProductsLoaded, setAllProductsLoaded] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Fetch Medusa products
+  // Ensure client-side only rendering
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Fetch Medusa products only after mount
+  useEffect(() => {
+    if (!mounted) return;
+    
     const loadProducts = async () => {
       try {
         setLoading(true);
         setError(null);
         
-        // Load first page
-        const firstBatch = await fetchMedusaProductsPaginated(1, 50);
+        // Load first page with smaller batch for faster initial load
+        const firstBatch = await fetchMedusaProductsPaginated(1, 30);
         setProducts(firstBatch.products);
         
-        // Load remaining pages in background
+        // Load second page in background for smoother experience
         if (firstBatch.totalPages > 1) {
-          const remainingPages = [];
-          for (let page = 2; page <= Math.min(firstBatch.totalPages, 10); page++) {
-            remainingPages.push(fetchMedusaProductsPaginated(page, 50));
-          }
-          
-          const results = await Promise.all(remainingPages);
-          const allProducts = [
-            ...firstBatch.products,
-            ...results.flatMap(r => r.products)
-          ];
-          setProducts(allProducts);
+          fetchMedusaProductsPaginated(2, 30).then(secondBatch => {
+            setProducts(prev => [...prev, ...secondBatch.products]);
+            
+            // Load remaining pages gradually
+            if (firstBatch.totalPages > 2) {
+              const loadRemainingPages = async () => {
+                for (let page = 3; page <= Math.min(firstBatch.totalPages, 8); page++) {
+                  const batch = await fetchMedusaProductsPaginated(page, 30);
+                  setProducts(prev => [...prev, ...batch.products]);
+                }
+                setAllProductsLoaded(true);
+              };
+              loadRemainingPages();
+            } else {
+              setAllProductsLoaded(true);
+            }
+          });
+        } else {
+          setAllProductsLoaded(true);
         }
-        
-        setAllProductsLoaded(true);
       } catch (err) {
         console.error('Failed to fetch Medusa products:', err);
         setError('Failed to fetch products');
@@ -107,7 +121,7 @@ function CollectionsContent() {
     };
     
     loadProducts();
-  }, []);
+  }, [mounted]);
 
   // Calculate category counts
   const categoriesWithCounts = useMemo(() => {
@@ -117,46 +131,40 @@ function CollectionsContent() {
       const count = products.filter(product => {
         const productTitle = product.title?.toLowerCase() || '';
         const productHandle = product.handle?.toLowerCase() || '';
+        const combinedText = `${productTitle} ${productHandle}`;
         const categoryId = category.id.toLowerCase();
         
-        // Match logic for different categories based on title/handle
+        // More comprehensive matching patterns
         if (categoryId === 'suits') {
-          return productTitle.includes('suit') || 
-                 productHandle.includes('suit') ||
-                 productTitle.includes('tuxedo') ||
-                 productTitle.includes('blazer');
+          return combinedText.match(/\b(suit|tuxedo|2-piece|3-piece|two.?piece|three.?piece)\b/);
         }
         if (categoryId === 'shirts') {
-          return productTitle.includes('shirt') || productHandle.includes('shirt');
+          return combinedText.match(/\b(shirt|dress.?shirt|button.?up|oxford|formal.?shirt)\b/) &&
+                 !combinedText.includes('tie');
         }
         if (categoryId === 'vest') {
-          return productTitle.includes('vest') || productHandle.includes('vest');
+          return combinedText.match(/\b(vest|waistcoat)\b/);
         }
         if (categoryId === 'jackets') {
-          return productTitle.includes('jacket') || 
-                 productTitle.includes('blazer') ||
-                 productTitle.includes('coat');
+          // Match blazers and jackets but exclude suits
+          return combinedText.match(/\b(blazer|jacket|sport.?coat|dinner.?jacket)\b/) &&
+                 !combinedText.match(/\b(suit|2-piece|3-piece)\b/);
         }
         if (categoryId === 'pants') {
-          return productTitle.includes('pant') || 
-                 productTitle.includes('trouser');
+          // This category seems to be for "Shirt & Tie" based on the UI
+          // Let's match shirt and tie combinations
+          return combinedText.includes('shirt') && combinedText.includes('tie') ||
+                 combinedText.match(/\b(combo|combination|set)\b/);
         }
         if (categoryId === 'knitwear') {
-          return productTitle.includes('knit') || 
-                 productTitle.includes('sweater') ||
-                 productTitle.includes('cardigan');
+          return combinedText.match(/\b(knit|sweater|cardigan|pullover|jumper)\b/);
         }
         if (categoryId === 'accessories') {
-          return productTitle.includes('tie') || 
-                 productTitle.includes('bow') ||
-                 productTitle.includes('belt') ||
-                 productTitle.includes('suspender') ||
-                 productTitle.includes('pocket') ||
-                 productTitle.includes('cufflink');
+          return combinedText.match(/\b(tie|bowtie|bow.?tie|necktie|belt|suspender|cufflink|pocket.?square|handkerchief)\b/) &&
+                 !combinedText.includes('shirt');
         }
         if (categoryId === 'shoes') {
-          return productTitle.includes('shoe') || 
-                 productTitle.includes('boot');
+          return combinedText.match(/\b(shoe|oxford|loafer|boot|derby|brogue|sneaker)\b/);
         }
         
         return false;
@@ -172,7 +180,29 @@ function CollectionsContent() {
     
     return products.map((product: MedusaProduct) => {
       const productTitle = product.title?.toLowerCase() || '';
+      const productHandle = product.handle?.toLowerCase() || '';
+      const combinedText = `${productTitle} ${productHandle}`;
       const price = getMedusaDisplayPrice(product);
+      
+      // Determine category with same logic as counting
+      let category = 'other';
+      if (combinedText.match(/\b(suit|tuxedo|2-piece|3-piece)\b/)) {
+        category = 'suits';
+      } else if (combinedText.match(/\b(blazer|jacket|sport.?coat)\b/) && !combinedText.includes('suit')) {
+        category = 'jackets';
+      } else if (combinedText.match(/\b(shirt|dress.?shirt)\b/) && !combinedText.includes('tie')) {
+        category = 'shirts';
+      } else if (combinedText.match(/\b(vest|waistcoat)\b/)) {
+        category = 'vest';
+      } else if (combinedText.includes('shirt') && combinedText.includes('tie')) {
+        category = 'pants'; // This is "Shirt & Tie" category
+      } else if (combinedText.match(/\b(tie|bowtie|belt|suspender|cufflink|pocket.?square)\b/)) {
+        category = 'accessories';
+      } else if (combinedText.match(/\b(knit|sweater|cardigan)\b/)) {
+        category = 'knitwear';
+      } else if (combinedText.match(/\b(shoe|oxford|loafer|boot)\b/)) {
+        category = 'shoes';
+      }
       
       return {
         id: product.id,
@@ -182,14 +212,7 @@ function CollectionsContent() {
         originalPrice: price > 100 ? Math.round(price * 1.2) : undefined,
         image: product.thumbnail || product.images?.[0]?.url || '/placeholder-product.jpg',
         hoverImage: product.images?.[1]?.url,
-        category: productTitle.includes('suit') ? 'suits' :
-                  productTitle.includes('shirt') ? 'shirts' :
-                  productTitle.includes('vest') ? 'vest' :
-                  productTitle.includes('jacket') || productTitle.includes('blazer') ? 'jackets' :
-                  productTitle.includes('pant') ? 'pants' :
-                  productTitle.includes('knit') || productTitle.includes('sweater') ? 'knitwear' :
-                  productTitle.includes('tie') || productTitle.includes('belt') ? 'accessories' :
-                  productTitle.includes('shoe') ? 'shoes' : 'other',
+        category: category,
         tags: [],
         isNew: false,
         isSale: false
@@ -214,7 +237,8 @@ function CollectionsContent() {
     );
   }
 
-  if (loading && products.length === 0) {
+  // Show loading state during SSR and initial client load
+  if (!mounted || (loading && products.length === 0)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-white">
         <div className="text-center">
@@ -222,7 +246,7 @@ function CollectionsContent() {
             <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-black mx-auto"></div>
           </div>
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Loading Collections</h2>
-          <p className="text-gray-600 animate-pulse">Fetching products from our catalog...</p>
+          <p className="text-gray-600 animate-pulse">Preparing your shopping experience...</p>
         </div>
       </div>
     );

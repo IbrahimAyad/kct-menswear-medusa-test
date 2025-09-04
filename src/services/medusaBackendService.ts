@@ -113,16 +113,19 @@ export async function fetchMedusaProductsPaginated(page: number = 1, pageSize: n
   products: MedusaProduct[]
   hasMore: boolean
   total: number
+  totalPages: number
 }> {
   const offset = (page - 1) * pageSize
   
   // Check cache first
   const cached = medusaProductCache.get(pageSize, offset)
   if (cached) {
+    const totalPages = Math.ceil(cached.length / pageSize)
     return {
       products: cached,
       hasMore: cached.length === pageSize,
-      total: cached.length
+      total: cached.length,
+      totalPages
     }
   }
   
@@ -143,6 +146,8 @@ export async function fetchMedusaProductsPaginated(page: number = 1, pageSize: n
 
     const data = await response.json()
     const products = data.products || []
+    const total = data.count || products.length
+    const totalPages = Math.ceil(total / pageSize)
     
     // Cache the results
     medusaProductCache.set(pageSize, offset, products)
@@ -150,11 +155,12 @@ export async function fetchMedusaProductsPaginated(page: number = 1, pageSize: n
     return {
       products,
       hasMore: products.length === pageSize,
-      total: data.count || products.length
+      total,
+      totalPages
     }
   } catch (error) {
     console.error('Error fetching paginated products:', error)
-    return { products: [], hasMore: false, total: 0 }
+    return { products: [], hasMore: false, total: 0, totalPages: 0 }
   }
 }
 
