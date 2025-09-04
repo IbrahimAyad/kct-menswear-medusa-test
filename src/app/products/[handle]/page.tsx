@@ -7,6 +7,7 @@ import { useMedusaCart } from '@/hooks/useMedusaCart'
 import { medusa, MEDUSA_CONFIG } from '@/lib/medusa/client'
 import { ShoppingCart, Check, AlertCircle, ArrowLeft, Truck, Shield, Star, Package } from 'lucide-react'
 import Link from 'next/link'
+import { getAllCoreProducts } from '@/lib/config/coreProducts'
 
 export default function ProductDetailPage() {
   const params = useParams()
@@ -25,9 +26,32 @@ export default function ProductDetailPage() {
 
   useEffect(() => {
     if (handle) {
+      // Check if this is a core suit product first
+      const coreProducts = getAllCoreProducts()
+      const coreSuit = coreProducts.find(p => 
+        p.id === handle || 
+        p.stripePriceId === handle ||
+        (p.category === 'suits' && (
+          p.id === `suit-${handle}-2p` ||
+          p.id === `suit-${handle}-3p` ||
+          p.id.includes(handle)
+        ))
+      )
+      
+      if (coreSuit && coreSuit.category === 'suits') {
+        // Extract color from suit ID and redirect
+        const match = coreSuit.id.match(/suit-([^-]+)-/)
+        if (match) {
+          const color = match[1]
+          router.replace(`/products/suits/${color}`)
+          return
+        }
+      }
+      
+      // Otherwise, try to fetch as Medusa product
       fetchProduct()
     }
-  }, [handle])
+  }, [handle, router])
 
   const fetchProduct = async () => {
     try {

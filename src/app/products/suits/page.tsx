@@ -177,7 +177,7 @@ export default function SuitsPage() {
                 .filter(suit => colors.includes(suit.color))
                 .map((suit) => (
                   <div key={suit.id} className="group">
-                    <Link href={suit.twoPieceId ? `/products/${suit.twoPieceId}` : '#'}>
+                    <Link href={`/products/suits/${suit.id.replace('suit-', '')}`}>
                       <div className="aspect-[3/4] bg-gray-100 rounded-lg overflow-hidden mb-4 relative">
                         <Image
                           src={suit.image}

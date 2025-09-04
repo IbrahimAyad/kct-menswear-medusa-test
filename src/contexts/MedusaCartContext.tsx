@@ -65,12 +65,18 @@ export function MedusaCartProvider({ children }: { children: ReactNode }) {
         setCart(cartData)
       } else {
         // Cart might be expired or invalid
+        console.log('Cart not found, clearing stored ID')
+        localStorage.removeItem('medusa_cart_id')
         setCartId(null)
         setCart(null)
       }
     } catch (err) {
-      console.error('Failed to refresh cart:', err)
-      setError('Failed to load cart')
+      console.error('Failed to refresh cart, creating new one:', err)
+      // Clear invalid cart ID and reset state
+      localStorage.removeItem('medusa_cart_id')
+      setCartId(null)
+      setCart(null)
+      setError(null) // Don't show error for expired carts
     } finally {
       setIsLoading(false)
     }

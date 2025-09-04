@@ -20,6 +20,7 @@ export interface MedusaProduct {
   description?: string
   thumbnail?: string
   price?: number
+  pricing_tier?: string
   metadata?: {
     tier_price?: number
     pricing_tier?: string
@@ -27,15 +28,18 @@ export interface MedusaProduct {
   variants?: Array<{
     id: string
     title: string
+    sku?: string
+    barcode?: string | null
+    inventory_quantity?: number
     prices?: Array<{
       amount: number
       currency_code: string
     }>
-    inventory_quantity?: number
   }>
   images?: Array<{
     url: string
   }>
+  categories?: Array<any>
 }
 
 export interface MedusaCart {
@@ -88,21 +92,26 @@ export async function fetchMedusaProducts(): Promise<MedusaProduct[]> {
   }
 }
 
-// Get single product using CUSTOM endpoint
+// Get single product by handle
+export async function fetchMedusaProductByHandle(handle: string): Promise<MedusaProduct | null> {
+  try {
+    // Fetch all products and find by handle
+    // Since there's no single product endpoint, we fetch with a limit and search
+    const products = await fetchMedusaProducts()
+    const product = products.find(p => p.handle === handle || p.id === handle)
+    return product || null
+  } catch (error) {
+    console.error('Error fetching Medusa product by handle:', error)
+    return null
+  }
+}
+
+// Alternative: Get product by ID from the list
 export async function fetchMedusaProduct(productId: string): Promise<MedusaProduct | null> {
   try {
-    const response = await fetch(`${MEDUSA_URL}/store/products`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify({ product_id: productId })
-    })
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch product: ${response.status}`)
-    }
-
-    const data = await response.json()
-    return data.product
+    const products = await fetchMedusaProducts()
+    const product = products.find(p => p.id === productId)
+    return product || null
   } catch (error) {
     console.error('Error fetching Medusa product:', error)
     return null
@@ -222,7 +231,11 @@ export async function getMedusaCart(cartId: string): Promise<MedusaCart | null> 
     })
 
     if (!response.ok) {
-      throw new Error(`Failed to get cart: ${response.status}`)
+      // Don't log error for 404s (cart not found is normal)
+      if (response.status !== 404) {
+        console.error(`Failed to get cart: ${response.status}`)
+      }
+      return null
     }
 
     const data = await response.json()

@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import Link from 'next/link'
 import { 
-  fetchMedusaProduct, 
+  fetchMedusaProductByHandle, 
   getMedusaDisplayPrice,
   isMedusaProductAvailable,
   type MedusaProduct 
@@ -20,7 +21,8 @@ import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
-export default function MedusaProductDetailPage() {
+// Client-only component to avoid hydration issues
+function ProductContent() {
   const params = useParams()
   const router = useRouter()
   const { addItem, isLoading: cartLoading } = useMedusaCart()
@@ -32,22 +34,26 @@ export default function MedusaProductDetailPage() {
   const [quantity, setQuantity] = useState(1)
   const [addingToCart, setAddingToCart] = useState(false)
   const [added, setAdded] = useState(false)
+  const [mounted, setMounted] = useState(false)
   
   const handle = params.handle as string
 
+  // Ensure client-side only rendering
   useEffect(() => {
-    if (handle) {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (handle && mounted) {
       loadProduct()
     }
-  }, [handle])
+  }, [handle, mounted])
 
   const loadProduct = async () => {
     setLoading(true)
     try {
-      // For now, we'll fetch the product by its ID
-      // In a real implementation, you'd fetch by handle
-      const productId = handle.startsWith('prod_') ? handle : `prod_${handle}`
-      const data = await fetchMedusaProduct(productId)
+      // Fetch product by handle
+      const data = await fetchMedusaProductByHandle(handle)
       
       if (data) {
         setProduct(data)
@@ -114,6 +120,18 @@ export default function MedusaProductDetailPage() {
     }
   }
 
+  // Don't render until mounted to avoid hydration mismatch
+  if (!mounted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Package className="h-12 w-12 text-gray-400 mx-auto mb-4 animate-pulse" />
+          <h2 className="text-xl font-semibold">Loading...</h2>
+        </div>
+      </div>
+    )
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -139,10 +157,12 @@ export default function MedusaProductDetailPage() {
     )
   }
 
-  const price = getMedusaDisplayPrice(product)
+  // Get price from the product directly or from metadata
+  const price = product.price || getMedusaDisplayPrice(product)
   const isAvailable = isMedusaProductAvailable(product)
   const images = product.images || []
   const currentImage = images[selectedImageIndex]?.url || product.thumbnail
+  const pricingTier = product.pricing_tier || product.metadata?.pricing_tier
 
   return (
     <div className="min-h-screen bg-white">
@@ -169,6 +189,7 @@ export default function MedusaProductDetailPage() {
                   alt={product.title}
                   fill
                   className="object-cover"
+                  sizes="(max-width: 1024px) 100vw, 50vw"
                   priority
                 />
               ) : (
@@ -226,6 +247,7 @@ export default function MedusaProductDetailPage() {
                       alt={`${product.title} ${index + 1}`}
                       fill
                       className="object-cover"
+                      sizes="80px"
                     />
                   </button>
                 ))}
@@ -238,9 +260,9 @@ export default function MedusaProductDetailPage() {
             {/* Title and Price */}
             <div>
               <h1 className="text-3xl font-bold mb-2">{product.title}</h1>
-              {product.metadata?.pricing_tier && (
+              {pricingTier && (
                 <span className="inline-block px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-600 mb-4">
-                  {product.metadata.pricing_tier}
+                  {pricingTier}
                 </span>
               )}
               {price > 0 ? (
@@ -258,9 +280,11 @@ export default function MedusaProductDetailPage() {
             )}
 
             {/* Variant Selection */}
-            {product.variants && product.variants.length > 1 && (
+            {product.variants && product.variants.length > 0 && (
               <div>
-                <label className="block text-sm font-medium mb-2">Select Option</label>
+                <label className="block text-sm font-medium mb-2">
+                  {product.variants.length > 1 ? 'Select Size' : 'Size'}
+                </label>
                 <select
                   value={selectedVariant?.id || ''}
                   onChange={(e) => {
@@ -271,7 +295,9 @@ export default function MedusaProductDetailPage() {
                 >
                   {product.variants.map((variant) => (
                     <option key={variant.id} value={variant.id}>
-                      {variant.title} {variant.inventory_quantity === 0 && '(Out of Stock)'}
+                      {variant.title} 
+                      {variant.inventory_quantity === 0 && ' (Out of Stock)'}
+                      {variant.sku && ` - ${variant.sku}`}
                     </option>
                   ))}
                 </select>
@@ -305,12 +331,12 @@ export default function MedusaProductDetailPage() {
             {/* Add to Cart Button */}
             <button
               onClick={handleAddToCart}
-              disabled={!isAvailable || addingToCart || cartLoading}
+              disabled={!isAvailable || addingToCart || cartLoading || !selectedVariant}
               className={cn(
                 "w-full py-4 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2",
                 added 
                   ? "bg-green-500 text-white" 
-                  : isAvailable 
+                  : isAvailable && selectedVariant
                     ? "bg-burgundy-600 hover:bg-burgundy-700 text-white" 
                     : "bg-gray-200 text-gray-500 cursor-not-allowed"
               )}
@@ -328,7 +354,7 @@ export default function MedusaProductDetailPage() {
               ) : (
                 <>
                   <ShoppingBag className="h-5 w-5" />
-                  {isAvailable ? 'Add to Cart' : 'Out of Stock'}
+                  {isAvailable && selectedVariant ? 'Add to Cart' : 'Select Size'}
                 </>
               )}
             </button>
@@ -354,9 +380,15 @@ export default function MedusaProductDetailPage() {
               <div className="border-t pt-6">
                 <h3 className="font-medium mb-3">Product Details</h3>
                 <dl className="space-y-2 text-sm">
-                  {product.handle && (
+                  {selectedVariant.sku && (
                     <div className="flex justify-between">
                       <dt className="text-gray-600">SKU:</dt>
+                      <dd className="font-medium">{selectedVariant.sku}</dd>
+                    </div>
+                  )}
+                  {product.handle && (
+                    <div className="flex justify-between">
+                      <dt className="text-gray-600">Style:</dt>
                       <dd className="font-medium">{product.handle}</dd>
                     </div>
                   )}
@@ -389,4 +421,9 @@ export default function MedusaProductDetailPage() {
       </div>
     </div>
   )
+}
+
+// Export as default with no SSR to avoid hydration issues
+export default function MedusaProductDetailPage() {
+  return <ProductContent />
 }
