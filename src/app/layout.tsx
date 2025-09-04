@@ -113,8 +113,7 @@ export default function RootLayout({
               <ServiceWorkerUnregister />
               <Suspense fallback={null}>
                 {/* <PostHogPageview /> */}
-                <GoogleAnalytics />
-                <FacebookPixel />
+                {/* Analytics are now handled in ClientOnlyAnalytics wrapper above */}
               </Suspense>
               {/* <FacebookMessenger /> */}
               {process.env.NODE_ENV === 'development' && <AnalyticsDashboard />}
