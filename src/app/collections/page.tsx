@@ -1,9 +1,8 @@
 'use client';
 
-import { Suspense, useMemo } from 'react';
-import { useUnifiedShop } from '@/hooks/useUnifiedShop';
+import { Suspense, useMemo, useState, useEffect } from 'react';
 import { MasterCollectionPage } from '@/components/collections/MasterCollectionPage';
-import { UnifiedProduct } from '@/types/unified-shop';
+import { fetchMedusaProductsPaginated, getMedusaDisplayPrice, type MedusaProduct } from '@/services/medusaBackendService';
 
 // All categories with updated images and dynamic counts
 const allCategories = [
@@ -66,59 +65,98 @@ const allCategories = [
 ];
 
 function CollectionsContent() {
-  const { products, loading, error } = useUnifiedShop({
-    initialFilters: { includeBundles: false },
-    autoFetch: true
-  });
-  
+  const [products, setProducts] = useState<MedusaProduct[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [allProductsLoaded, setAllProductsLoaded] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
+  // Fetch Medusa products
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Load first page
+        const firstBatch = await fetchMedusaProductsPaginated(1, 50);
+        setProducts(firstBatch.products);
+        
+        // Load remaining pages in background
+        if (firstBatch.totalPages > 1) {
+          const remainingPages = [];
+          for (let page = 2; page <= Math.min(firstBatch.totalPages, 10); page++) {
+            remainingPages.push(fetchMedusaProductsPaginated(page, 50));
+          }
+          
+          const results = await Promise.all(remainingPages);
+          const allProducts = [
+            ...firstBatch.products,
+            ...results.flatMap(r => r.products)
+          ];
+          setProducts(allProducts);
+        }
+        
+        setAllProductsLoaded(true);
+      } catch (err) {
+        console.error('Failed to fetch Medusa products:', err);
+        setError('Failed to fetch products');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadProducts();
+  }, []);
 
   // Calculate category counts
   const categoriesWithCounts = useMemo(() => {
-    if (!products) return allCategories;
+    if (!products || products.length === 0) return allCategories;
     
     return allCategories.map(category => {
       const count = products.filter(product => {
-        const productCategory = product.category?.toLowerCase() || '';
+        const productTitle = product.title?.toLowerCase() || '';
+        const productHandle = product.handle?.toLowerCase() || '';
         const categoryId = category.id.toLowerCase();
         
-        // Match logic for different categories
+        // Match logic for different categories based on title/handle
         if (categoryId === 'suits') {
-          return productCategory.includes('suit') || 
-                 productCategory.includes('tuxedo') ||
-                 productCategory.includes('blazer');
+          return productTitle.includes('suit') || 
+                 productHandle.includes('suit') ||
+                 productTitle.includes('tuxedo') ||
+                 productTitle.includes('blazer');
         }
         if (categoryId === 'shirts') {
-          return productCategory.includes('shirt');
+          return productTitle.includes('shirt') || productHandle.includes('shirt');
         }
         if (categoryId === 'vest') {
-          return productCategory.includes('vest');
+          return productTitle.includes('vest') || productHandle.includes('vest');
         }
         if (categoryId === 'jackets') {
-          return productCategory.includes('jacket') || 
-                 productCategory.includes('blazer') ||
-                 productCategory.includes('coat');
+          return productTitle.includes('jacket') || 
+                 productTitle.includes('blazer') ||
+                 productTitle.includes('coat');
         }
         if (categoryId === 'pants') {
-          return productCategory.includes('pant') || 
-                 productCategory.includes('trouser');
+          return productTitle.includes('pant') || 
+                 productTitle.includes('trouser');
         }
         if (categoryId === 'knitwear') {
-          return productCategory.includes('knit') || 
-                 productCategory.includes('sweater') ||
-                 productCategory.includes('cardigan');
+          return productTitle.includes('knit') || 
+                 productTitle.includes('sweater') ||
+                 productTitle.includes('cardigan');
         }
         if (categoryId === 'accessories') {
-          return productCategory.includes('tie') || 
-                 productCategory.includes('bow') ||
-                 productCategory.includes('belt') ||
-                 productCategory.includes('suspender') ||
-                 productCategory.includes('pocket') ||
-                 productCategory.includes('cufflink');
+          return productTitle.includes('tie') || 
+                 productTitle.includes('bow') ||
+                 productTitle.includes('belt') ||
+                 productTitle.includes('suspender') ||
+                 productTitle.includes('pocket') ||
+                 productTitle.includes('cufflink');
         }
         if (categoryId === 'shoes') {
-          return productCategory.includes('shoe') || 
-                 productCategory.includes('boot');
+          return productTitle.includes('shoe') || 
+                 productTitle.includes('boot');
         }
         
         return false;
@@ -128,30 +166,35 @@ function CollectionsContent() {
     });
   }, [products]);
 
-  // Transform products for MasterCollectionPage
+  // Transform Medusa products for MasterCollectionPage
   const transformedProducts = useMemo(() => {
-    if (!products) return [];
+    if (!products || products.length === 0) return [];
     
-    return products.map((product: UnifiedProduct) => ({
-      id: product.id,
-      name: product.name,
-      price: typeof product.price === 'string' ? parseFloat(product.price) : product.price,
-      originalPrice: product.compare_at_price ? parseFloat(product.compare_at_price) : 
-                     (product.price > 100 ? product.price * 1.2 : undefined),
-      image: product.images?.[0]?.src || product.featured_image?.src || product.primary_image || product.image || '/placeholder-product.jpg',
-      hoverImage: product.images?.[1]?.src || product.additionalImages?.[0],
-      category: product.category?.toLowerCase().includes('suit') ? 'suits' :
-                product.category?.toLowerCase().includes('shirt') ? 'shirts' :
-                product.category?.toLowerCase().includes('vest') ? 'vest' :
-                product.category?.toLowerCase().includes('jacket') || product.category?.toLowerCase().includes('blazer') ? 'jackets' :
-                product.category?.toLowerCase().includes('pant') ? 'pants' :
-                product.category?.toLowerCase().includes('knit') || product.category?.toLowerCase().includes('sweater') ? 'knitwear' :
-                product.category?.toLowerCase().includes('tie') || product.category?.toLowerCase().includes('belt') ? 'accessories' :
-                product.category?.toLowerCase().includes('shoe') ? 'shoes' : 'other',
-      tags: product.tags || [],
-      isNew: product.tags?.includes('new-arrival'),
-      isSale: product.tags?.includes('sale')
-    }));
+    return products.map((product: MedusaProduct) => {
+      const productTitle = product.title?.toLowerCase() || '';
+      const price = getMedusaDisplayPrice(product);
+      
+      return {
+        id: product.id,
+        name: product.title,
+        handle: product.handle,
+        price: price,
+        originalPrice: price > 100 ? Math.round(price * 1.2) : undefined,
+        image: product.thumbnail || product.images?.[0]?.url || '/placeholder-product.jpg',
+        hoverImage: product.images?.[1]?.url,
+        category: productTitle.includes('suit') ? 'suits' :
+                  productTitle.includes('shirt') ? 'shirts' :
+                  productTitle.includes('vest') ? 'vest' :
+                  productTitle.includes('jacket') || productTitle.includes('blazer') ? 'jackets' :
+                  productTitle.includes('pant') ? 'pants' :
+                  productTitle.includes('knit') || productTitle.includes('sweater') ? 'knitwear' :
+                  productTitle.includes('tie') || productTitle.includes('belt') ? 'accessories' :
+                  productTitle.includes('shoe') ? 'shoes' : 'other',
+        tags: [],
+        isNew: false,
+        isSale: false
+      };
+    });
   }, [products]);
 
   if (error) {
@@ -160,6 +203,26 @@ function CollectionsContent() {
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Oops! Something went wrong</h2>
           <p className="text-gray-600">{error}</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-black text-white rounded hover:bg-gray-800"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading && products.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-white">
+        <div className="text-center">
+          <div className="relative mb-8">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-black mx-auto"></div>
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Loading Collections</h2>
+          <p className="text-gray-600 animate-pulse">Fetching products from our catalog...</p>
         </div>
       </div>
     );
