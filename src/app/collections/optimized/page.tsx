@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -25,7 +25,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-export default function OptimizedCollectionsPage() {
+function CollectionsContent() {
   const searchParams = useSearchParams()
   const collectionParam = searchParams.get('collection') || 'all-products'
   
@@ -419,5 +419,26 @@ export default function OptimizedCollectionsPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+// Loading component for Suspense
+function CollectionsLoading() {
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-center">
+        <Package className="h-12 w-12 text-gray-400 mx-auto mb-4 animate-pulse" />
+        <h2 className="text-xl font-semibold">Loading Collections...</h2>
+      </div>
+    </div>
+  )
+}
+
+// Main export with Suspense boundary
+export default function OptimizedCollectionsPage() {
+  return (
+    <Suspense fallback={<CollectionsLoading />}>
+      <CollectionsContent />
+    </Suspense>
   )
 }
