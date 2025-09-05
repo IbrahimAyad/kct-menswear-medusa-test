@@ -11,7 +11,7 @@ interface CacheEntry {
 
 class MedusaProductCache {
   private cache: Map<string, CacheEntry> = new Map()
-  private readonly TTL = 10 * 60 * 1000 // 10 minutes cache TTL for better performance
+  private readonly TTL = 30 * 60 * 1000 // 30 minutes cache TTL - increased for better performance
   
   // Generate cache key from query params
   private getCacheKey(limit: number, offset: number): string {

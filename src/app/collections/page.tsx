@@ -18,6 +18,7 @@ import {
   getColorHex
 } from '@/services/medusaProductService'
 import { fetchMedusaProducts, type MedusaProduct } from '@/services/medusaBackendService'
+import { progressiveLoader } from '@/services/medusaProgressiveLoader'
 import { Button } from '@/components/ui/button'
 import { 
   Package, Filter, X, ChevronDown, Search, 
@@ -82,6 +83,8 @@ function CollectionsContent() {
   const [products, setProducts] = useState<MedusaProduct[]>([])
   const [filteredProducts, setFilteredProducts] = useState<MedusaProduct[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(true)
   const [showFilters, setShowFilters] = useState(false)
   const [showMobileFilters, setShowMobileFilters] = useState(false)
   const [gridSize, setGridSize] = useState<2 | 3 | 4>(3)
@@ -117,12 +120,44 @@ function CollectionsContent() {
   const loadProducts = async () => {
     setLoading(true)
     try {
-      const data = await fetchMedusaProducts()
-      setProducts(data)
+      console.time('[Collections] Initial load')
+      progressiveLoader.reset()
+      const result = await progressiveLoader.loadInitialBatch()
+      setProducts(result.products)
+      setHasMore(result.hasMore)
+      console.timeEnd('[Collections] Initial load')
+      
+      // Preload next batch in background
+      if (result.hasMore) {
+        setTimeout(() => progressiveLoader.preloadNext(), 1000)
+      }
     } catch (error) {
       console.error('Failed to load products:', error)
     } finally {
       setLoading(false)
+    }
+  }
+  
+  const loadMoreProducts = async () => {
+    if (loadingMore || !hasMore) return
+    
+    setLoadingMore(true)
+    try {
+      console.time('[Collections] Load more')
+      const result = await progressiveLoader.loadMore()
+      const allProducts = progressiveLoader.getLoadedProducts()
+      setProducts(allProducts)
+      setHasMore(result.hasMore)
+      console.timeEnd('[Collections] Load more')
+      
+      // Preload next batch
+      if (result.hasMore) {
+        setTimeout(() => progressiveLoader.preloadNext(), 1000)
+      }
+    } catch (error) {
+      console.error('Failed to load more products:', error)
+    } finally {
+      setLoadingMore(false)
     }
   }
   
@@ -532,12 +567,15 @@ function CollectionsContent() {
               gridSize === 3 && "grid-cols-2 md:grid-cols-3",
               gridSize === 4 && "grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
             )}>
-              {filteredProducts.map(product => {
+              {filteredProducts.map((product, index) => {
                 const stock = getProductStock(product)
                 const collections = getProductCollections(product)
                 const tags = getProductTags(product)
                 const colorTag = tags.find(t => t.startsWith('color-'))
                 const color = colorTag?.replace('color-', '')
+                
+                // Priority loading for first 8 images (above the fold)
+                const isAboveTheFold = index < 8
                 
                 return (
                   <Link 
@@ -554,6 +592,8 @@ function CollectionsContent() {
                             fill
                             className="object-cover group-hover:scale-105 transition-transform duration-300"
                             sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                            priority={isAboveTheFold}
+                            loading={isAboveTheFold ? 'eager' : 'lazy'}
                           />
                         )}
                         
@@ -631,6 +671,46 @@ function CollectionsContent() {
                   </Link>
                 )
               })}
+            </div>
+          )}
+          
+          {/* Load More Button */}
+          {!loading && hasMore && filteredProducts.length > 0 && (
+            <div className="flex justify-center mt-12 mb-8">
+              <Button 
+                onClick={loadMoreProducts}
+                disabled={loadingMore}
+                size="lg"
+                variant="outline"
+                className="min-w-[200px]"
+              >
+                {loadingMore ? (
+                  <>
+                    <span className="animate-spin mr-2">⏳</span>
+                    Loading...
+                  </>
+                ) : (
+                  <>
+                    Load More Products
+                    <ChevronDown className="ml-2 h-4 w-4" />
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+          
+          {/* Loading More Indicator */}
+          {loadingMore && (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-8">
+              {[...Array(8)].map((_, i) => (
+                <div key={`loading-more-${i}`} className="bg-white rounded-lg animate-pulse">
+                  <div className="aspect-[3/4] bg-gray-200 rounded-lg mb-3" />
+                  <div className="p-4">
+                    <div className="h-4 bg-gray-200 rounded mb-2" />
+                    <div className="h-3 bg-gray-200 rounded w-2/3" />
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>

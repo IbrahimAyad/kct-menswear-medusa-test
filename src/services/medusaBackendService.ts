@@ -65,15 +65,18 @@ export interface MedusaCart {
 }
 
 // Fetch all Medusa products using CUSTOM endpoint with caching
-export async function fetchMedusaProducts(): Promise<MedusaProduct[]> {
-  const limit = 200
+export async function fetchMedusaProducts(customLimit?: number): Promise<MedusaProduct[]> {
+  const limit = customLimit || 40 // Reduced from 200 for faster initial load
   const offset = 0
   
   // Check cache first
   const cached = medusaProductCache.get(limit, offset)
   if (cached) {
+    console.log(`[CACHE HIT] Returning ${cached.length} products from cache`)
     return cached
   }
+  
+  console.log(`[CACHE MISS] Fetching ${limit} products from API`)
   
   try {
     const params = new URLSearchParams({
@@ -86,6 +89,7 @@ export async function fetchMedusaProducts(): Promise<MedusaProduct[]> {
       headers: getHeaders()
     })
 
+    console.time('Medusa API Response')
     console.log('Medusa API response status:', response.status)
 
     if (!response.ok) {
@@ -96,6 +100,7 @@ export async function fetchMedusaProducts(): Promise<MedusaProduct[]> {
 
     const data = await response.json()
     const products = data.products || []
+    console.timeEnd('Medusa API Response')
     console.log('Medusa products fetched:', products.length)
     
     // Cache the results
