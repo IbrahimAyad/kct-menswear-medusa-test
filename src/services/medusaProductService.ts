@@ -89,13 +89,15 @@ export const FILTER_OPTIONS = {
     { value: 'under-100', label: 'Under $100', min: 0, max: 100 },
     { value: '100-200', label: '$100 - $200', min: 100, max: 200 },
     { value: '200-300', label: '$200 - $300', min: 200, max: 300 },
-    { value: 'over-300', label: 'Over $300', min: 300, max: 9999 }
+    { value: '300-plus', label: 'Over $300', min: 300, max: 9999 }
   ],
   
   occasions: [
-    { value: 'occasion-wedding', label: 'Wedding' },
-    { value: 'occasion-prom', label: 'Prom' },
-    { value: 'occasion-business', label: 'Business' }
+    { value: 'wedding', label: 'Wedding' },
+    { value: 'prom', label: 'Prom' },
+    { value: 'business', label: 'Business' },
+    { value: 'formal', label: 'Formal' },
+    { value: 'casual', label: 'Casual' }
   ],
   
   styles: [

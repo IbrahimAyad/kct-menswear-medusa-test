@@ -91,8 +91,7 @@ export function extractPriceRange(product: MedusaProduct): string | null {
   if (price < 100) return 'under-100'
   if (price < 200) return '100-200'
   if (price < 300) return '200-300'
-  if (price < 500) return '300-500'
-  return '500-plus'
+  return '300-plus'
 }
 
 // Extract occasions from product
@@ -114,9 +113,10 @@ export function extractStyleFromProduct(product: MedusaProduct): string[] {
   const styles: string[] = []
   const text = `${product.title} ${product.handle}`.toLowerCase()
   
-  if (text.includes('modern') || text.includes('contemporary')) styles.push('modern')
-  if (text.includes('classic') || text.includes('traditional')) styles.push('classic')
   if (text.includes('slim') || text.includes('fitted')) styles.push('slim-fit')
+  if (text.includes('modern')) styles.push('modern-fit')
+  if (text.includes('classic') || text.includes('traditional')) styles.push('classic-fit')
+  if (text.includes('double breasted') || text.includes('double-breasted')) styles.push('double-breasted')
   if (text.includes('regular')) styles.push('regular-fit')
   
   return styles

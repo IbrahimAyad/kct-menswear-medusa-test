@@ -384,20 +384,23 @@ function CollectionsContent() {
                   <div className="mb-6">
                     <h4 className="font-medium mb-3">Color</h4>
                     <div className="grid grid-cols-4 gap-2">
-                      {FILTER_OPTIONS.colors.map(color => (
-                        <button
-                          key={color.value}
-                          onClick={() => toggleColorFilter(color.value)}
-                          className={cn(
-                            "w-10 h-10 rounded-full border-2 transition-all",
-                            activeFilters.colors?.includes(color.value)
-                              ? "border-black scale-110"
-                              : "border-gray-300 hover:border-gray-400"
-                          )}
-                          style={{ backgroundColor: color.hex }}
-                          title={color.label}
-                        />
-                      ))}
+                      {FILTER_OPTIONS.colors.map(color => {
+                        const colorName = color.value.replace('color-', '')
+                        return (
+                          <button
+                            key={color.value}
+                            onClick={() => toggleColorFilter(colorName)}
+                            className={cn(
+                              "w-10 h-10 rounded-full border-2 transition-all",
+                              activeFilters.colors?.includes(colorName)
+                                ? "border-black scale-110"
+                                : "border-gray-300 hover:border-gray-400"
+                            )}
+                            style={{ backgroundColor: color.hex }}
+                            title={color.label}
+                          />
+                        )
+                      })}
                     </div>
                   </div>
                   
@@ -469,7 +472,7 @@ function CollectionsContent() {
                   </div>
                   
                   {/* In Stock */}
-                  <div>
+                  <div className="mb-6">
                     <label className="flex items-center">
                       <input
                         type="checkbox"
@@ -483,6 +486,16 @@ function CollectionsContent() {
                       <span className="text-sm">In Stock Only</span>
                     </label>
                   </div>
+                  
+                  {/* Clear Filters */}
+                  {activeFilterCount > 0 && (
+                    <button
+                      onClick={clearAllFilters}
+                      className="w-full py-2 px-4 bg-gray-100 hover:bg-gray-200 text-sm rounded transition-colors"
+                    >
+                      Clear All Filters ({activeFilterCount})
+                    </button>
+                  )}
                 </div>
               </div>
             </motion.aside>
