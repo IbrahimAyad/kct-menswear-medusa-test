@@ -9,6 +9,7 @@ import TrendingNowCarousel from "@/components/home/TrendingNowCarousel";
 import LuxuryVideoShowcase from "@/components/home/LuxuryVideoShowcase";
 import { progressiveLoader } from "@/services/medusaProgressiveLoader";
 import { type MedusaProduct } from "@/services/medusaBackendService";
+import { medusaProductCache } from "@/services/medusaProductCache";
 
 // Working video solution using iframe embeds instead of HLS
 const FeaturedVideo = ({ videoId, title, className = "" }: { videoId: string; title: string; className?: string }) => {
@@ -84,25 +85,59 @@ export default function HomePage() {
     try {
       console.time('[Home] Loading Medusa products');
       
-      // Use progressive loader to fetch real Medusa products
-      progressiveLoader.reset();
-      
-      // Fetch only 12 products for home page (faster)
-      const result = await progressiveLoader.loadInitialBatch();
-      
-      if (result.products && result.products.length > 0) {
-        // Use first 12 products for home page
-        const homeProducts = result.products.slice(0, 12);
+      // First, check if we have cached products for instant display
+      const cached = medusaProductCache.get();
+      if (cached && cached.length > 0) {
+        console.log('[Home] Using cached products for instant display');
+        const homeProducts = cached.slice(0, 12);
         setProducts(homeProducts);
-        
-        // Extract collection images from real products
         updateCollectionImages(homeProducts);
+        setLoading(false);
+        
+        // Still fetch fresh data in background
+        progressiveLoader.reset();
+        progressiveLoader.loadInitialBatch().then(result => {
+          if (result.products && result.products.length > 0) {
+            const freshProducts = result.products.slice(0, 12);
+            setProducts(freshProducts);
+            updateCollectionImages(freshProducts);
+          }
+        });
+        return;
+      }
+      
+      // No cache, fetch directly but only 12 products for faster load
+      const params = new URLSearchParams({
+        limit: '12',
+        offset: '0'
+      });
+      
+      const response = await fetch(`https://backend-production-7441.up.railway.app/store/products?${params}`, {
+        headers: {
+          'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || ''
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch products: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      const products = data.products || [];
+      
+      if (products.length > 0) {
+        setProducts(products);
+        updateCollectionImages(products);
+        
+        // Cache for next time
+        medusaProductCache.set(products);
         
         // Preload more products in background for collections page
         setTimeout(() => {
           console.log('[Home] Preloading additional products in background');
-          progressiveLoader.preloadNext();
-        }, 2000);
+          progressiveLoader.reset();
+          progressiveLoader.loadInitialBatch(); // This loads 40 for collections
+        }, 1000);
       } else {
         // Fallback to demo products if no real products
         setProducts(createDemoProducts() as any);
