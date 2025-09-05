@@ -4,7 +4,7 @@ import { Navigation } from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
 import { Providers } from "@/components/providers/Providers";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { MedusaCartProvider } from "@/contexts/MedusaCartContext";
+import { MedusaCartProvider } from "@/context/medusa-cart-context";
 import { SmartChatLauncher } from "@/components/chat/SmartChatLauncher";
 import { ChatWidget } from "@/components/ai/ChatWidget";
 import { UnifiedCartDrawer } from "@/components/cart/UnifiedCartDrawer";
