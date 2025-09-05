@@ -1,4 +1,4 @@
-// Simple in-memory cache for Medusa products
+// Enhanced in-memory cache for Medusa products with collection support
 // Helps reduce API calls and improve performance
 
 import { MedusaProduct } from './medusaBackendService'
@@ -11,7 +11,7 @@ interface CacheEntry {
 
 class MedusaProductCache {
   private cache: Map<string, CacheEntry> = new Map()
-  private readonly TTL = 5 * 60 * 1000 // 5 minutes cache TTL
+  private readonly TTL = 10 * 60 * 1000 // 10 minutes cache TTL for better performance
   
   // Generate cache key from query params
   private getCacheKey(limit: number, offset: number): string {
@@ -75,6 +75,38 @@ class MedusaProductCache {
       keys: Array.from(this.cache.keys()),
       totalProducts: Array.from(this.cache.values()).reduce((sum, entry) => sum + entry.data.length, 0)
     }
+  }
+  
+  // Generic key-based cache methods for collections
+  getByKey(key: string): MedusaProduct[] | null {
+    const entry = this.cache.get(key)
+    
+    if (entry && this.isValid(entry)) {
+      console.log('Cache hit for key:', key)
+      return entry.data
+    }
+    
+    // Clean up expired entry
+    if (entry) {
+      this.cache.delete(key)
+    }
+    
+    return null
+  }
+  
+  setByKey(key: string, products: MedusaProduct[]): void {
+    this.cache.set(key, {
+      data: products,
+      timestamp: Date.now(),
+      query: key
+    })
+    console.log(`Cached ${products.length} products for key: ${key}`)
+  }
+  
+  // Clear specific collection cache
+  clearCollection(collection: string): void {
+    const key = `collection_${collection}`
+    this.cache.delete(key)
   }
 }
 
