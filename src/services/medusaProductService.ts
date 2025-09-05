@@ -21,19 +21,43 @@ export function parseMetadataField(field: string | undefined): string[] {
   return field.split(',').map(item => item.trim()).filter(Boolean)
 }
 
+import { 
+  extractCollectionFromProduct, 
+  extractColorsFromProduct,
+  extractOccasionsFromProduct,
+  extractStyleFromProduct,
+  extractPriceRange
+} from './productMetadataHelper'
+
 // Extract collections from product
 export function getProductCollections(product: MedusaProduct): string[] {
-  return parseMetadataField(product.metadata?.collections)
+  // First try metadata, then fall back to extraction
+  const metadataCollections = parseMetadataField(product.metadata?.collections)
+  if (metadataCollections.length > 0) return metadataCollections
+  return extractCollectionFromProduct(product)
 }
 
 // Extract tags from product
 export function getProductTags(product: MedusaProduct): string[] {
-  return parseMetadataField(product.metadata?.tags)
+  // First try metadata, then fall back to extraction
+  const metadataTags = parseMetadataField(product.metadata?.tags)
+  if (metadataTags.length > 0) return metadataTags
+  
+  // Generate tags from product attributes
+  const tags: string[] = []
+  const colors = extractColorsFromProduct(product)
+  colors.forEach(color => tags.push(`color-${color}`))
+  return tags
 }
 
 // Extract categories from product
 export function getProductCategories(product: MedusaProduct): string[] {
-  return parseMetadataField(product.metadata?.categories)
+  // First try metadata, then fall back to extraction from collections
+  const metadataCategories = parseMetadataField(product.metadata?.categories)
+  if (metadataCategories.length > 0) return metadataCategories
+  
+  // Use collections as categories
+  return getProductCollections(product)
 }
 
 // Filter options configuration
@@ -104,27 +128,30 @@ export function filterProducts(products: MedusaProduct[], filters: ActiveFilters
     
     // Color filter (can be multiple)
     if (filters.colors && filters.colors.length > 0) {
-      const tags = getProductTags(product)
-      const hasColor = filters.colors.some(color => tags.includes(color))
+      const productColors = extractColorsFromProduct(product)
+      const hasColor = filters.colors.some(color => productColors.includes(color))
       if (!hasColor) return false
     }
     
     // Price range filter
     if (filters.priceRange) {
-      const tags = getProductTags(product)
-      if (!tags.includes(filters.priceRange)) return false
+      const price = product.metadata?.tier_price || product.price || 0
+      const [min, max] = filters.priceRange.split('-').map(p => 
+        p === 'plus' ? Infinity : parseInt(p)
+      )
+      if (price < min || (max !== Infinity && price > max)) return false
     }
     
     // Occasion filter
     if (filters.occasion) {
-      const tags = getProductTags(product)
-      if (!tags.includes(filters.occasion)) return false
+      const occasions = extractOccasionsFromProduct(product)
+      if (!occasions.includes(filters.occasion)) return false
     }
     
     // Style filter
     if (filters.style) {
-      const tags = getProductTags(product)
-      if (!tags.includes(filters.style)) return false
+      const styles = extractStyleFromProduct(product)
+      if (!styles.includes(filters.style)) return false
     }
     
     // In stock filter
