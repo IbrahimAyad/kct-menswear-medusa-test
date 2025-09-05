@@ -5,9 +5,10 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Play, Star, ShoppingCart, Heart, CheckCircle, Phone, MapPin, Clock, Sparkles } from "lucide-react";
-import { EnhancedProductCard } from "@/components/products/enhanced/EnhancedProductCard";
 import TrendingNowCarousel from "@/components/home/TrendingNowCarousel";
 import LuxuryVideoShowcase from "@/components/home/LuxuryVideoShowcase";
+import { progressiveLoader } from "@/services/medusaProgressiveLoader";
+import { type MedusaProduct } from "@/services/medusaBackendService";
 
 // Working video solution using iframe embeds instead of HLS
 const FeaturedVideo = ({ videoId, title, className = "" }: { videoId: string; title: string; className?: string }) => {
@@ -67,8 +68,13 @@ const HeroVideo = ({ className = "" }: { className?: string }) => {
 
 
 export default function HomePage() {
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<MedusaProduct[]>([]);
   const [loading, setLoading] = useState(true);
+  const [collectionImages, setCollectionImages] = useState<{ [key: string]: string }>({
+    wedding: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80",
+    suits: "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=800&q=80",
+    prom: "https://images.unsplash.com/photo-1521505772811-d7e4ec1b5c7b?w=800&q=80"
+  });
 
   useEffect(() => {
     loadProducts();
@@ -76,20 +82,68 @@ export default function HomePage() {
 
   const loadProducts = async () => {
     try {
-      const response = await fetch('/api/products/enhanced?status=active&limit=12');
-      if (response.ok) {
-        const data = await response.json();
-        // If no real products, create some demo products
-        const loadedProducts = data.products?.length ? data.products : createDemoProducts();
-        setProducts(loadedProducts);
+      console.time('[Home] Loading Medusa products');
+      
+      // Use progressive loader to fetch real Medusa products
+      progressiveLoader.reset();
+      
+      // Fetch only 12 products for home page (faster)
+      const result = await progressiveLoader.loadInitialBatch();
+      
+      if (result.products && result.products.length > 0) {
+        // Use first 12 products for home page
+        const homeProducts = result.products.slice(0, 12);
+        setProducts(homeProducts);
+        
+        // Extract collection images from real products
+        updateCollectionImages(homeProducts);
+        
+        // Preload more products in background for collections page
+        setTimeout(() => {
+          console.log('[Home] Preloading additional products in background');
+          progressiveLoader.preloadNext();
+        }, 2000);
       } else {
-        setProducts(createDemoProducts());
+        // Fallback to demo products if no real products
+        setProducts(createDemoProducts() as any);
       }
+      
+      console.timeEnd('[Home] Loading Medusa products');
     } catch (error) {
-      setProducts(createDemoProducts());
+      console.error('[Home] Failed to load Medusa products:', error);
+      setProducts(createDemoProducts() as any);
     } finally {
       setLoading(false);
     }
+  };
+  
+  // Update collection images based on real products
+  const updateCollectionImages = (products: MedusaProduct[]) => {
+    const images: { [key: string]: string } = {};
+    
+    // Find first product for each collection type
+    products.forEach(product => {
+      const title = product.title?.toLowerCase() || '';
+      const handle = product.handle?.toLowerCase() || '';
+      
+      // Wedding collection
+      if (!images.wedding && (title.includes('wedding') || title.includes('groom'))) {
+        images.wedding = product.thumbnail || collectionImages.wedding;
+      }
+      
+      // Suits collection
+      if (!images.suits && (title.includes('suit') || handle.includes('suit'))) {
+        images.suits = product.thumbnail || collectionImages.suits;
+      }
+      
+      // Prom/Evening collection
+      if (!images.prom && (title.includes('prom') || title.includes('tuxedo') || title.includes('evening'))) {
+        images.prom = product.thumbnail || collectionImages.prom;
+      }
+    });
+    
+    // Update state with found images
+    setCollectionImages(prev => ({ ...prev, ...images }));
   };
 
   // Create demo products if API fails
@@ -213,7 +267,14 @@ export default function HomePage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.8 }}
           >
-            <Link href="/collections">
+            <Link 
+              href="/collections"
+              onMouseEnter={() => {
+                // Prefetch collections data on hover
+                console.log('[Home] Prefetching collections on hover');
+                progressiveLoader.preloadNext();
+              }}
+            >
               <button className="bg-white text-gray-900 px-12 py-4 font-light tracking-wide hover:bg-gray-50 transition-all duration-300 flex items-center justify-center group">
                 EXPLORE COLLECTION
                 <ArrowRight className="ml-3 h-4 w-4 group-hover:translate-x-1 transition-transform" />
@@ -240,7 +301,14 @@ export default function HomePage() {
 
       {/* Hugo Boss Inspired Trending Carousel */}
       <TrendingNowCarousel 
-        products={products} 
+        products={products.map(p => ({
+          id: p.id,
+          name: p.title,
+          base_price: p.metadata?.tier_price || p.price || 0,
+          image_url: p.thumbnail,
+          slug: p.handle,
+          category: p.metadata?.categories || 'menswear'
+        }))} 
         title="Trending Now"
         subtitle="Discover what's capturing attention"
       />
@@ -268,20 +336,20 @@ export default function HomePage() {
               {
                 title: "Wedding Suits",
                 subtitle: "Perfect moments deserve perfection",
-                image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80",
-                href: "/collections/wedding"
+                image: collectionImages.wedding,
+                href: "/collections?collection=wedding"
               },
               {
                 title: "Business Suits", 
                 subtitle: "Professional excellence redefined",
-                image: "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=800&q=80",
-                href: "/collections/suits"
+                image: collectionImages.suits,
+                href: "/collections?collection=suits-tuxedos"
               },
               {
                 title: "Evening Wear",
                 subtitle: "Sophistication for special occasions",
-                image: "https://images.unsplash.com/photo-1521505772811-d7e4ec1b5c7b?w=800&q=80",
-                href: "/collections/prom"
+                image: collectionImages.prom,
+                href: "/collections?collection=prom"
               }
             ].map((collection, index) => (
               <motion.div
@@ -291,6 +359,11 @@ export default function HomePage() {
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.2 }}
                 className="group cursor-pointer"
+                onMouseEnter={() => {
+                  // Prefetch when hovering over collection cards
+                  console.log(`[Home] Prefetching ${collection.title} collection`);
+                  progressiveLoader.preloadNext();
+                }}
               >
                 <Link href={collection.href}>
                   <div className="relative aspect-[3/4] overflow-hidden mb-6 bg-gray-100">
@@ -359,14 +432,41 @@ export default function HomePage() {
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.1 }}
                 >
-                  <EnhancedProductCard product={product} showQuickActions={true} />
+                  <Link href={`/products/medusa/${product.handle}`} className="group block">
+                    <div className="relative aspect-[3/4] overflow-hidden bg-gray-100 mb-4">
+                      {product.thumbnail && (
+                        <Image
+                          src={product.thumbnail}
+                          alt={product.title}
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform duration-500"
+                          sizes="(max-width: 768px) 50vw, 33vw"
+                        />
+                      )}
+                    </div>
+                    <div className="space-y-1">
+                      <h3 className="text-sm font-light text-gray-900 group-hover:text-gray-600 transition-colors">
+                        {product.title}
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        ${product.metadata?.tier_price || product.price || 0}
+                      </p>
+                    </div>
+                  </Link>
                 </motion.div>
               ))}
             </div>
           )}
 
           <div className="text-center">
-            <Link href="/collections">
+            <Link 
+              href="/collections"
+              onMouseEnter={() => {
+                // Prefetch more products on hover
+                console.log('[Home] Prefetching more products on VIEW ALL hover');
+                progressiveLoader.preloadNext();
+              }}
+            >
               <button className="bg-gray-900 text-white px-12 py-4 font-light tracking-wide hover:bg-gray-800 transition-colors duration-300">
                 VIEW ALL PRODUCTS
               </button>
