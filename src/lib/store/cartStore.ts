@@ -141,12 +141,13 @@ export const useCartStore = create<CartStore>()(
       },
     }),
     {
-      name: "kct-cart-storage",
+      name: "core-cart",  // Changed to match the error message
       storage: createJSONStorage(() => localStorage),
-      version: 2, // Increment to clear old cart data
+      version: 3, // Increment to clear corrupted cart data
       migrate: (persistedState: unknown, version: number) => {
-        // Clear old cart data that doesn't have metadata
-        if (version < 2) {
+        // Clear corrupted or old cart data
+        if (version < 3) {
+          console.log('Migrating cart to version 3, clearing old data');
           return { items: [], isLoading: false };
         }
         return persistedState;
@@ -161,7 +162,16 @@ export const useCartStore = create<CartStore>()(
       // Handle rehydration errors gracefully
       onRehydrateStorage: () => (state, error) => {
         if (error) {
-          console.warn('Failed to rehydrate cart store:', error);
+          console.error('Error loading core-cart from storage:', error);
+          // Clear corrupted localStorage data
+          if (typeof window !== 'undefined') {
+            try {
+              localStorage.removeItem('core-cart');
+              console.log('Cleared corrupted cart data');
+            } catch (e) {
+              console.error('Failed to clear corrupted cart:', e);
+            }
+          }
           // Reset to safe state on hydration error
           return { items: [], isLoading: false };
         }

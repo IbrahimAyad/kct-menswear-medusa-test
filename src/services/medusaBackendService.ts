@@ -190,9 +190,39 @@ export async function fetchMedusaProduct(productId: string): Promise<MedusaProdu
   }
 }
 
-// Create cart using CUSTOM endpoint
+// Initialize payment collection for cart (needed immediately after creation)
+export async function initializeCartPayment(cartId: string): Promise<any | null> {
+  try {
+    const response = await fetch(`${MEDUSA_URL}/store/checkout`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({
+        action: 'initialize_payment',
+        cart_id: cartId
+      })
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error(`Failed to initialize payment for cart: ${response.status} - ${errorText}`)
+      // Don't throw - cart can still work for browsing
+      return null
+    }
+
+    const data = await response.json()
+    console.log('Payment collection initialized for cart:', cartId)
+    return data
+  } catch (error) {
+    console.error('Error initializing cart payment:', error)
+    // Don't throw - cart can still work for browsing
+    return null
+  }
+}
+
+// Create cart using CUSTOM endpoint (with automatic payment initialization)
 export async function createMedusaCart(email?: string): Promise<MedusaCart | null> {
   try {
+    // Step 1: Create the cart
     const response = await fetch(`${MEDUSA_URL}/store/cart-operations`, {
       method: 'POST',
       headers: getHeaders(),
@@ -208,7 +238,15 @@ export async function createMedusaCart(email?: string): Promise<MedusaCart | nul
     }
 
     const data = await response.json()
-    console.log('Cart created:', data.cart_id)
+    const cartId = data.cart_id || data.id
+    console.log('Cart created:', cartId)
+    
+    // Step 2: Initialize payment collection immediately
+    // This prevents the "strategy" error when adding items
+    if (cartId) {
+      await initializeCartPayment(cartId)
+    }
+    
     return data
   } catch (error) {
     console.error('Error creating Medusa cart:', error)
