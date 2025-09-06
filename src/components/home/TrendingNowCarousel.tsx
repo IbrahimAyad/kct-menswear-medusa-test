@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { getProductUrl, prefetchProduct } from '@/lib/products/navigation';
 
 interface Product {
   id: string;
@@ -224,7 +225,10 @@ const TrendingNowCarousel = ({
                     }}
                     transition={{ duration: 0.3, ease: 'easeOut' }}
                   >
-                    <Link href={`/products/${product.slug || product.id}`}>
+                    <Link 
+                      href={getProductUrl(product)}
+                      onMouseEnter={() => prefetchProduct(product)}
+                    >
                       <div className="group">
                         {/* Product Image */}
                         <div className="relative aspect-[3/4] overflow-hidden bg-gray-50 mb-4">
@@ -274,7 +278,10 @@ const TrendingNowCarousel = ({
                   transform: `translateX(${dragOffset}px)`,
                 }}
               >
-                <Link href={`/products/${products[currentIndex]?.slug || products[currentIndex]?.id}`}>
+                <Link 
+                  href={getProductUrl(products[currentIndex] || {})}
+                  onTouchStart={() => products[currentIndex] && prefetchProduct(products[currentIndex])}
+                >
                   <div className="group">
                     {/* Product Image */}
                     <div className="relative aspect-[3/4] overflow-hidden bg-gray-50 mb-4">

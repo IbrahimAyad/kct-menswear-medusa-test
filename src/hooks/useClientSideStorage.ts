@@ -31,8 +31,24 @@ export function useClientSideStorage<T>(
 
       const item = storageObj.getItem(key)
       if (item) {
-        const parsed = JSON.parse(item) as T
-        setStoredValue(parsed)
+        try {
+          // Try to parse as JSON first
+          const parsed = JSON.parse(item) as T
+          setStoredValue(parsed)
+        } catch (jsonError) {
+          // If JSON parsing fails, check if it's a string value
+          // This handles legacy cart IDs stored as plain strings
+          if (typeof initialValue === 'string' || initialValue === null) {
+            // If we expect a string, use the raw value
+            setStoredValue(item as T)
+            // Re-save it as proper JSON for future
+            storageObj.setItem(key, JSON.stringify(item))
+          } else {
+            // For non-string types, log error and use initial value
+            console.error(`Invalid JSON in ${key}, resetting to initial value:`, jsonError)
+            storageObj.removeItem(key)
+          }
+        }
       }
     } catch (error) {
       console.error(`Error loading ${key} from storage:`, error)

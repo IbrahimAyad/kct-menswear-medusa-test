@@ -342,6 +342,8 @@ export default function HomePage() {
           base_price: p.metadata?.tier_price || p.price || 0,
           image_url: p.thumbnail,
           slug: p.handle,
+          handle: p.handle, // Add handle explicitly for robust navigation
+          title: p.title, // Add title for fallback slug generation
           category: p.metadata?.categories || 'menswear'
         }))} 
         title="Trending Now"
