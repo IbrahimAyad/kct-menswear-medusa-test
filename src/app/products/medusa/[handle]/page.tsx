@@ -27,6 +27,7 @@ import SizeGuideModal from '@/components/products/SizeGuideModal'
 import ProductReviews from '@/components/products/ProductReviews'
 import CompleteTheLook from '@/components/products/CompleteTheLook'
 import TrustBadges, { StockUrgency, PaymentMethods } from '@/components/products/TrustBadges'
+import LazyProductSection from '@/components/products/LazyProductSection'
 
 export default function EnhancedProductPage() {
   const params = useParams()
@@ -418,19 +419,23 @@ export default function EnhancedProductPage() {
         </div>
 
         {/* Complete the Look Section */}
-        <CompleteTheLook 
-          currentProduct={{
-            id: product.id,
-            title: product.title,
-            price: price
-          }}
-        />
+        <LazyProductSection>
+          <CompleteTheLook 
+            currentProduct={{
+              id: product.id,
+              title: product.title,
+              price: price
+            }}
+          />
+        </LazyProductSection>
 
         {/* Reviews Section */}
-        <ProductReviews 
-          productId={product.id}
-          productName={product.title}
-        />
+        <LazyProductSection rootMargin="200px">
+          <ProductReviews 
+            productId={product.id}
+            productName={product.title}
+          />
+        </LazyProductSection>
       </div>
 
       {/* Size Guide Modal */}
