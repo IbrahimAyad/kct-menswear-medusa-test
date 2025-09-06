@@ -25,7 +25,7 @@ import { cn } from '@/lib/utils'
 // Import our new components
 import SizeGuideModal from '@/components/products/SizeGuideModal'
 import ProductReviews from '@/components/products/ProductReviews'
-import CompleteTheLook from '@/components/products/CompleteTheLook'
+import AICompleteTheLook from '@/components/products/AICompleteTheLook'
 import TrustBadges, { StockUrgency, PaymentMethods } from '@/components/products/TrustBadges'
 import LazyProductSection from '@/components/products/LazyProductSection'
 
@@ -418,14 +418,10 @@ export default function EnhancedProductPage() {
           </div>
         </div>
 
-        {/* Complete the Look Section */}
+        {/* AI-Powered Complete the Look Section */}
         <LazyProductSection>
-          <CompleteTheLook 
-            currentProduct={{
-              id: product.id,
-              title: product.title,
-              price: price
-            }}
+          <AICompleteTheLook 
+            currentProduct={product}
           />
         </LazyProductSection>
 
