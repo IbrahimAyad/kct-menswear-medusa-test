@@ -105,6 +105,22 @@ export async function fetchMedusaProducts(customLimit?: number): Promise<MedusaP
     console.timeEnd('Medusa API Response')
     console.log('Medusa products fetched:', products.length)
     
+    // Check first product structure for debugging
+    if (products.length > 0) {
+      const sample = products[0]
+      console.log('Sample product structure:', {
+        title: sample.title,
+        hasPrice: !!sample.price,
+        hasMetadataTierPrice: !!sample.metadata?.tier_price,
+        variantCount: sample.variants?.length || 0,
+        firstVariant: sample.variants?.[0] ? {
+          hasCalculatedPrice: !!sample.variants[0].calculated_price,
+          hasPrices: !!sample.variants[0].prices,
+          hasDirectPrice: !!sample.variants[0].price
+        } : null
+      })
+    }
+    
     // Cache the results
     medusaProductCache.set(limit, offset, products)
     
@@ -184,13 +200,16 @@ export async function fetchMedusaProductByHandle(handle: string): Promise<Medusa
     const product = products.find(p => p.handle === handle || p.id === handle)
     
     if (product) {
-      console.log('Product found:', product)
-      console.log('Product price:', product.price)
-      console.log('Product metadata:', product.metadata)
-      console.log('Product variants:', product.variants)
+      // Log critical pricing info only
       if (product.variants?.length > 0) {
-        console.log('First variant:', product.variants[0])
-        console.log('First variant price:', product.variants[0].price)
+        const variant = product.variants[0]
+        console.log('Product pricing check:', {
+          title: product.title,
+          'variant.calculated_price': variant.calculated_price,
+          'variant.prices': variant.prices,
+          'variant.price': variant.price,
+          'product.price': product.price
+        })
       }
     }
     

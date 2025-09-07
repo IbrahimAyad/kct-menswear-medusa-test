@@ -77,18 +77,6 @@ export default function EnhancedProductPage() {
       const data = await fetchMedusaProductByHandle(handle)
       
       if (data) {
-        // Debug: Log the actual product structure
-        console.log('=== PRODUCT DATA DEBUG ===')
-        console.log('Full product:', data)
-        console.log('Has price?', data.price)
-        console.log('Has metadata.tier_price?', data.metadata?.tier_price)
-        console.log('Has variants?', data.variants)
-        console.log('First variant:', data.variants?.[0])
-        console.log('First variant price:', data.variants?.[0]?.price)
-        console.log('Has images?', data.images)
-        console.log('Has thumbnail?', data.thumbnail)
-        console.log('==========================')
-        
         setProduct(data)
         if (data.variants && data.variants.length > 0) {
           setSelectedVariant(data.variants[0])
@@ -151,12 +139,7 @@ export default function EnhancedProductPage() {
   const images = product.images || []
   const currentImage = images[selectedImageIndex] || { url: product.thumbnail || '' }
   const isAvailable = selectedVariant ? isMedusaProductAvailable(selectedVariant) : false
-  
-  // Debug price calculation
-  console.log('Selected variant:', selectedVariant)
-  console.log('Calling getMedusaDisplayPrice with:', selectedVariant)
   const price = selectedVariant ? getMedusaDisplayPrice(selectedVariant) : getMedusaDisplayPrice(product)
-  console.log('Calculated price:', price)
   
   const stockQuantity = selectedVariant?.inventory_quantity || 0
 
