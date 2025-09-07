@@ -500,51 +500,60 @@ export async function completeMedusaOrder(cartId: string, paymentIntentId: strin
   }
 }
 
-// Helper to get display price - handles both custom API and standard Medusa formats
+// Helper to get display price - Medusa 2.0 structure with calculated_price
 export function getMedusaDisplayPrice(productOrVariant: any): number {
-  // Check for direct price field first (custom API structure - most common)
-  if (productOrVariant?.price !== undefined && productOrVariant.price !== null) {
-    const price = Number(productOrVariant.price);
-    // If price is a string like "229.99" or a number, return it
-    if (!isNaN(price) && price > 0) {
-      return price;
-    }
+  // PRIORITY 1: Check for calculated_price (Medusa 2.0 standard field)
+  // This is where the price ACTUALLY is in the database
+  if (productOrVariant?.calculated_price?.calculated_amount !== undefined) {
+    const amount = Number(productOrVariant.calculated_price.calculated_amount);
+    // Amount is in CENTS (19999 = $199.99), so divide by 100
+    return amount / 100;
   }
   
-  // Check metadata for tier price (custom field)
-  if (productOrVariant?.metadata?.tier_price !== undefined && productOrVariant.metadata.tier_price !== null) {
-    const price = Number(productOrVariant.metadata.tier_price);
-    if (!isNaN(price) && price > 0) {
-      return price;
-    }
-  }
-  
-  // Check for prices array (standard Medusa structure - unlikely in custom API)
+  // PRIORITY 2: Check for prices array (if expanded)
   if (productOrVariant?.prices?.length > 0) {
     const usdPrice = productOrVariant.prices.find((p: any) => p.currency_code === 'usd') || productOrVariant.prices[0];
     if (usdPrice?.amount !== undefined) {
       const amount = Number(usdPrice.amount);
-      // Only divide by 100 if it's clearly in cents (amount > 1000)
-      return amount > 1000 ? amount / 100 : amount;
+      // Amount is in CENTS, divide by 100
+      return amount / 100;
     }
   }
   
-  // Check for calculated_price (Medusa computed field - unlikely in custom API)
-  if (productOrVariant?.calculated_price?.calculated_amount !== undefined) {
-    const amount = Number(productOrVariant.calculated_price.calculated_amount);
-    return amount > 1000 ? amount / 100 : amount;
+  // PRIORITY 3: Fallback - check for direct price field (custom API - legacy)
+  if (productOrVariant?.price !== undefined && productOrVariant.price !== null) {
+    const price = Number(productOrVariant.price);
+    // This might already be in dollars from custom API
+    if (!isNaN(price) && price > 0) {
+      // If it's > 1000, it's likely cents, otherwise dollars
+      return price > 1000 ? price / 100 : price;
+    }
   }
   
-  // If this is a product with variants, try the first variant
+  // PRIORITY 4: Check metadata (legacy field - shouldn't exist)
+  if (productOrVariant?.metadata?.tier_price !== undefined) {
+    const price = Number(productOrVariant.metadata.tier_price);
+    if (!isNaN(price) && price > 0) {
+      return price > 1000 ? price / 100 : price;
+    }
+  }
+  
+  // PRIORITY 5: If this is a product with variants, try the first variant
   if (productOrVariant?.variants?.length > 0) {
-    const firstVariantPrice = getMedusaDisplayPrice(productOrVariant.variants[0]);
-    if (firstVariantPrice > 0) {
-      return firstVariantPrice;
+    const firstVariant = productOrVariant.variants[0];
+    // Recursively check the first variant
+    if (firstVariant?.calculated_price?.calculated_amount) {
+      return Number(firstVariant.calculated_price.calculated_amount) / 100;
     }
   }
   
   // No price found
-  console.warn('[getMedusaDisplayPrice] No price found for:', productOrVariant?.title || productOrVariant?.id || 'unknown product');
+  console.warn('[getMedusaDisplayPrice] No price found for:', {
+    title: productOrVariant?.title,
+    id: productOrVariant?.id,
+    calculated_price: productOrVariant?.calculated_price,
+    prices: productOrVariant?.prices
+  });
   return 0;
 }
 

@@ -32,38 +32,44 @@ interface KCTProduct {
  * Priority: direct price > metadata.tier_price > first variant price
  */
 export const getProductPrice = (product: KCTProduct | any): number => {
-  // Check for prices array (standard Medusa structure)
+  // PRIORITY 1: Check for calculated_price (Medusa 2.0 standard)
+  if (product?.calculated_price?.calculated_amount !== undefined) {
+    const amount = Number(product.calculated_price.calculated_amount);
+    // Amount is in CENTS, divide by 100
+    return amount / 100;
+  }
+  
+  // PRIORITY 2: Check for prices array (if expanded)
   if (product?.prices?.length > 0) {
     const usdPrice = product.prices.find((p: any) => p.currency_code === 'usd') || product.prices[0];
     if (usdPrice?.amount !== undefined) {
-      // Check if amount is in cents (> 100) or dollars
       const amount = Number(usdPrice.amount);
-      return amount > 100 ? amount / 100 : amount;
+      // Amount is in CENTS, divide by 100
+      return amount / 100;
     }
   }
   
-  // Check for calculated_price (Medusa computed field)
-  if (product?.calculated_price?.calculated_amount !== undefined) {
-    const amount = Number(product.calculated_price.calculated_amount);
-    return amount > 100 ? amount / 100 : amount;
+  // PRIORITY 3: Check first variant's calculated_price
+  if (product?.variants?.[0]?.calculated_price?.calculated_amount !== undefined) {
+    const amount = Number(product.variants[0].calculated_price.calculated_amount);
+    // Amount is in CENTS, divide by 100
+    return amount / 100;
   }
   
-  // Your custom API provides price directly in DOLLARS
-  if (product?.price !== undefined && product.price !== null) {
-    return Number(product.price);
-  }
-  
-  if (product?.metadata?.tier_price !== undefined && product.metadata.tier_price !== null) {
-    return Number(product.metadata.tier_price);
-  }
-  
-  if (product?.variants?.[0]?.price !== undefined && product.variants[0].price !== null) {
-    return Number(product.variants[0].price);
-  }
-  
-  // Try to get price from first variant's prices array
+  // PRIORITY 4: Try first variant's prices array
   if (product?.variants?.[0]?.prices?.length > 0) {
     return getVariantPrice(product.variants[0]);
+  }
+  
+  // PRIORITY 5: Legacy fields (shouldn't exist but check anyway)
+  if (product?.price !== undefined && product.price !== null) {
+    const price = Number(product.price);
+    return price > 1000 ? price / 100 : price;
+  }
+  
+  if (product?.metadata?.tier_price !== undefined) {
+    const price = Number(product.metadata.tier_price);
+    return price > 1000 ? price / 100 : price;
   }
   
   return 0;
@@ -73,25 +79,28 @@ export const getProductPrice = (product: KCTProduct | any): number => {
  * Get the price from a specific variant
  */
 export const getVariantPrice = (variant: any): number => {
-  // Check for prices array (standard Medusa structure)
+  // PRIORITY 1: Check for calculated_price (Medusa 2.0 standard)
+  if (variant?.calculated_price?.calculated_amount !== undefined) {
+    const amount = Number(variant.calculated_price.calculated_amount);
+    // Amount is in CENTS (19999 = $199.99), divide by 100
+    return amount / 100;
+  }
+  
+  // PRIORITY 2: Check for prices array (if expanded)
   if (variant?.prices?.length > 0) {
     const usdPrice = variant.prices.find((p: any) => p.currency_code === 'usd') || variant.prices[0];
     if (usdPrice?.amount !== undefined) {
-      // Check if amount is in cents (> 100) or dollars
       const amount = Number(usdPrice.amount);
-      return amount > 100 ? amount / 100 : amount;
+      // Amount is in CENTS, divide by 100
+      return amount / 100;
     }
   }
   
-  // Check for calculated_price
-  if (variant?.calculated_price?.calculated_amount !== undefined) {
-    const amount = Number(variant.calculated_price.calculated_amount);
-    return amount > 100 ? amount / 100 : amount;
-  }
-  
-  // Direct price field
+  // PRIORITY 3: Legacy direct price field
   if (variant?.price !== undefined && variant.price !== null) {
-    return Number(variant.price);
+    const price = Number(variant.price);
+    // Check if it's cents or dollars
+    return price > 1000 ? price / 100 : price;
   }
   
   return 0;
