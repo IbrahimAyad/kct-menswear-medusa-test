@@ -13,6 +13,12 @@ import {
   type OutfitMapping 
 } from '@/lib/ai/complete-look-mappings'
 import { KnowledgeBankAdapter } from '@/lib/services/knowledgeBankAdapter'
+import { 
+  buildProductPayload, 
+  buildCompleteTheLookPayload,
+  safeSlice,
+  safeMap
+} from '@/lib/services/knowledgeBankUtils'
 
 export interface AISuggestion {
   id: string
@@ -132,7 +138,8 @@ class AICompleteTheLookService {
         ...(staticMapping.suggestions.accessories || [])
       ]
 
-      for (const suggestionId of allSuggestionIds.slice(0, limit)) {
+      // FIX: Use safe slice utility
+      for (const suggestionId of safeSlice(allSuggestionIds, 0, limit)) {
         // Find matching product by handle or title keywords
         const matchingProduct = products?.find(p => {
           const handle = p.handle?.toLowerCase()
@@ -193,7 +200,8 @@ class AICompleteTheLookService {
       // Step 4: Rank and limit results
       const ranked = this.rankSuggestions(filtered, analysis)
       
-      return ranked.slice(0, limit)
+      // FIX: Add defensive check for ranked array
+      return Array.isArray(ranked) ? ranked.slice(0, limit) : []
     } catch (error) {
       console.error('AI suggestion generation error:', error)
       throw error
@@ -212,13 +220,17 @@ class AICompleteTheLookService {
         season: this.getCurrentSeason()
       })
       
+      // FIX: Add defensive check for recommendations array
+      const safeRecommendations = Array.isArray(recommendations) ? recommendations : []
+      
       // Convert Knowledge Bank response to FashionClipAnalysis format
       return {
         category: this.detectCategory(product.title),
         formality: this.detectFormality(product.title),
         color_palette: this.extractColors(product.title),
         style: this.detectStyle(product.title),
-        attributes: recommendations.slice(0, 3).map(r => r.reason || '')
+        // FIX: Use safe utilities for array operations
+        attributes: safeMap(safeSlice(safeRecommendations, 0, 3), r => r?.reason || '')
       }
     } catch (error) {
       console.error('Knowledge Bank analysis failed, using text analysis:', error)
@@ -583,7 +595,8 @@ class AICompleteTheLookService {
       ...(mapping.suggestions.accessories || [])
     ]
 
-    for (const id of allSuggestions.slice(0, limit)) {
+    // FIX: Use safe slice utility
+    for (const id of safeSlice(allSuggestions, 0, limit)) {
       const suggestion = this.createFallbackSuggestion(id)
       if (suggestion) suggestions.push(suggestion)
     }

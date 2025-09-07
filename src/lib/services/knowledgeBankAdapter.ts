@@ -234,9 +234,14 @@ export class KnowledgeBankAdapter {
       }
 
       const data = await response.json();
-      return data.recommendations;
+      
+      // FIX: API returns nested structure { success, data: { recommendations } }
+      const recommendations = data?.data?.recommendations || data?.recommendations || [];
+      
+      // Ensure we always return an array
+      return Array.isArray(recommendations) ? recommendations : [];
     } catch (error) {
-
+      console.warn('Knowledge Bank recommendations failed:', error);
       // Fallback to mock recommendations
       return this.getMockRecommendations(options);
     }
@@ -295,9 +300,13 @@ export class KnowledgeBankAdapter {
       }
 
       const data = await response.json();
-      if (data.success && Array.isArray(data.data)) {
+      
+      // FIX: Handle nested structure { success, data: { trending: [...] } }
+      const trendingData = data?.data?.trending || data?.trending || data?.data || [];
+      
+      if (Array.isArray(trendingData)) {
         // Transform API response to our format
-        return data.data.slice(0, limit).map((item: any) => ({
+        return trendingData.slice(0, limit).map((item: any) => ({
           combination: {
             suit: item.combination?.suit || '',
             shirt: item.combination?.shirt || '',
