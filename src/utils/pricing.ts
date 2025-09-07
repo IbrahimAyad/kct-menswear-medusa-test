@@ -32,26 +32,40 @@ interface KCTProduct {
  * Priority: direct price > metadata.tier_price > first variant price
  */
 export const getProductPrice = (product: KCTProduct | any): number => {
-  // Debug logging
-  console.log('[getProductPrice] Input:', product);
+  // Check for prices array (standard Medusa structure)
+  if (product?.prices?.length > 0) {
+    const usdPrice = product.prices.find((p: any) => p.currency_code === 'usd') || product.prices[0];
+    if (usdPrice?.amount !== undefined) {
+      // Check if amount is in cents (> 100) or dollars
+      const amount = Number(usdPrice.amount);
+      return amount > 100 ? amount / 100 : amount;
+    }
+  }
+  
+  // Check for calculated_price (Medusa computed field)
+  if (product?.calculated_price?.calculated_amount !== undefined) {
+    const amount = Number(product.calculated_price.calculated_amount);
+    return amount > 100 ? amount / 100 : amount;
+  }
   
   // Your custom API provides price directly in DOLLARS
   if (product?.price !== undefined && product.price !== null) {
-    console.log('[getProductPrice] Found product.price:', product.price);
-    return Number(product.price); // Already in dollars!
+    return Number(product.price);
   }
   
   if (product?.metadata?.tier_price !== undefined && product.metadata.tier_price !== null) {
-    console.log('[getProductPrice] Found metadata.tier_price:', product.metadata.tier_price);
-    return Number(product.metadata.tier_price); // Already in dollars!
+    return Number(product.metadata.tier_price);
   }
   
   if (product?.variants?.[0]?.price !== undefined && product.variants[0].price !== null) {
-    console.log('[getProductPrice] Found variants[0].price:', product.variants[0].price);
-    return Number(product.variants[0].price); // Already in dollars!
+    return Number(product.variants[0].price);
   }
   
-  console.log('[getProductPrice] No price found, returning 0');
+  // Try to get price from first variant's prices array
+  if (product?.variants?.[0]?.prices?.length > 0) {
+    return getVariantPrice(product.variants[0]);
+  }
+  
   return 0;
 };
 
@@ -59,9 +73,27 @@ export const getProductPrice = (product: KCTProduct | any): number => {
  * Get the price from a specific variant
  */
 export const getVariantPrice = (variant: any): number => {
-  if (variant?.price !== undefined && variant.price !== null) {
-    return Number(variant.price); // Already in dollars!
+  // Check for prices array (standard Medusa structure)
+  if (variant?.prices?.length > 0) {
+    const usdPrice = variant.prices.find((p: any) => p.currency_code === 'usd') || variant.prices[0];
+    if (usdPrice?.amount !== undefined) {
+      // Check if amount is in cents (> 100) or dollars
+      const amount = Number(usdPrice.amount);
+      return amount > 100 ? amount / 100 : amount;
+    }
   }
+  
+  // Check for calculated_price
+  if (variant?.calculated_price?.calculated_amount !== undefined) {
+    const amount = Number(variant.calculated_price.calculated_amount);
+    return amount > 100 ? amount / 100 : amount;
+  }
+  
+  // Direct price field
+  if (variant?.price !== undefined && variant.price !== null) {
+    return Number(variant.price);
+  }
+  
   return 0;
 };
 

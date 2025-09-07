@@ -173,11 +173,35 @@ export async function fetchMedusaProductsPaginated(page: number = 1, pageSize: n
   }
 }
 
-// Get single product by handle
+// Get single product by handle with proper price expansion
 export async function fetchMedusaProductByHandle(handle: string): Promise<MedusaProduct | null> {
+  const US_REGION_ID = 'reg_01K3S6NDGAC1DSWH9MCZCWBWWD'
+  
   try {
-    // Fetch all products and find by handle
-    // Since there's no single product endpoint, we fetch with a limit and search
+    // First, try to fetch the specific product with expanded fields
+    const params = new URLSearchParams({
+      handle: handle,
+      region_id: US_REGION_ID,
+      currency_code: 'usd',
+      expand: 'variants,variants.prices,images',
+      limit: '1'
+    })
+    
+    const response = await fetch(`${MEDUSA_URL}/store/products?${params}`, {
+      method: 'GET',
+      headers: getHeaders()
+    })
+    
+    if (response.ok) {
+      const data = await response.json()
+      if (data.products && data.products.length > 0) {
+        const product = data.products[0]
+        console.log('Product fetched with expansion:', product)
+        return product
+      }
+    }
+    
+    // Fallback: Fetch all products and find by handle
     const products = await fetchMedusaProducts()
     const product = products.find(p => p.handle === handle || p.id === handle)
     return product || null
@@ -486,37 +510,51 @@ export async function completeMedusaOrder(cartId: string, paymentIntentId: strin
   }
 }
 
-// Helper to get display price
+// Helper to get display price - handles both custom API and standard Medusa formats
 export function getMedusaDisplayPrice(productOrVariant: any): number {
-  // IMPORTANT: Our custom API returns prices in DOLLARS, not cents!
-  // Do NOT divide by 100
+  // Debug what we're receiving
+  console.log('[getMedusaDisplayPrice] Input:', productOrVariant);
+  
+  // Check for prices array (standard Medusa structure from expanded queries)
+  if (productOrVariant?.prices?.length > 0) {
+    const usdPrice = productOrVariant.prices.find((p: any) => p.currency_code === 'usd') || productOrVariant.prices[0];
+    if (usdPrice?.amount !== undefined) {
+      // Check if amount is in cents (> 100) or dollars
+      const amount = Number(usdPrice.amount);
+      // If amount is greater than 100, it's likely in cents
+      const price = amount > 100 ? amount / 100 : amount;
+      console.log('[getMedusaDisplayPrice] Found in prices array:', price);
+      return price;
+    }
+  }
+  
+  // Check for calculated_price (Medusa computed field)
+  if (productOrVariant?.calculated_price?.calculated_amount !== undefined) {
+    const amount = Number(productOrVariant.calculated_price.calculated_amount);
+    const price = amount > 100 ? amount / 100 : amount;
+    console.log('[getMedusaDisplayPrice] Found calculated_price:', price);
+    return price;
+  }
   
   // Check for direct price field (custom API structure)
   if (productOrVariant?.price !== undefined && productOrVariant.price !== null) {
-    return Number(productOrVariant.price); // Already in dollars!
+    console.log('[getMedusaDisplayPrice] Found direct price:', productOrVariant.price);
+    return Number(productOrVariant.price);
   }
   
   // Check metadata for tier price
   if (productOrVariant?.metadata?.tier_price !== undefined) {
-    return Number(productOrVariant.metadata.tier_price); // Already in dollars!
+    console.log('[getMedusaDisplayPrice] Found tier_price:', productOrVariant.metadata.tier_price);
+    return Number(productOrVariant.metadata.tier_price);
   }
   
   // Check if it's a product with variants
-  if (productOrVariant?.variants?.[0]?.price !== undefined) {
-    return Number(productOrVariant.variants[0].price); // Already in dollars!
+  if (productOrVariant?.variants?.[0]) {
+    // Recursively check the first variant
+    return getMedusaDisplayPrice(productOrVariant.variants[0]);
   }
   
-  // Legacy check: variant.prices array (shouldn't exist in our custom API)
-  if (productOrVariant?.prices?.length > 0) {
-    console.warn('Found variant.prices array - this should not exist in custom API');
-    const usdPrice = productOrVariant.prices.find((p: any) => p.currency_code === 'usd') || productOrVariant.prices[0];
-    if (usdPrice?.amount) {
-      // If this exists, it might be from a different endpoint
-      return Number(usdPrice.amount);
-    }
-  }
-  
-  // No price found
+  console.log('[getMedusaDisplayPrice] No price found, returning 0');
   return 0;
 }
 
