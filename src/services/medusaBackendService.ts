@@ -173,37 +173,27 @@ export async function fetchMedusaProductsPaginated(page: number = 1, pageSize: n
   }
 }
 
-// Get single product by handle with proper price expansion
+// Get single product by handle
 export async function fetchMedusaProductByHandle(handle: string): Promise<MedusaProduct | null> {
-  const US_REGION_ID = 'reg_01K3S6NDGAC1DSWH9MCZCWBWWD'
-  
   try {
-    // First, try to fetch the specific product with expanded fields
-    const params = new URLSearchParams({
-      handle: handle,
-      region_id: US_REGION_ID,
-      currency_code: 'usd',
-      expand: 'variants,variants.prices,images',
-      limit: '1'
-    })
+    // The custom API doesn't support single product fetch or handle parameter
+    // We need to fetch all products and filter client-side
+    const products = await fetchMedusaProducts(100) // Fetch more products to ensure we get the one we need
     
-    const response = await fetch(`${MEDUSA_URL}/store/products?${params}`, {
-      method: 'GET',
-      headers: getHeaders()
-    })
+    // Find by handle or ID
+    const product = products.find(p => p.handle === handle || p.id === handle)
     
-    if (response.ok) {
-      const data = await response.json()
-      if (data.products && data.products.length > 0) {
-        const product = data.products[0]
-        console.log('Product fetched with expansion:', product)
-        return product
+    if (product) {
+      console.log('Product found:', product)
+      console.log('Product price:', product.price)
+      console.log('Product metadata:', product.metadata)
+      console.log('Product variants:', product.variants)
+      if (product.variants?.length > 0) {
+        console.log('First variant:', product.variants[0])
+        console.log('First variant price:', product.variants[0].price)
       }
     }
     
-    // Fallback: Fetch all products and find by handle
-    const products = await fetchMedusaProducts()
-    const product = products.find(p => p.handle === handle || p.id === handle)
     return product || null
   } catch (error) {
     console.error('Error fetching Medusa product by handle:', error)
@@ -512,49 +502,49 @@ export async function completeMedusaOrder(cartId: string, paymentIntentId: strin
 
 // Helper to get display price - handles both custom API and standard Medusa formats
 export function getMedusaDisplayPrice(productOrVariant: any): number {
-  // Debug what we're receiving
-  console.log('[getMedusaDisplayPrice] Input:', productOrVariant);
-  
-  // Check for prices array (standard Medusa structure from expanded queries)
-  if (productOrVariant?.prices?.length > 0) {
-    const usdPrice = productOrVariant.prices.find((p: any) => p.currency_code === 'usd') || productOrVariant.prices[0];
-    if (usdPrice?.amount !== undefined) {
-      // Check if amount is in cents (> 100) or dollars
-      const amount = Number(usdPrice.amount);
-      // If amount is greater than 100, it's likely in cents
-      const price = amount > 100 ? amount / 100 : amount;
-      console.log('[getMedusaDisplayPrice] Found in prices array:', price);
+  // Check for direct price field first (custom API structure - most common)
+  if (productOrVariant?.price !== undefined && productOrVariant.price !== null) {
+    const price = Number(productOrVariant.price);
+    // If price is a string like "229.99" or a number, return it
+    if (!isNaN(price) && price > 0) {
       return price;
     }
   }
   
-  // Check for calculated_price (Medusa computed field)
+  // Check metadata for tier price (custom field)
+  if (productOrVariant?.metadata?.tier_price !== undefined && productOrVariant.metadata.tier_price !== null) {
+    const price = Number(productOrVariant.metadata.tier_price);
+    if (!isNaN(price) && price > 0) {
+      return price;
+    }
+  }
+  
+  // Check for prices array (standard Medusa structure - unlikely in custom API)
+  if (productOrVariant?.prices?.length > 0) {
+    const usdPrice = productOrVariant.prices.find((p: any) => p.currency_code === 'usd') || productOrVariant.prices[0];
+    if (usdPrice?.amount !== undefined) {
+      const amount = Number(usdPrice.amount);
+      // Only divide by 100 if it's clearly in cents (amount > 1000)
+      return amount > 1000 ? amount / 100 : amount;
+    }
+  }
+  
+  // Check for calculated_price (Medusa computed field - unlikely in custom API)
   if (productOrVariant?.calculated_price?.calculated_amount !== undefined) {
     const amount = Number(productOrVariant.calculated_price.calculated_amount);
-    const price = amount > 100 ? amount / 100 : amount;
-    console.log('[getMedusaDisplayPrice] Found calculated_price:', price);
-    return price;
+    return amount > 1000 ? amount / 100 : amount;
   }
   
-  // Check for direct price field (custom API structure)
-  if (productOrVariant?.price !== undefined && productOrVariant.price !== null) {
-    console.log('[getMedusaDisplayPrice] Found direct price:', productOrVariant.price);
-    return Number(productOrVariant.price);
+  // If this is a product with variants, try the first variant
+  if (productOrVariant?.variants?.length > 0) {
+    const firstVariantPrice = getMedusaDisplayPrice(productOrVariant.variants[0]);
+    if (firstVariantPrice > 0) {
+      return firstVariantPrice;
+    }
   }
   
-  // Check metadata for tier price
-  if (productOrVariant?.metadata?.tier_price !== undefined) {
-    console.log('[getMedusaDisplayPrice] Found tier_price:', productOrVariant.metadata.tier_price);
-    return Number(productOrVariant.metadata.tier_price);
-  }
-  
-  // Check if it's a product with variants
-  if (productOrVariant?.variants?.[0]) {
-    // Recursively check the first variant
-    return getMedusaDisplayPrice(productOrVariant.variants[0]);
-  }
-  
-  console.log('[getMedusaDisplayPrice] No price found, returning 0');
+  // No price found
+  console.warn('[getMedusaDisplayPrice] No price found for:', productOrVariant?.title || productOrVariant?.id || 'unknown product');
   return 0;
 }
 
