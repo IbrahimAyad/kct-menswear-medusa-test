@@ -4,6 +4,7 @@
  */
 
 import { fetchMedusaProducts, type MedusaProduct } from '@/services/medusaBackendService'
+import { getProductPrice } from '@/utils/pricing'
 import { medusaProductCache } from '@/services/medusaProductCache'
 import { 
   getStaticSuggestions, 
@@ -148,7 +149,7 @@ class AICompleteTheLookService {
             id: matchingProduct.id,
             handle: matchingProduct.handle,
             title: matchingProduct.title,
-            price: matchingProduct.variants?.[0]?.prices?.[0]?.amount / 100 || 99,
+            price: getProductPrice(matchingProduct) || 99,
             image: matchingProduct.thumbnail || matchingProduct.images?.[0]?.url || this.getFallbackImage(suggestionId),
             category: this.detectCategory(matchingProduct.title),
             confidence: 0.7, // Static suggestions have lower confidence
@@ -277,7 +278,7 @@ class AICompleteTheLookService {
         id: product.id,
         handle: product.handle,
         title: product.title,
-        price: product.variants?.[0]?.prices?.[0]?.amount / 100 || 99,
+        price: getProductPrice(product) || 99,
         image: product.thumbnail || product.images?.[0]?.url || '',
         category: this.detectCategory(product.title),
         confidence: score.total,

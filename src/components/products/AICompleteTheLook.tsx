@@ -9,6 +9,7 @@ import EnhancedImage from '@/components/ui/enhanced-image'
 import LazyProductSection from '@/components/products/LazyProductSection'
 import { aiCompleteTheLookService, type AISuggestion } from '@/lib/services/aiCompleteTheLook'
 import type { MedusaProduct } from '@/services/medusaBackendService'
+import { getProductPrice, formatPrice } from '@/utils/pricing'
 
 interface AICompleteTheLookProps {
   currentProduct: MedusaProduct
@@ -108,9 +109,7 @@ export default function AICompleteTheLook({ currentProduct, onAddToCart }: AICom
   // Price calculations
   const calculateTotal = () => {
     const selectedProducts = suggestions.filter(s => selectedItems.has(s.id))
-    const currentPrice = currentProduct.variants?.[0]?.prices?.[0]?.amount 
-      ? currentProduct.variants[0].prices[0].amount / 100 
-      : currentProduct.price || 0
+    const currentPrice = getProductPrice(currentProduct)
     const subtotal = selectedProducts.reduce((acc, p) => acc + p.price, 0) + currentPrice
     const discount = selectedItems.size > 0 ? subtotal * (bundleDiscount / 100) : 0
     return {
@@ -253,9 +252,7 @@ export default function AICompleteTheLook({ currentProduct, onAddToCart }: AICom
             <div className="space-y-2 mb-4">
               <div className="flex justify-between text-sm">
                 <span>Current item</span>
-                <span>${(currentProduct.variants?.[0]?.prices?.[0]?.amount 
-                  ? currentProduct.variants[0].prices[0].amount / 100 
-                  : currentProduct.price || 0).toFixed(2)}</span>
+                <span>{formatPrice(getProductPrice(currentProduct))}</span>
               </div>
               {suggestions.filter(s => selectedItems.has(s.id)).map(item => (
                 <div key={item.id} className="flex justify-between text-sm">
