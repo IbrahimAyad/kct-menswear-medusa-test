@@ -3,6 +3,7 @@
 // NOT standard Medusa v2 endpoints
 
 import { medusaProductCache } from './medusaProductCache'
+import { getProductPrice } from '@/utils/pricing'
 
 const MEDUSA_URL = 'https://backend-production-7441.up.railway.app'
 
@@ -519,61 +520,10 @@ export async function completeMedusaOrder(cartId: string, paymentIntentId: strin
   }
 }
 
-// Helper to get display price - Medusa 2.0 structure with calculated_price
-export function getMedusaDisplayPrice(productOrVariant: any): number {
-  // PRIORITY 1: Check for calculated_price (Medusa 2.0 standard field)
-  // This is where the price ACTUALLY is in the database
-  if (productOrVariant?.calculated_price?.calculated_amount !== undefined) {
-    const amount = Number(productOrVariant.calculated_price.calculated_amount);
-    // Amount is in CENTS (19999 = $199.99), so divide by 100
-    return amount / 100;
-  }
-  
-  // PRIORITY 2: Check for prices array (if expanded)
-  if (productOrVariant?.prices?.length > 0) {
-    const usdPrice = productOrVariant.prices.find((p: any) => p.currency_code === 'usd') || productOrVariant.prices[0];
-    if (usdPrice?.amount !== undefined) {
-      const amount = Number(usdPrice.amount);
-      // Amount is in CENTS, divide by 100
-      return amount / 100;
-    }
-  }
-  
-  // PRIORITY 3: Fallback - check for direct price field (custom API - legacy)
-  if (productOrVariant?.price !== undefined && productOrVariant.price !== null) {
-    const price = Number(productOrVariant.price);
-    // This might already be in dollars from custom API
-    if (!isNaN(price) && price > 0) {
-      // If it's > 1000, it's likely cents, otherwise dollars
-      return price > 1000 ? price / 100 : price;
-    }
-  }
-  
-  // PRIORITY 4: Check metadata (legacy field - shouldn't exist)
-  if (productOrVariant?.metadata?.tier_price !== undefined) {
-    const price = Number(productOrVariant.metadata.tier_price);
-    if (!isNaN(price) && price > 0) {
-      return price > 1000 ? price / 100 : price;
-    }
-  }
-  
-  // PRIORITY 5: If this is a product with variants, try the first variant
-  if (productOrVariant?.variants?.length > 0) {
-    const firstVariant = productOrVariant.variants[0];
-    // Recursively check the first variant
-    if (firstVariant?.calculated_price?.calculated_amount) {
-      return Number(firstVariant.calculated_price.calculated_amount) / 100;
-    }
-  }
-  
-  // No price found
-  console.warn('[getMedusaDisplayPrice] No price found for:', {
-    title: productOrVariant?.title,
-    id: productOrVariant?.id,
-    calculated_price: productOrVariant?.calculated_price,
-    prices: productOrVariant?.prices
-  });
-  return 0;
+// Helper to get display price - delegates to centralized pricing utility
+export function getMedusaDisplayPrice(productOrVariant: any, variant?: any): number {
+  // Use centralized pricing utility for consistency
+  return getProductPrice(productOrVariant, variant);
 }
 
 // Helper to check product availability

@@ -224,7 +224,6 @@ export class KnowledgeBankAdapter {
       const response = await fetch(`${this.apiUrl}/api/v2/recommendations`, {
         method: 'POST',
         headers: {
-          'x-api-key': this.apiKey,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(options)
@@ -256,7 +255,6 @@ export class KnowledgeBankAdapter {
     try {
       const response = await fetch(`${this.apiUrl}/api/v2/analytics/conversions/${combinationId}`, {
         headers: {
-          'x-api-key': this.apiKey,
           'Content-Type': 'application/json'
         }
       });
@@ -286,9 +284,8 @@ export class KnowledgeBankAdapter {
     growth: number;
   }>> {
     try {
-      const response = await fetch(`${this.apiUrl}/api/v2/intelligence/trending`, {
+      const response = await fetch(`${this.apiUrl}/api/v2/trending`, {
         headers: {
-          'x-api-key': this.apiKey,
           'Content-Type': 'application/json'
         }
       });

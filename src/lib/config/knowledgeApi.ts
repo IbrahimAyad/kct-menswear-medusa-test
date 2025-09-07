@@ -41,17 +41,22 @@ export const KNOWLEDGE_API_CONFIG = {
     realTimeAnalytics: true,        // Live metrics
   },
   
-  // V2 Endpoints mapping
+  // V2 Endpoints mapping - CONFIRMED WORKING by backend team
   endpoints: {
-    // Core V2 endpoints (updated from V1)
+    // Core V2 endpoints - ALL PUBLIC, NO AUTH REQUIRED
     colors: '/api/v2/colors',
-    colorRelationships: '/api/v2/colors/:color/relationships',
+    colorRelationships: '/api/v2/colors/:color',
     validate: '/api/v2/combinations/validate',
     recommendations: '/api/v2/recommendations',
-    trending: '/api/v2/intelligence/trending',
+    trending: '/api/v2/trending',
     venues: '/api/v2/venues/:type/recommendations',
     styles: '/api/v2/styles/:profile',
     rules: '/api/v2/rules/check',
+    
+    // Complete the Look endpoint - NEWLY ADDED
+    completeLook: '/api/v2/products/complete-the-look',
+    similarProducts: '/api/v2/products/similar',
+    analyzeOutfit: '/api/v2/analyze/outfit',
     
     // Fashion-CLIP V2 endpoints
     visualAnalyze: '/api/v2/visual/analyze',
