@@ -32,19 +32,26 @@ interface KCTProduct {
  * Priority: direct price > metadata.tier_price > first variant price
  */
 export const getProductPrice = (product: KCTProduct | any): number => {
+  // Debug logging
+  console.log('[getProductPrice] Input:', product);
+  
   // Your custom API provides price directly in DOLLARS
   if (product?.price !== undefined && product.price !== null) {
+    console.log('[getProductPrice] Found product.price:', product.price);
     return Number(product.price); // Already in dollars!
   }
   
   if (product?.metadata?.tier_price !== undefined && product.metadata.tier_price !== null) {
+    console.log('[getProductPrice] Found metadata.tier_price:', product.metadata.tier_price);
     return Number(product.metadata.tier_price); // Already in dollars!
   }
   
   if (product?.variants?.[0]?.price !== undefined && product.variants[0].price !== null) {
+    console.log('[getProductPrice] Found variants[0].price:', product.variants[0].price);
     return Number(product.variants[0].price); // Already in dollars!
   }
   
+  console.log('[getProductPrice] No price found, returning 0');
   return 0;
 };
 
