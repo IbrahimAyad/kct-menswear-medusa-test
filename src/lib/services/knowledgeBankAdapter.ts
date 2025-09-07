@@ -63,7 +63,7 @@ export interface ConversionData {
   };
 }
 
-class KnowledgeBankAdapter {
+export class KnowledgeBankAdapter {
   private apiUrl: string;
   private apiKey: string;
   private cache: Map<string, any> = new Map();
@@ -635,3 +635,4 @@ class KnowledgeBankAdapter {
 }
 
 export const knowledgeBankAdapter = new KnowledgeBankAdapter();
+export default KnowledgeBankAdapter;
