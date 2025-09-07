@@ -339,7 +339,7 @@ export default function HomePage() {
         products={products.map(p => ({
           id: p.id,
           name: p.title,
-          base_price: p.metadata?.tier_price || p.price || 0,
+          base_price: (p.price || 0) / 100, // Convert cents to dollars
           image_url: p.thumbnail,
           slug: p.handle,
           handle: p.handle, // Add handle explicitly for robust navigation
@@ -486,7 +486,7 @@ export default function HomePage() {
                         {product.title}
                       </h3>
                       <p className="text-sm text-gray-600">
-                        ${product.metadata?.tier_price || product.price || 0}
+                        ${((product.price || 0) / 100).toFixed(2)}
                       </p>
                     </div>
                   </Link>

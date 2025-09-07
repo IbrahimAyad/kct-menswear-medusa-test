@@ -3,6 +3,7 @@
 // NOT standard Medusa v2 endpoints
 
 import { medusaProductCache } from './medusaProductCache'
+import { getProductPrice } from '@/utils/pricing'
 
 const MEDUSA_URL = 'https://backend-production-7441.up.railway.app'
 
@@ -24,6 +25,7 @@ export interface MedusaProduct {
   price?: number
   pricing_tier?: string
   metadata?: {
+    tier_price?: number
     pricing_tier?: string
   }
   variants?: Array<{
@@ -82,8 +84,7 @@ export async function fetchMedusaProducts(customLimit?: number): Promise<MedusaP
     const params = new URLSearchParams({
       limit: limit.toString(),
       offset: offset.toString(),
-      region_id: US_REGION_ID, // Include region for price filtering
-      fields: '*variants.calculated_price' // Request price data
+      region_id: US_REGION_ID // Include region for price filtering
     })
     
     const response = await fetch(`${MEDUSA_URL}/store/products?${params}`, {
@@ -111,7 +112,7 @@ export async function fetchMedusaProducts(customLimit?: number): Promise<MedusaP
       console.log('Sample product structure:', {
         title: sample.title,
         hasPrice: !!sample.price,
-        hasPriceField: !!sample.price,
+        hasMetadataTierPrice: !!sample.metadata?.tier_price,
         variantCount: sample.variants?.length || 0,
         firstVariant: sample.variants?.[0] ? {
           hasCalculatedPrice: !!sample.variants[0].calculated_price,
@@ -157,8 +158,7 @@ export async function fetchMedusaProductsPaginated(page: number = 1, pageSize: n
     const params = new URLSearchParams({
       limit: pageSize.toString(),
       offset: offset.toString(),
-      region_id: US_REGION_ID, // Include region for price filtering
-      fields: '*variants.calculated_price' // Request price data
+      region_id: US_REGION_ID // Include region for price filtering
     })
     
     const response = await fetch(`${MEDUSA_URL}/store/products?${params}`, {
@@ -520,6 +520,11 @@ export async function completeMedusaOrder(cartId: string, paymentIntentId: strin
   }
 }
 
+// Helper to get display price - delegates to centralized pricing utility
+export function getMedusaDisplayPrice(productOrVariant: any, variant?: any): number {
+  // Use centralized pricing utility for consistency
+  return getProductPrice(productOrVariant, variant);
+}
 
 // Helper to check product availability
 export function isMedusaProductAvailable(variant: any): boolean {

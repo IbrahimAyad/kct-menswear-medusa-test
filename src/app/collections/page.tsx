@@ -658,7 +658,7 @@ function CollectionsContent() {
                         )}
                         
                         <p className="text-lg font-semibold">
-                          ${product.metadata?.tier_price || product.price || 0}
+                          ${((product.price || 0) / 100).toFixed(2)}
                         </p>
                         
                         {stock.inStock && stock.totalQuantity <= 5 && (

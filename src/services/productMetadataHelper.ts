@@ -86,7 +86,7 @@ export function extractColorsFromProduct(product: MedusaProduct): string[] {
 
 // Extract price range from product
 export function extractPriceRange(product: MedusaProduct): string | null {
-  const price = product.price || product.metadata?.tier_price || 0
+  const price = (product.price || 0) / 100 // Convert cents to dollars
   
   if (price < 100) return 'under-100'
   if (price < 200) return '100-200'

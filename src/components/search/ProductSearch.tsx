@@ -108,8 +108,9 @@ export default function ProductSearch({ products, onClose, isOverlay = false }: 
   }
 
   const getPrice = (product: MedusaProduct) => {
-    const price = product.metadata?.tier_price || product.price || 0
-    return typeof price === 'number' ? price.toFixed(2) : '0.00'
+    const priceInCents = product.price || 0
+    const priceInDollars = priceInCents / 100
+    return priceInDollars.toFixed(2)
   }
 
   const getCollections = (product: MedusaProduct) => {

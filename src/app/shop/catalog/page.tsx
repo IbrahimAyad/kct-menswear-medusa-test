@@ -5,11 +5,11 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { 
   fetchMedusaProducts, 
-  getMedusaDisplayPrice,
   isMedusaProductAvailable,
   getDefaultVariant,
   type MedusaProduct 
 } from '@/services/medusaBackendService'
+import { getProductPrice } from '@/utils/pricing'
 import { useMedusaCart } from '@/contexts/MedusaCartContext'
 import { ShoppingBag, Filter, Grid2x2, Grid3x3, Search, Package, Plus, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -126,9 +126,13 @@ export default function CatalogPage() {
     .sort((a, b) => {
       switch (sortBy) {
         case 'price-low':
-          return getMedusaDisplayPrice(a) - getMedusaDisplayPrice(b)
+          const priceA = parseFloat(getProductPrice(a?.variants?.[0])) || 0
+          const priceB = parseFloat(getProductPrice(b?.variants?.[0])) || 0
+          return priceA - priceB
         case 'price-high':
-          return getMedusaDisplayPrice(b) - getMedusaDisplayPrice(a)
+          const priceHighA = parseFloat(getProductPrice(a?.variants?.[0])) || 0
+          const priceHighB = parseFloat(getProductPrice(b?.variants?.[0])) || 0
+          return priceHighB - priceHighA
         case 'name':
         default:
           return a.title.localeCompare(b.title)
@@ -255,7 +259,8 @@ export default function CatalogPage() {
         ) : (
           <div className={`grid ${gridClass} gap-4`}>
             {filteredProducts.map((product) => {
-              const price = getMedusaDisplayPrice(product)
+              const defaultVariant = getDefaultVariant(product)
+              const price = parseFloat(getProductPrice(defaultVariant)) || 0
               const isAvailable = isMedusaProductAvailable(product)
               const isAdding = addingToCart === product.id
               const isAdded = addedItems.has(product.id)

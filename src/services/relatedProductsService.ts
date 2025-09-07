@@ -64,8 +64,8 @@ export function findRelatedProducts(
       })
       
       // Price similarity bonus
-      const currentPrice = currentProduct.metadata?.tier_price || currentProduct.price || 0
-      const productPrice = product.metadata?.tier_price || product.price || 0
+      const currentPrice = (currentProduct.price || 0) / 100 // Convert cents to dollars
+      const productPrice = (product.price || 0) / 100 // Convert cents to dollars
       const priceDiff = Math.abs(currentPrice - productPrice)
       
       if (priceDiff < 50) score += 4
@@ -80,7 +80,7 @@ export function findRelatedProducts(
   
   // If we don't have enough related products, add some from the same price range
   if (scoredProducts.length < limit) {
-    const currentPrice = currentProduct.metadata?.tier_price || currentProduct.price || 0
+    const currentPrice = (currentProduct.price || 0) / 100 // Convert cents to dollars
     
     const similarPriceProducts = allProducts
       .filter(p => {
@@ -89,7 +89,7 @@ export function findRelatedProducts(
           return false
         }
         
-        const productPrice = p.metadata?.tier_price || p.price || 0
+        const productPrice = (p.price || 0) / 100 // Convert cents to dollars
         const priceDiff = Math.abs(currentPrice - productPrice)
         return priceDiff < 100 // Within $100 price range
       })

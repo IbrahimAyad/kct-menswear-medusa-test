@@ -2,7 +2,8 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useParams } from 'next/navigation'
-import { fetchMedusaProductByHandle, fetchMedusaProducts, MedusaProduct, getDefaultVariant, getMedusaDisplayPrice } from '@/services/medusaBackendService'
+import { fetchMedusaProductByHandle, fetchMedusaProducts, MedusaProduct, getDefaultVariant } from '@/services/medusaBackendService'
+import { getProductPrice } from '@/utils/pricing'
 import { findRelatedProducts, getComplementaryProducts } from '@/services/relatedProductsService'
 import RelatedProducts from '@/components/products/RelatedProducts'
 import { useMedusaCart } from '@/context/medusa-cart-context'
@@ -124,7 +125,8 @@ function ProductDetailContent() {
   }
 
   const images = getImages()
-  const price = getMedusaDisplayPrice(product)
+  const defaultVariant = getDefaultVariant(product)
+  const price = parseFloat(getProductPrice(defaultVariant))
   const colors = getColors()
   const sizes = getSizes()
 

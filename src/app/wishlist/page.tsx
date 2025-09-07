@@ -6,7 +6,8 @@ import { Heart, ShoppingCart, X } from 'lucide-react'
 import { useMedusaCart } from '@/hooks/useMedusaCart'
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { getMedusaDisplayPrice, getDefaultVariant } from '@/services/medusaBackendService'
+import { getDefaultVariant } from '@/services/medusaBackendService'
+import { getProductPrice } from '@/utils/pricing'
 
 export default function WishlistPage() {
   const { items, removeItem, clearWishlist } = useWishlistStore()
@@ -36,7 +37,8 @@ export default function WishlistPage() {
   }
 
   const getPrice = (item: any) => {
-    return getMedusaDisplayPrice(item.product)
+    const variant = getDefaultVariant(item.product)
+    return parseFloat(getProductPrice(variant))
   }
 
   const getColors = (item: any) => {

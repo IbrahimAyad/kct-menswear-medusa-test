@@ -137,11 +137,12 @@ export function filterProducts(products: MedusaProduct[], filters: ActiveFilters
     
     // Price range filter
     if (filters.priceRange) {
-      const price = product.metadata?.tier_price || product.price || 0
+      const price = product.price || 0 // Backend will provide actual price in cents, convert to dollars for range check
+      const priceInDollars = price / 100
       const [min, max] = filters.priceRange.split('-').map(p => 
         p === 'plus' ? Infinity : parseInt(p)
       )
-      if (price < min || (max !== Infinity && price > max)) return false
+      if (priceInDollars < min || (max !== Infinity && priceInDollars > max)) return false
     }
     
     // Occasion filter
@@ -261,7 +262,7 @@ export function getCollectionPriceRange(products: MedusaProduct[]): {
   max: number
 } {
   const prices = products
-    .map(p => p.metadata?.tier_price || p.price || 0)
+    .map(p => (p.price || 0) / 100) // Convert cents to dollars
     .filter(price => price > 0)
   
   if (prices.length === 0) {
@@ -283,12 +284,12 @@ export function sortProducts(products: MedusaProduct[], sortBy: SortOption): Med
   switch (sortBy) {
     case 'price-asc':
       return sorted.sort((a, b) => 
-        (a.metadata?.tier_price || 0) - (b.metadata?.tier_price || 0)
+        (a.price || 0) - (b.price || 0)
       )
     
     case 'price-desc':
       return sorted.sort((a, b) => 
-        (b.metadata?.tier_price || 0) - (a.metadata?.tier_price || 0)
+        (b.price || 0) - (a.price || 0)
       )
     
     case 'name-asc':

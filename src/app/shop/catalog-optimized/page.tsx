@@ -6,10 +6,10 @@ import Image from 'next/image'
 import { Package, ShoppingCart, Check, Loader2, ChevronDown } from 'lucide-react'
 import { 
   fetchMedusaProductsPaginated, 
-  getMedusaDisplayPrice, 
   getDefaultVariant,
   type MedusaProduct 
 } from '@/services/medusaBackendService'
+import { getProductPrice } from '@/utils/pricing'
 import { useMedusaCart } from '@/contexts/MedusaCartContext'
 import { toast } from 'sonner'
 
@@ -170,10 +170,10 @@ export default function OptimizedCatalogPage() {
       <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
           {products.map((product) => {
-            const price = getMedusaDisplayPrice(product)
+            const variant = getDefaultVariant(product)
+            const price = parseFloat(getProductPrice(variant))
             const isAdded = addedItems.has(product.id)
             const isAdding = addingToCart === product.id
-            const variant = getDefaultVariant(product)
             const isAvailable = variant && variant.inventory_quantity > 0
             
             return (

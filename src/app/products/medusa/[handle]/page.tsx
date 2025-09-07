@@ -6,10 +6,10 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { 
   fetchMedusaProductByHandle, 
-  getMedusaDisplayPrice,
   isMedusaProductAvailable,
   type MedusaProduct 
 } from '@/services/medusaBackendService'
+import { getProductPrice } from '@/utils/pricing'
 import { useMedusaCart } from '@/contexts/MedusaCartContext'
 import { getPrefetchedProduct } from '@/lib/products/navigation'
 import { 
@@ -139,7 +139,7 @@ export default function EnhancedProductPage() {
   const images = product.images || []
   const currentImage = images[selectedImageIndex] || { url: product.thumbnail || '' }
   const isAvailable = selectedVariant ? isMedusaProductAvailable(selectedVariant) : false
-  const price = selectedVariant ? getMedusaDisplayPrice(selectedVariant) : getMedusaDisplayPrice(product)
+  const price = selectedVariant ? parseFloat(getProductPrice(selectedVariant)) : parseFloat(getProductPrice(product?.variants?.[0]))
   
   const stockQuantity = selectedVariant?.inventory_quantity || 0
 
