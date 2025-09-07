@@ -487,28 +487,37 @@ export async function completeMedusaOrder(cartId: string, paymentIntentId: strin
 }
 
 // Helper to get display price
-export function getMedusaDisplayPrice(variant: any): number {
-  // Backend stores prices in CENTS, need to convert to dollars
-  // Prices are nested in variant.prices[] array
+export function getMedusaDisplayPrice(productOrVariant: any): number {
+  // IMPORTANT: Our custom API returns prices in DOLLARS, not cents!
+  // Do NOT divide by 100
   
-  // If variant has prices array
-  if (variant?.prices?.length > 0) {
-    // Find USD price or use first price
-    const usdPrice = variant.prices.find((p: any) => p.currency_code === 'usd') || variant.prices[0]
+  // Check for direct price field (custom API structure)
+  if (productOrVariant?.price !== undefined && productOrVariant.price !== null) {
+    return Number(productOrVariant.price); // Already in dollars!
+  }
+  
+  // Check metadata for tier price
+  if (productOrVariant?.metadata?.tier_price !== undefined) {
+    return Number(productOrVariant.metadata.tier_price); // Already in dollars!
+  }
+  
+  // Check if it's a product with variants
+  if (productOrVariant?.variants?.[0]?.price !== undefined) {
+    return Number(productOrVariant.variants[0].price); // Already in dollars!
+  }
+  
+  // Legacy check: variant.prices array (shouldn't exist in our custom API)
+  if (productOrVariant?.prices?.length > 0) {
+    console.warn('Found variant.prices array - this should not exist in custom API');
+    const usdPrice = productOrVariant.prices.find((p: any) => p.currency_code === 'usd') || productOrVariant.prices[0];
     if (usdPrice?.amount) {
-      // Convert from cents to dollars
-      return usdPrice.amount / 100
+      // If this exists, it might be from a different endpoint
+      return Number(usdPrice.amount);
     }
   }
   
-  // Fallback: check if variant has direct price field (old format)
-  if (variant?.price) {
-    // Check if it's already in dollars (< 1000) or cents
-    return variant.price > 1000 ? variant.price / 100 : variant.price
-  }
-  
   // No price found
-  return 0
+  return 0;
 }
 
 // Helper to check product availability
