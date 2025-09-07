@@ -68,6 +68,7 @@ export interface MedusaCart {
 export async function fetchMedusaProducts(customLimit?: number): Promise<MedusaProduct[]> {
   const limit = customLimit || 40 // Reduced from 200 for faster initial load
   const offset = 0
+  const US_REGION_ID = 'reg_01K3S6NDGAC1DSWH9MCZCWBWWD' // US region for proper pricing
   
   // Check cache first
   const cached = medusaProductCache.get(limit, offset)
@@ -81,7 +82,8 @@ export async function fetchMedusaProducts(customLimit?: number): Promise<MedusaP
   try {
     const params = new URLSearchParams({
       limit: limit.toString(),
-      offset: offset.toString()
+      offset: offset.toString(),
+      region_id: US_REGION_ID // Include region for price filtering
     })
     
     const response = await fetch(`${MEDUSA_URL}/store/products?${params}`, {
@@ -121,6 +123,7 @@ export async function fetchMedusaProductsPaginated(page: number = 1, pageSize: n
   totalPages: number
 }> {
   const offset = (page - 1) * pageSize
+  const US_REGION_ID = 'reg_01K3S6NDGAC1DSWH9MCZCWBWWD' // US region for proper pricing
   
   // Check cache first
   const cached = medusaProductCache.get(pageSize, offset)
@@ -137,7 +140,8 @@ export async function fetchMedusaProductsPaginated(page: number = 1, pageSize: n
   try {
     const params = new URLSearchParams({
       limit: pageSize.toString(),
-      offset: offset.toString()
+      offset: offset.toString(),
+      region_id: US_REGION_ID // Include region for price filtering
     })
     
     const response = await fetch(`${MEDUSA_URL}/store/products?${params}`, {
@@ -483,22 +487,42 @@ export async function completeMedusaOrder(cartId: string, paymentIntentId: strin
 }
 
 // Helper to get display price
-export function getMedusaDisplayPrice(product: MedusaProduct): number {
-  // Prices are already in dollars (not cents)
-  if (product.price) return product.price
-  if (product.metadata?.tier_price) return product.metadata.tier_price
+export function getMedusaDisplayPrice(variant: any): number {
+  // Backend stores prices in CENTS, need to convert to dollars
+  // Prices are nested in variant.prices[] array
   
-  // Check variant prices
-  if (product.variants?.length && product.variants[0].prices?.length) {
-    return product.variants[0].prices[0].amount
+  // If variant has prices array
+  if (variant?.prices?.length > 0) {
+    // Find USD price or use first price
+    const usdPrice = variant.prices.find((p: any) => p.currency_code === 'usd') || variant.prices[0]
+    if (usdPrice?.amount) {
+      // Convert from cents to dollars
+      return usdPrice.amount / 100
+    }
   }
   
+  // Fallback: check if variant has direct price field (old format)
+  if (variant?.price) {
+    // Check if it's already in dollars (< 1000) or cents
+    return variant.price > 1000 ? variant.price / 100 : variant.price
+  }
+  
+  // No price found
   return 0
 }
 
 // Helper to check product availability
-export function isMedusaProductAvailable(product: MedusaProduct): boolean {
-  return product.variants?.some(v => (v.inventory_quantity || 0) > 0) || false
+export function isMedusaProductAvailable(variant: any): boolean {
+  // IMPORTANT: All products have manage_inventory = false
+  // This means unlimited stock - always available
+  
+  // If inventory management is disabled, product is always available
+  if (variant?.manage_inventory === false) {
+    return true
+  }
+  
+  // Fallback: check inventory quantity only if manage_inventory is true
+  return (variant?.inventory_quantity || 0) > 0
 }
 
 // Helper to get product variant
