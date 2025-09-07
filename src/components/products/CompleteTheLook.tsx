@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 import { getProductUrl } from '@/lib/products/navigation'
 import EnhancedImage from '@/components/ui/enhanced-image'
 import { fetchMedusaProducts } from '@/services/medusaBackendService'
+import { getProductPriceAsNumber } from '@/utils/pricing'
 
 interface SuggestedProduct {
   id: string
@@ -63,7 +64,7 @@ const generateSuggestions = async (product: any): Promise<SuggestedProduct[]> =>
           id: shirt.id,
           handle: shirt.handle,
           title: shirt.title,
-          price: shirt.variants?.[0]?.prices?.[0]?.amount / 100 || 89,
+          price: getProductPriceAsNumber(shirt) || 89,
           image: shirt.thumbnail || shirt.images?.[0]?.url || 'https://imagedelivery.net/QI-O2U_ayTU_H_Ilcb4c6Q/dd5c1f7d-722d-4e17-00be-60a3fdb33900/public',
           category: 'shirt'
         })
@@ -76,7 +77,7 @@ const generateSuggestions = async (product: any): Promise<SuggestedProduct[]> =>
           id: tie.id,
           handle: tie.handle,
           title: tie.title,
-          price: tie.variants?.[0]?.prices?.[0]?.amount / 100 || 45,
+          price: getProductPriceAsNumber(tie) || 45,
           image: tie.thumbnail || tie.images?.[0]?.url || 'https://cdn.kctmenswear.com/main-solid-vest-tie/light-gray-dusty-rose-tie.png',
           category: 'tie'
         })
@@ -89,7 +90,7 @@ const generateSuggestions = async (product: any): Promise<SuggestedProduct[]> =>
           id: shoe.id,
           handle: shoe.handle,
           title: shoe.title,
-          price: shoe.variants?.[0]?.prices?.[0]?.amount / 100 || 195,
+          price: getProductPriceAsNumber(shoe) || 195,
           image: shoe.thumbnail || shoe.images?.[0]?.url || 'https://imagedelivery.net/QI-O2U_ayTU_H_Ilcb4c6Q/7d203d2a-63b7-46d3-9749-1f203e4ccc00/public',
           category: 'shoes'
         })
@@ -102,7 +103,7 @@ const generateSuggestions = async (product: any): Promise<SuggestedProduct[]> =>
           id: accessory.id,
           handle: accessory.handle,
           title: accessory.title,
-          price: accessory.variants?.[0]?.prices?.[0]?.amount / 100 || 25,
+          price: getProductPriceAsNumber(accessory) || 25,
           image: accessory.thumbnail || accessory.images?.[0]?.url || 'https://cdn.kctmenswear.com/accessories/pocket-squares/white-pocket-square.png',
           category: 'accessory'
         })
@@ -117,7 +118,7 @@ const generateSuggestions = async (product: any): Promise<SuggestedProduct[]> =>
           id: tie.id,
           handle: tie.handle,
           title: tie.title,
-          price: tie.variants?.[0]?.prices?.[0]?.amount / 100 || 45,
+          price: getProductPriceAsNumber(tie) || 45,
           image: tie.thumbnail || tie.images?.[0]?.url || 'https://cdn.kctmenswear.com/main-solid-vest-tie/navy-tie.png',
           category: 'tie'
         })
@@ -130,7 +131,7 @@ const generateSuggestions = async (product: any): Promise<SuggestedProduct[]> =>
           id: vest.id,
           handle: vest.handle,
           title: vest.title,
-          price: vest.variants?.[0]?.prices?.[0]?.amount / 100 || 125,
+          price: getProductPriceAsNumber(vest) || 125,
           image: vest.thumbnail || vest.images?.[0]?.url || 'https://cdn.kctmenswear.com/main-solid-vest-tie/dusty-sage-model.png',
           category: 'vest'
         })
@@ -142,7 +143,7 @@ const generateSuggestions = async (product: any): Promise<SuggestedProduct[]> =>
           id: accessory.id,
           handle: accessory.handle,
           title: accessory.title,
-          price: accessory.variants?.[0]?.prices?.[0]?.amount / 100 || 65,
+          price: getProductPriceAsNumber(accessory) || 65,
           image: accessory.thumbnail || accessory.images?.[0]?.url || 'https://imagedelivery.net/QI-O2U_ayTU_H_Ilcb4c6Q/c5b5c5d5-5b5c-4b5c-5b5c-5b5c5b5c5b5c/public',
           category: 'accessory'
         })
@@ -157,7 +158,7 @@ const generateSuggestions = async (product: any): Promise<SuggestedProduct[]> =>
           id: item.id,
           handle: item.handle,
           title: item.title,
-          price: item.variants?.[0]?.prices?.[0]?.amount / 100 || [85, 22, 45, 125][index],
+          price: getProductPriceAsNumber(item) || [85, 22, 45, 125][index],
           image: item.thumbnail || item.images?.[0]?.url || [
             'https://imagedelivery.net/QI-O2U_ayTU_H_Ilcb4c6Q/a1b2c3d4-5e6f-7g8h-9i0j-1k2l3m4n5o6p/public',
             'https://imagedelivery.net/QI-O2U_ayTU_H_Ilcb4c6Q/s9o8c7k6s-5d4r-3e2s-1s0s-9o8c7k6s5d4r/public',
@@ -372,7 +373,7 @@ export default function CompleteTheLook({ currentProduct, onAddToCart }: Complet
             
             <div className="px-1">
               <h3 className="text-sm font-light line-clamp-1">{item.title}</h3>
-              <p className="text-sm font-medium">${item.price.toFixed(2)}</p>
+              <p className="text-sm font-medium">${(typeof item.price === 'number' ? item.price : 0).toFixed(2)}</p>
             </div>
           </div>
         ))}
@@ -388,7 +389,7 @@ export default function CompleteTheLook({ currentProduct, onAddToCart }: Complet
             {suggestions.filter(s => selectedItems.has(s.id)).map(item => (
               <div key={item.id} className="flex justify-between text-sm">
                 <span className="text-gray-600">+ {item.title}</span>
-                <span className="text-gray-600">${item.price.toFixed(2)}</span>
+                <span className="text-gray-600">${(typeof item.price === 'number' ? item.price : 0).toFixed(2)}</span>
               </div>
             ))}
             <div className="border-t pt-2">
