@@ -28,6 +28,7 @@ import ProductReviews from '@/components/products/ProductReviews'
 import AICompleteTheLook from '@/components/products/AICompleteTheLook'
 import TrustBadges, { StockUrgency, PaymentMethods } from '@/components/products/TrustBadges'
 import LazyProductSection from '@/components/products/LazyProductSection'
+import CompleteTheLookErrorBoundary from '@/components/products/CompleteTheLookErrorBoundary'
 
 export default function EnhancedProductPage() {
   const params = useParams()
@@ -420,9 +421,11 @@ export default function EnhancedProductPage() {
 
         {/* AI-Powered Complete the Look Section */}
         <LazyProductSection>
-          <AICompleteTheLook 
-            currentProduct={product}
-          />
+          <CompleteTheLookErrorBoundary>
+            <AICompleteTheLook 
+              currentProduct={product}
+            />
+          </CompleteTheLookErrorBoundary>
         </LazyProductSection>
 
         {/* Reviews Section */}

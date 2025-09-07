@@ -11,6 +11,7 @@ import {
   formalityLevels,
   type OutfitMapping 
 } from '@/lib/ai/complete-look-mappings'
+import { KnowledgeBankAdapter } from '@/lib/services/knowledgeBankAdapter'
 
 export interface AISuggestion {
   id: string
@@ -39,6 +40,7 @@ class AICompleteTheLookService {
   private fashionClipKey: string
   private knowledgeApiUrl: string
   private knowledgeApiKey: string
+  private knowledgeBank: KnowledgeBankAdapter
   private cacheTimeout: number = 30 * 60 * 1000 // 30 minutes
 
   constructor() {
@@ -46,6 +48,7 @@ class AICompleteTheLookService {
     this.fashionClipKey = process.env.NEXT_PUBLIC_FASHION_CLIP_KEY || 'kct-menswear-api-2024-secret'
     this.knowledgeApiUrl = process.env.KCT_KNOWLEDGE_API_URL || 'https://kct-knowledge-api-2-production.up.railway.app'
     this.knowledgeApiKey = process.env.KCT_KNOWLEDGE_API_KEY || 'kct-menswear-api-2024-secret'
+    this.knowledgeBank = new KnowledgeBankAdapter()
   }
 
   /**
@@ -63,9 +66,12 @@ class AICompleteTheLookService {
     } = {}
   ): Promise<AISuggestion[]> {
     const { useCache = true, useAI = true, limit = 4 } = options
+    
+    // Defensive: Ensure limit is a valid number
+    const safeLimit = Number.isFinite(limit) ? limit : 4
 
     // Tier 1: Get instant static suggestions
-    const staticSuggestions = await this.getStaticSuggestionsWithProducts(product, limit)
+    const staticSuggestions = await this.getStaticSuggestionsWithProducts(product, safeLimit)
     
     if (!useAI) {
       return staticSuggestions
@@ -81,7 +87,7 @@ class AICompleteTheLookService {
 
     // Tier 3: Generate AI suggestions (progressive enhancement)
     try {
-      const aiSuggestions = await this.generateAISuggestions(product, limit)
+      const aiSuggestions = await this.generateAISuggestions(product, safeLimit)
       
       // Cache the results
       if (useCache) {
@@ -106,8 +112,15 @@ class AICompleteTheLookService {
     if (!staticMapping) return []
 
     try {
-      // Fetch real products from Medusa
-      const { products } = await fetchMedusaProducts({ limit: 50 })
+      // Fetch real products from Medusa - FIX: Pass number, not object
+      const products = await fetchMedusaProducts(50)
+      
+      // Defensive: Ensure products is an array
+      if (!Array.isArray(products)) {
+        console.warn('Products is not an array, falling back')
+        return this.createFallbackSuggestions(staticMapping, limit)
+      }
+      
       const suggestions: AISuggestion[] = []
 
       // Map static suggestions to real products
@@ -120,7 +133,7 @@ class AICompleteTheLookService {
 
       for (const suggestionId of allSuggestionIds.slice(0, limit)) {
         // Find matching product by handle or title keywords
-        const matchingProduct = products.find(p => {
+        const matchingProduct = products?.find(p => {
           const handle = p.handle?.toLowerCase()
           const title = p.title?.toLowerCase()
           const suggestion = suggestionId.toLowerCase().replace(/-/g, ' ')
@@ -155,7 +168,7 @@ class AICompleteTheLookService {
       return suggestions
     } catch (error) {
       console.error('Failed to fetch products for static suggestions:', error)
-      return this.createFallbackSuggestions(staticMapping, limit)
+      return this.createFallbackSuggestions(staticMapping || this.getDefaultMapping(), limit)
     }
   }
 
@@ -187,36 +200,27 @@ class AICompleteTheLookService {
   }
 
   /**
-   * Analyze product using Fashion CLIP API
+   * Analyze product using Knowledge Bank API instead of Fashion CLIP
    */
   private async analyzeProductWithFashionClip(product: MedusaProduct): Promise<FashionClipAnalysis> {
     try {
-      // If product has an image, analyze it
-      if (product.thumbnail || product.images?.[0]?.url) {
-        const imageUrl = product.thumbnail || product.images![0].url
-        
-        const response = await fetch(`${this.fashionClipUrl}/analyze-url`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': this.fashionClipKey
-          },
-          body: JSON.stringify({
-            image_url: imageUrl,
-            return_embeddings: true,
-            analyze_style: true
-          })
-        })
-
-        if (response.ok) {
-          return await response.json()
-        }
+      // Use Knowledge Bank for analysis - it's more reliable
+      const suitColor = this.extractColors(product.title)[0] || 'navy'
+      const recommendations = await this.knowledgeBank.getRecommendations({
+        occasion: this.detectOccasion(product.title),
+        season: this.getCurrentSeason()
+      })
+      
+      // Convert Knowledge Bank response to FashionClipAnalysis format
+      return {
+        category: this.detectCategory(product.title),
+        formality: this.detectFormality(product.title),
+        color_palette: this.extractColors(product.title),
+        style: this.detectStyle(product.title),
+        attributes: recommendations.slice(0, 3).map(r => r.reason || '')
       }
-
-      // Fallback: Analyze based on text description
-      return this.analyzeProductFromText(product)
     } catch (error) {
-      console.error('Fashion CLIP analysis failed:', error)
+      console.error('Knowledge Bank analysis failed, using text analysis:', error)
       return this.analyzeProductFromText(product)
     }
   }
@@ -249,8 +253,14 @@ class AICompleteTheLookService {
     limit: number
   ): Promise<AISuggestion[]> {
     try {
-      // Fetch all available products
-      const { products } = await fetchMedusaProducts({ limit: 100 })
+      // Fetch all available products - FIX: Pass number, not object
+      const products = await fetchMedusaProducts(100)
+      
+      // Defensive: Ensure products is an array
+      if (!Array.isArray(products)) {
+        console.warn('Products is not an array in findComplementaryProducts')
+        return []
+      }
       
       // Score each product for complementarity
       const scored = products
@@ -533,6 +543,36 @@ class AICompleteTheLookService {
     }
   }
 
+  private getDefaultMapping(): OutfitMapping {
+    return {
+      category: 'general',
+      keywords: [],
+      suggestions: {
+        shirts: ['white-dress-shirt', 'light-blue-dress-shirt'],
+        ties: ['silk-tie', 'navy-tie'],
+        shoes: ['dress-shoes', 'oxford-shoes'],
+        accessories: ['pocket-square', 'cufflinks']
+      }
+    }
+  }
+  
+  private getCurrentSeason(): string {
+    const month = new Date().getMonth()
+    if (month >= 2 && month <= 4) return 'spring'
+    if (month >= 5 && month <= 7) return 'summer'
+    if (month >= 8 && month <= 10) return 'fall'
+    return 'winter'
+  }
+  
+  private detectOccasion(title: string): string {
+    const lower = title.toLowerCase()
+    if (lower.includes('wedding')) return 'wedding'
+    if (lower.includes('tuxedo') || lower.includes('formal')) return 'formal'
+    if (lower.includes('business')) return 'business'
+    if (lower.includes('casual')) return 'casual'
+    return 'versatile'
+  }
+  
   private createFallbackSuggestions(mapping: OutfitMapping, limit: number): AISuggestion[] {
     const suggestions: AISuggestion[] = []
     const allSuggestions = [
@@ -550,33 +590,105 @@ class AICompleteTheLookService {
     return suggestions
   }
 
-  // Cache management
+  // Multi-tier Cache Management
+  private memoryCache: Map<string, { suggestions: AISuggestion[], timestamp: number }> = new Map()
 
   private getCachedSuggestions(productId: string): AISuggestion[] | null {
     if (typeof window === 'undefined') return null
     
-    const cached = localStorage.getItem(`ai-suggestions-${productId}`)
-    if (!cached) return null
-    
-    try {
-      const { suggestions, timestamp } = JSON.parse(cached)
-      if (Date.now() - timestamp > this.cacheTimeout) {
-        localStorage.removeItem(`ai-suggestions-${productId}`)
-        return null
-      }
-      return suggestions
-    } catch {
-      return null
+    // Tier 1: Memory cache (instant)
+    const memCached = this.memoryCache.get(productId)
+    if (memCached && Date.now() - memCached.timestamp < this.cacheTimeout) {
+      console.log('[CACHE] Memory cache hit')
+      return memCached.suggestions
     }
+    
+    // Tier 2: SessionStorage (same session)
+    try {
+      const sessionCached = sessionStorage.getItem(`ai-suggestions-${productId}`)
+      if (sessionCached) {
+        const { suggestions, timestamp } = JSON.parse(sessionCached)
+        if (Date.now() - timestamp < this.cacheTimeout) {
+          console.log('[CACHE] Session cache hit')
+          // Promote to memory cache
+          this.memoryCache.set(productId, { suggestions, timestamp })
+          return suggestions
+        }
+      }
+    } catch {}
+    
+    // Tier 3: LocalStorage (persistent)
+    try {
+      const localCached = localStorage.getItem(`ai-suggestions-${productId}`)
+      if (localCached) {
+        const { suggestions, timestamp } = JSON.parse(localCached)
+        if (Date.now() - timestamp > this.cacheTimeout) {
+          localStorage.removeItem(`ai-suggestions-${productId}`)
+          return null
+        }
+        console.log('[CACHE] Local cache hit')
+        // Promote to faster caches
+        this.memoryCache.set(productId, { suggestions, timestamp })
+        sessionStorage.setItem(`ai-suggestions-${productId}`, localCached)
+        return suggestions
+      }
+    } catch {}
+    
+    return null
   }
 
   private cacheSuggestions(productId: string, suggestions: AISuggestion[]): void {
     if (typeof window === 'undefined') return
     
-    localStorage.setItem(`ai-suggestions-${productId}`, JSON.stringify({
+    const cacheData = JSON.stringify({
       suggestions,
       timestamp: Date.now()
-    }))
+    })
+    
+    // Write to all cache tiers
+    try {
+      // Memory cache
+      this.memoryCache.set(productId, { suggestions, timestamp: Date.now() })
+      
+      // SessionStorage
+      sessionStorage.setItem(`ai-suggestions-${productId}`, cacheData)
+      
+      // LocalStorage with size check
+      if (cacheData.length < 50000) { // Limit to 50KB per item
+        localStorage.setItem(`ai-suggestions-${productId}`, cacheData)
+      }
+    } catch (error) {
+      console.warn('Cache write failed:', error)
+      // Clean up old cache entries if storage is full
+      this.cleanupCache()
+    }
+  }
+  
+  private cleanupCache(): void {
+    if (typeof window === 'undefined') return
+    
+    try {
+      // Clean old entries from localStorage
+      const keys = Object.keys(localStorage)
+      const aiKeys = keys.filter(k => k.startsWith('ai-suggestions-'))
+      
+      // Remove entries older than cache timeout
+      aiKeys.forEach(key => {
+        try {
+          const data = localStorage.getItem(key)
+          if (data) {
+            const { timestamp } = JSON.parse(data)
+            if (Date.now() - timestamp > this.cacheTimeout) {
+              localStorage.removeItem(key)
+            }
+          }
+        } catch {
+          localStorage.removeItem(key)
+        }
+      })
+    } catch (error) {
+      console.error('Cache cleanup failed:', error)
+    }
   }
 }
 
