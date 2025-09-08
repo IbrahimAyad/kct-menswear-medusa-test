@@ -284,16 +284,16 @@ export async function initializeCartPayment(cartId: string): Promise<any | null>
   }
 }
 
-// Create cart using existing endpoint (workflow endpoints not yet working)
+// Create cart using standard Medusa v2 endpoint
 export async function createMedusaCart(email?: string): Promise<MedusaCart | null> {
   try {
-    // TODO: Switch to /store/cart-workflow once backend team fixes the endpoint
-    const response = await fetch(`${MEDUSA_URL}/store/cart-operations`, {
+    // Using standard Medusa v2 /store/carts endpoint
+    const response = await fetch(`${MEDUSA_URL}/store/carts`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({
-        action: 'create',
-        customer_email: email || ''
+        region_id: 'reg_01K3S6NDGAC1DSWH9MCZCWBWWD',
+        email: email || undefined
       })
     })
 
@@ -303,26 +303,24 @@ export async function createMedusaCart(email?: string): Promise<MedusaCart | nul
     }
 
     const data = await response.json()
-    const cartId = data.cart_id || data.id
-    console.log('Cart created:', cartId)
+    const cart = data.cart
+    console.log('Cart created:', cart?.id)
     
-    return data
+    return cart
   } catch (error) {
     console.error('Error creating Medusa cart:', error)
     return null
   }
 }
 
-// Add item to cart using existing endpoint (workflow endpoints not yet working)
+// Add item to cart using standard Medusa v2 endpoint
 export async function addToMedusaCart(cartId: string, variantId: string, quantity: number = 1): Promise<MedusaCart | null> {
   try {
-    // TODO: Switch to /store/cart-workflow once backend team fixes the endpoint
-    const response = await fetch(`${MEDUSA_URL}/store/cart-operations`, {
+    // Using standard Medusa v2 /store/carts/{id}/line-items endpoint
+    const response = await fetch(`${MEDUSA_URL}/store/carts/${cartId}/line-items`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({
-        action: 'add_item',
-        cart_id: cartId,
         variant_id: variantId,
         quantity: quantity
       })
@@ -355,16 +353,13 @@ export async function addToMedusaCart(cartId: string, variantId: string, quantit
   }
 }
 
-// Update item quantity using CUSTOM endpoint
+// Update item quantity using standard Medusa v2 endpoint
 export async function updateMedusaCartItem(cartId: string, itemId: string, quantity: number): Promise<MedusaCart | null> {
   try {
-    const response = await fetch(`${MEDUSA_URL}/store/cart-operations`, {
+    const response = await fetch(`${MEDUSA_URL}/store/carts/${cartId}/line-items/${itemId}`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({
-        action: 'update_item',
-        cart_id: cartId,
-        item_id: itemId,
         quantity: quantity
       })
     })
@@ -381,17 +376,12 @@ export async function updateMedusaCartItem(cartId: string, itemId: string, quant
   }
 }
 
-// Remove item from cart using CUSTOM endpoint
+// Remove item from cart using standard Medusa v2 endpoint
 export async function removeFromMedusaCart(cartId: string, itemId: string): Promise<MedusaCart | null> {
   try {
-    const response = await fetch(`${MEDUSA_URL}/store/cart-operations`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify({
-        action: 'remove_item',
-        cart_id: cartId,
-        item_id: itemId
-      })
+    const response = await fetch(`${MEDUSA_URL}/store/carts/${cartId}/line-items/${itemId}`, {
+      method: 'DELETE',
+      headers: getHeaders()
     })
 
     if (!response.ok) {
@@ -406,10 +396,10 @@ export async function removeFromMedusaCart(cartId: string, itemId: string): Prom
   }
 }
 
-// Get cart using CUSTOM endpoint
+// Get cart using standard Medusa v2 endpoint
 export async function getMedusaCart(cartId: string): Promise<MedusaCart | null> {
   try {
-    const response = await fetch(`${MEDUSA_URL}/store/cart-operations?cart_id=${cartId}`, {
+    const response = await fetch(`${MEDUSA_URL}/store/carts/${cartId}`, {
       method: 'GET',
       headers: getHeaders()
     })
@@ -423,7 +413,7 @@ export async function getMedusaCart(cartId: string): Promise<MedusaCart | null> 
     }
 
     const data = await response.json()
-    return data.cart
+    return data.cart || data
   } catch (error) {
     console.error('Error getting cart:', error)
     return null
@@ -497,9 +487,81 @@ export async function addShippingMethod(cartId: string, shippingMethod: string =
   }
 }
 
-// Step 3: Initialize payment
+// Step 3: Create payment collection (Medusa v2 workflow)
+export async function createPaymentCollection(cartId: string) {
+  try {
+    const response = await fetch(`${MEDUSA_URL}/store/payment-collections`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({
+        cart_id: cartId
+      })
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`Failed to create payment collection: ${response.status} - ${errorText}`)
+    }
+
+    const data = await response.json()
+    return data.payment_collection
+  } catch (error) {
+    console.error('Error creating payment collection:', error)
+    return null
+  }
+}
+
+// Step 4: Create payment session with Stripe
+export async function createPaymentSession(paymentCollectionId: string) {
+  try {
+    const response = await fetch(`${MEDUSA_URL}/store/payment-collections/${paymentCollectionId}/payment-sessions`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({
+        provider_id: 'pp_stripe_stripe'
+      })
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`Failed to create payment session: ${response.status} - ${errorText}`)
+    }
+
+    const data = await response.json()
+    // The payment session is in the payment_sessions array
+    const paymentSession = data.payment_collection?.payment_sessions?.[0]
+    if (paymentSession) {
+      // Extract the Stripe client secret from the data
+      return {
+        ...paymentSession,
+        client_secret: paymentSession.data?.client_secret
+      }
+    }
+    return null
+  } catch (error) {
+    console.error('Error creating payment session:', error)
+    return null
+  }
+}
+
+// Legacy payment initialization (keep for compatibility)
 export async function initializeMedusaPayment(cartId: string) {
   try {
+    // Try new Medusa v2 workflow
+    const paymentCollection = await createPaymentCollection(cartId)
+    if (paymentCollection) {
+      const paymentSession = await createPaymentSession(paymentCollection.id)
+      if (paymentSession) {
+        return {
+          client_secret: paymentSession.client_secret,
+          amount: paymentCollection.amount,
+          payment_collection_id: paymentCollection.id,
+          payment_session_id: paymentSession.id
+        }
+      }
+    }
+    
+    // Fallback to old checkout endpoint if available
     const response = await fetch(`${MEDUSA_URL}/store/checkout`, {
       method: 'POST',
       headers: getHeaders(),
@@ -515,7 +577,6 @@ export async function initializeMedusaPayment(cartId: string) {
     }
 
     const data = await response.json()
-    // Returns: { client_secret, amount, payment_collection_id, payment_session_id }
     return data
   } catch (error) {
     console.error('Error initializing payment:', error)
