@@ -284,11 +284,11 @@ export async function initializeCartPayment(cartId: string): Promise<any | null>
   }
 }
 
-// Create cart using existing endpoint (workflow endpoints pending deployment)
+// Create cart using new workflow endpoint
 export async function createMedusaCart(email?: string): Promise<MedusaCart | null> {
   try {
-    // Will switch to /store/cart-workflow once fully deployed
-    const response = await fetch(`${MEDUSA_URL}/store/cart-operations`, {
+    // Using new cart-workflow endpoint that fixes strategy error
+    const response = await fetch(`${MEDUSA_URL}/store/cart-workflow`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({
@@ -313,11 +313,11 @@ export async function createMedusaCart(email?: string): Promise<MedusaCart | nul
   }
 }
 
-// Add item to cart using existing endpoint (workflow endpoints pending deployment)
+// Add item to cart using new workflow endpoint
 export async function addToMedusaCart(cartId: string, variantId: string, quantity: number = 1): Promise<MedusaCart | null> {
   try {
-    // Will switch to /store/cart-workflow once fully deployed
-    const response = await fetch(`${MEDUSA_URL}/store/cart-operations`, {
+    // Using new cart-workflow endpoint that fixes strategy error
+    const response = await fetch(`${MEDUSA_URL}/store/cart-workflow`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({
@@ -355,10 +355,10 @@ export async function addToMedusaCart(cartId: string, variantId: string, quantit
   }
 }
 
-// Update item quantity using CUSTOM endpoint
+// Update item quantity using new workflow endpoint
 export async function updateMedusaCartItem(cartId: string, itemId: string, quantity: number): Promise<MedusaCart | null> {
   try {
-    const response = await fetch(`${MEDUSA_URL}/store/cart-operations`, {
+    const response = await fetch(`${MEDUSA_URL}/store/cart-workflow`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({
@@ -381,10 +381,10 @@ export async function updateMedusaCartItem(cartId: string, itemId: string, quant
   }
 }
 
-// Remove item from cart using CUSTOM endpoint
+// Remove item from cart using new workflow endpoint
 export async function removeFromMedusaCart(cartId: string, itemId: string): Promise<MedusaCart | null> {
   try {
-    const response = await fetch(`${MEDUSA_URL}/store/cart-operations`, {
+    const response = await fetch(`${MEDUSA_URL}/store/cart-workflow`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({
@@ -406,10 +406,10 @@ export async function removeFromMedusaCart(cartId: string, itemId: string): Prom
   }
 }
 
-// Get cart using CUSTOM endpoint
+// Get cart using cart-helper endpoint
 export async function getMedusaCart(cartId: string): Promise<MedusaCart | null> {
   try {
-    const response = await fetch(`${MEDUSA_URL}/store/cart-operations?cart_id=${cartId}`, {
+    const response = await fetch(`${MEDUSA_URL}/store/cart-helper?cart_id=${cartId}`, {
       method: 'GET',
       headers: getHeaders()
     })
