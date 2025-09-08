@@ -237,6 +237,26 @@ export async function fetchMedusaProduct(productId: string): Promise<MedusaProdu
 
 // Initialize payment collection for cart (needed immediately after creation)
 export async function initializeCartPayment(cartId: string): Promise<any | null> {
+  // Try new payment-init endpoint first (if deployed)
+  try {
+    const response = await fetch(`${MEDUSA_URL}/store/payment-init`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({
+        cart_id: cartId
+      })
+    })
+
+    if (response.ok) {
+      const data = await response.json()
+      console.log('Payment initialized successfully with provider:', data.provider_id)
+      return data
+    }
+  } catch (error) {
+    console.log('New payment-init endpoint not available, trying fallback')
+  }
+
+  // Fallback to old checkout endpoint
   try {
     const response = await fetch(`${MEDUSA_URL}/store/checkout`, {
       method: 'POST',
