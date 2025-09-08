@@ -116,7 +116,9 @@ export async function fetchMedusaProducts(customLimit?: number): Promise<MedusaP
         firstVariant: sample.variants?.[0] ? {
           hasCalculatedPrice: !!sample.variants[0].calculated_price,
           hasPrices: !!sample.variants[0].prices,
-          hasDirectPrice: !!sample.variants[0].price
+          hasDirectPrice: !!sample.variants[0].price,
+          hasTierPrice: !!sample.variants[0].metadata?.tier_price,
+          tierPriceValue: sample.variants[0].metadata?.tier_price
         } : null
       })
     }

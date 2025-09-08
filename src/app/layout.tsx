@@ -4,11 +4,10 @@ import { Navigation } from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
 import { Providers } from "@/components/providers/Providers";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { MedusaCartProvider } from "@/context/medusa-cart-context";
+// Removed old MedusaCartProvider - using the one in Providers instead
 import { SmartChatLauncher } from "@/components/chat/SmartChatLauncher";
 import { ChatWidget } from "@/components/ai/ChatWidget";
-import { UnifiedCartDrawer } from "@/components/cart/UnifiedCartDrawer";
-import { MixedCartWarning } from "@/components/cart/MixedCartWarning";
+import { SimpleCartDrawer } from "@/components/cart/SimpleCartDrawer";
 import { StyleConsultantButton } from "@/components/style-consultant/VirtualStyleConsultant";
 import { GoogleAnalyticsScript } from "@/components/analytics/GoogleAnalytics";
 import { AnalyticsDashboard } from "@/components/analytics/AnalyticsDashboard";
@@ -97,20 +96,18 @@ export default function RootLayout({
         {/* <PostHogProvider> */}
           <Providers>
             <AuthProvider>
-              <MedusaCartProvider>
-                <ClientOnlyAnalytics>
-                  <GoogleAnalyticsScript />
-                  <FacebookPixelScript />
-                </ClientOnlyAnalytics>
-                <Navigation />
-                <main id="main-content" className="pt-16 min-h-screen" role="main" aria-label="Main content">
-                  {children}
-                </main>
+              <ClientOnlyAnalytics>
+                <GoogleAnalyticsScript />
+                <FacebookPixelScript />
+              </ClientOnlyAnalytics>
+              <Navigation />
+              <main id="main-content" className="pt-16 min-h-screen" role="main" aria-label="Main content">
+                {children}
+              </main>
               <Footer />
               <SmartChatLauncher />
               {/* <StyleConsultantButton /> */}
-              <UnifiedCartDrawer />
-              <MixedCartWarning />
+              <SimpleCartDrawer />
               <MobileBottomNav />
               <ServiceWorkerUnregister />
               <Suspense fallback={null}>
@@ -119,7 +116,6 @@ export default function RootLayout({
               </Suspense>
               {/* <FacebookMessenger /> */}
               {process.env.NODE_ENV === 'development' && <AnalyticsDashboard />}
-              </MedusaCartProvider>
             </AuthProvider>
           </Providers>
         {/* </PostHogProvider> */}

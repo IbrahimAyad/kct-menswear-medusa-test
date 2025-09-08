@@ -11,6 +11,7 @@ import {
 } from '@/services/medusaBackendService'
 import { getProductPrice } from '@/utils/pricing'
 import { useMedusaCart } from '@/contexts/MedusaCartContext'
+import { useUIStore } from '@/store/uiStore'
 import { ShoppingBag, Filter, Grid2x2, Grid3x3, Search, Package, Plus, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
@@ -27,8 +28,9 @@ export default function CatalogPage() {
   const [addingToCart, setAddingToCart] = useState<string | null>(null)
   const [addedItems, setAddedItems] = useState<Set<string>>(new Set())
 
-  // Get cart context
+  // Get cart context and UI store
   const { addItem, isLoading: cartLoading } = useMedusaCart()
+  const { setIsCartOpen } = useUIStore()
 
   useEffect(() => {
     setMounted(true)
@@ -87,6 +89,9 @@ export default function CatalogPage() {
       // Show success state
       setAddedItems(prev => new Set([...prev, product.id]))
       toast.success(`${product.title} added to cart!`)
+      
+      // Open cart drawer
+      setIsCartOpen(true)
       
       // Reset success state after 2 seconds
       setTimeout(() => {

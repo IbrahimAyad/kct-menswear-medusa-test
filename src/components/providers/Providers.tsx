@@ -4,7 +4,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactNode, useState } from "react";
 import { NotificationContainer } from "@/components/notifications/NotificationContainer";
 import { SettingsProvider } from "@/contexts/SettingsContext";
-import { CoreCartProvider } from "@/contexts/CoreCartContext";
 import { MedusaCartProvider } from "@/contexts/MedusaCartContext";
 import { Toaster } from "sonner";
 
@@ -25,22 +24,20 @@ export function Providers({ children }: ProvidersProps) {
   return (
     <QueryClientProvider client={queryClient}>
       <SettingsProvider>
-        <CoreCartProvider>
-          <MedusaCartProvider>
-            {children}
-            <NotificationContainer />
-            <Toaster 
-              position="bottom-right"
-              toastOptions={{
-                duration: 3000,
-                style: {
-                  background: '#363636',
-                  color: '#fff',
-                },
-              }}
-            />
-          </MedusaCartProvider>
-        </CoreCartProvider>
+        <MedusaCartProvider>
+          {children}
+          <NotificationContainer />
+          <Toaster 
+            position="bottom-right"
+            toastOptions={{
+              duration: 3000,
+              style: {
+                background: '#363636',
+                color: '#fff',
+              },
+            }}
+          />
+        </MedusaCartProvider>
       </SettingsProvider>
     </QueryClientProvider>
   );

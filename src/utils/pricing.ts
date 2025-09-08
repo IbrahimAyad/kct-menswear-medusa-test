@@ -1,37 +1,31 @@
 /**
- * KCT Menswear Pricing System - Handles both backend response structures
- * Supports both product.price and variant.calculated_price formats
+ * KCT Menswear Pricing System - Simplified after backend standardization
+ * Backend now ONLY uses calculated_price.calculated_amount (in cents)
  */
 
 /**
  * Get the price from a product or variant
- * Handles multiple data structures from backend
+ * Backend standardized to only use calculated_price.calculated_amount
  * @param productOrVariant - Product or Variant object from Medusa API
  * @returns Price in dollars (converted from cents)
  */
 export const getProductPrice = (productOrVariant: any): string => {
-  // Case 1: Direct product with price field (product listing)
-  if (productOrVariant?.price !== undefined && !productOrVariant?.calculated_price) {
-    const priceInCents = productOrVariant.price
-    return (priceInCents / 100).toFixed(2)
-  }
-  
-  // Case 2: Variant with calculated_price (product detail)
+  // Case 1: Direct variant with calculated_price
   if (productOrVariant?.calculated_price?.calculated_amount !== undefined) {
     const amountInCents = productOrVariant.calculated_price.calculated_amount
     return (amountInCents / 100).toFixed(2)
   }
   
-  // Case 3: Product with variants array
+  // Case 2: Product with variants array - check first variant
   if (productOrVariant?.variants?.[0]?.calculated_price?.calculated_amount !== undefined) {
     const amountInCents = productOrVariant.variants[0].calculated_price.calculated_amount
     return (amountInCents / 100).toFixed(2)
   }
   
-  // Case 4: Product with variants that have price field
-  if (productOrVariant?.variants?.[0]?.price !== undefined) {
-    const priceInCents = productOrVariant.variants[0].price
-    return (priceInCents / 100).toFixed(2)
+  // Case 3: Single variant property
+  if (productOrVariant?.variant?.calculated_price?.calculated_amount !== undefined) {
+    const amountInCents = productOrVariant.variant.calculated_price.calculated_amount
+    return (amountInCents / 100).toFixed(2)
   }
   
   // Fallback
