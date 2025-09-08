@@ -29,11 +29,13 @@ import AICompleteTheLook from '@/components/products/AICompleteTheLook'
 import TrustBadges, { StockUrgency, PaymentMethods } from '@/components/products/TrustBadges'
 import LazyProductSection from '@/components/products/LazyProductSection'
 import CompleteTheLookErrorBoundary from '@/components/products/CompleteTheLookErrorBoundary'
+import { useUIStore } from '@/store/uiStore'
 
 export default function EnhancedProductPage() {
   const params = useParams()
   const router = useRouter()
   const { addItem, isLoading: cartLoading } = useMedusaCart()
+  const { setIsCartOpen } = useUIStore()
   
   const [product, setProduct] = useState<MedusaProduct | null>(null)
   const [loading, setLoading] = useState(true)
@@ -104,6 +106,8 @@ export default function EnhancedProductPage() {
       await addItem(selectedVariant.id, quantity, product || undefined)
       setAdded(true)
       toast.success('Added to cart!')
+      // Open the cart drawer
+      setIsCartOpen(true)
       setTimeout(() => setAdded(false), 3000)
     } catch (error) {
       console.error('Failed to add to cart:', error)
