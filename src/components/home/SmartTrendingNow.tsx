@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, Sparkles, TrendingUp, Heart } from "lucide-react";
+import { fetchMedusaProducts } from "@/services/medusaBackendService";
+import { getProductPriceAsNumber } from "@/utils/pricing";
 
 interface Product {
   id: string;
@@ -44,71 +46,44 @@ export function SmartTrendingNow() {
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Fetch smart recommendations using our AI endpoints
+  // Fetch smart recommendations using Medusa products
   useEffect(() => {
     const fetchSmartProducts = async () => {
       setLoading(true);
       try {
-        // Fetch from multiple AI-powered endpoints
-        const [
-          trendingResponse,
-          recommendationsResponse,
-          outfitsResponse,
-          affinityResponse
-        ] = await Promise.all([
-          // Get actual trending products based on analytics
-          fetch('/api/recommendations/trending?limit=12'),
-          // Get AI recommendations
-          fetch('/api/recommendations?type=featured&limit=12'),
-          // Get complete outfit recommendations
-          fetch('/api/ai/outfit-recommendations', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              occasion: 'business',
-              style: 'modern',
-              budget: 500
-            })
-          }),
-          // Get products with high affinity scores
-          fetch('/api/recommendations/affinity?productId=featured&limit=8')
-        ]);
+        // Fetch Medusa products
+        const medusaProducts = await fetchMedusaProducts(20);
+        
+        // Transform Medusa products to our format
+        const transformedProducts = medusaProducts.map((product: any) => ({
+          id: product.id,
+          name: product.title,
+          category: product.category || 'suits',
+          price: getProductPriceAsNumber(product),
+          images: product.thumbnail ? [product.thumbnail] : product.images?.map((img: any) => img.url) || [],
+          slug: product.handle || product.id,
+          is_featured: true,
+          is_trending: true
+        }));
 
-        const trending = await trendingResponse.json();
-        const recommendations = await recommendationsResponse.json();
-        const outfits = await outfitsResponse.json();
-        const affinity = await affinityResponse.json();
-
-        // Also fetch regular products for fallback
-        const productsResponse = await fetch('/api/products/unified?limit=20');
-        const regularProducts = await productsResponse.json();
-
-        // Organize smart recommendations
+        // Organize products for different tabs
         setProducts({
-          'ai-picks': recommendations.products || regularProducts.products?.slice(0, 8) || [],
-          'trending': trending.products || regularProducts.products?.slice(0, 8) || [],
-          'outfits': outfits.recommendations || [],
-          'personalized': affinity.products || regularProducts.products?.slice(8, 16) || [],
-          'best-sellers': regularProducts.products?.filter((p: any) => p.is_featured) || []
+          'ai-picks': transformedProducts.slice(0, 8),
+          'trending': transformedProducts.slice(0, 8),
+          'outfits': [], // We'll keep this empty for now
+          'personalized': transformedProducts.slice(8, 16),
+          'best-sellers': transformedProducts.filter((p: any) => p.price > 100).slice(0, 8)
         });
       } catch (error) {
         console.error('Error fetching smart products:', error);
-        // Fallback to regular products
-        try {
-          const response = await fetch('/api/products/unified?limit=20');
-          const data = await response.json();
-          const allProducts = data.products || [];
-          
-          setProducts({
-            'ai-picks': allProducts.slice(0, 5),
-            'trending': allProducts.slice(5, 10),
-            'outfits': [],
-            'personalized': allProducts.slice(10, 15),
-            'best-sellers': allProducts.slice(15, 20)
-          });
-        } catch (fallbackError) {
-          console.error('Fallback also failed:', fallbackError);
-        }
+        // Fallback to empty arrays
+        setProducts({
+          'ai-picks': [],
+          'trending': [],
+          'outfits': [],
+          'personalized': [],
+          'best-sellers': []
+        });
       } finally {
         setLoading(false);
       }
@@ -371,15 +346,15 @@ export function SmartTrendingNow() {
                             {product.sale_price ? (
                               <>
                                 <span className="text-gray-400 line-through text-sm">
-                                  ${product.price.toFixed(2)}
+                                  ${typeof product.price === 'number' ? product.price.toFixed(2) : '0.00'}
                                 </span>
                                 <span className="text-red-600 text-lg font-bold">
-                                  ${product.sale_price.toFixed(2)}
+                                  ${typeof product.sale_price === 'number' ? product.sale_price.toFixed(2) : '0.00'}
                                 </span>
                               </>
                             ) : (
                               <span className="text-black text-lg font-bold">
-                                ${product.price.toFixed(2)}
+                                ${typeof product.price === 'number' ? product.price.toFixed(2) : '0.00'}
                               </span>
                             )}
                           </div>

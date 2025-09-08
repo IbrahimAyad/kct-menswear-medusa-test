@@ -71,7 +71,9 @@ export class MedusaProgressiveLoader {
     try {
       const params = new URLSearchParams({
         limit: this.batchSize.toString(),
-        offset: '0'
+        offset: '0',
+        region_id: 'reg_01K3S6NDGAC1DSWH9MCZCWBWWD', // Include region for proper pricing
+        fields: '*variants.calculated_price' // Request price data
       })
       
       const response = await fetch(`${MEDUSA_URL}/store/products?${params}`, {
@@ -143,7 +145,9 @@ export class MedusaProgressiveLoader {
       // Load from API
       const params = new URLSearchParams({
         limit: this.batchSize.toString(),
-        offset: this.currentOffset.toString()
+        offset: this.currentOffset.toString(),
+        region_id: 'reg_01K3S6NDGAC1DSWH9MCZCWBWWD', // Include region for proper pricing
+        fields: '*variants.calculated_price' // Request price data
       })
       
       const response = await fetch(`${MEDUSA_URL}/store/products?${params}`, {
@@ -207,7 +211,9 @@ export class MedusaProgressiveLoader {
     try {
       const params = new URLSearchParams({
         limit: this.batchSize.toString(),
-        offset: nextOffset.toString()
+        offset: nextOffset.toString(),
+        region_id: 'reg_01K3S6NDGAC1DSWH9MCZCWBWWD', // Include region for proper pricing
+        fields: '*variants.calculated_price' // Request price data
       })
       
       const response = await fetch(`${MEDUSA_URL}/store/products?${params}`, {

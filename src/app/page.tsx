@@ -110,7 +110,9 @@ export default function HomePage() {
       // No cache, fetch directly but only 12 products for faster load
       const params = new URLSearchParams({
         limit: '12',
-        offset: '0'
+        offset: '0',
+        region_id: 'reg_01K3S6NDGAC1DSWH9MCZCWBWWD', // Include region for proper pricing
+        fields: '*variants.calculated_price' // Request price data
       });
       
       const response = await fetch(`https://backend-production-7441.up.railway.app/store/products?${params}`, {
