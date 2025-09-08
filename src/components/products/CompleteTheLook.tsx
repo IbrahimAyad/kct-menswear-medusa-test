@@ -292,7 +292,9 @@ export default function CompleteTheLook({ currentProduct, onAddToCart }: Complet
   
   const calculateTotal = () => {
     const selectedProducts = suggestions.filter(s => selectedItems.has(s.id))
-    const subtotal = selectedProducts.reduce((acc, p) => acc + p.price, 0) + (currentProduct.price || 0)
+    // Ensure currentProduct.price is a number
+    const currentPrice = typeof currentProduct.price === 'number' ? currentProduct.price : 0
+    const subtotal = selectedProducts.reduce((acc, p) => acc + (typeof p.price === 'number' ? p.price : 0), 0) + currentPrice
     const discount = selectedItems.size > 0 ? subtotal * (bundleDiscount / 100) : 0
     return {
       subtotal,
@@ -384,7 +386,7 @@ export default function CompleteTheLook({ currentProduct, onAddToCart }: Complet
           <div className="space-y-2 mb-4">
             <div className="flex justify-between text-sm">
               <span>Current item</span>
-              <span>${currentProduct.price?.toFixed(2) || '0.00'}</span>
+              <span>${(typeof currentProduct.price === 'number' ? currentProduct.price.toFixed(2) : '0.00')}</span>
             </div>
             {suggestions.filter(s => selectedItems.has(s.id)).map(item => (
               <div key={item.id} className="flex justify-between text-sm">

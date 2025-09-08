@@ -315,14 +315,28 @@ export async function addToMedusaCart(cartId: string, variantId: string, quantit
 
     if (!response.ok) {
       const errorText = await response.text()
-      throw new Error(`Failed to add to cart: ${response.status} - ${errorText}`)
+      console.error(`Cart API Error: ${response.status}`, errorText)
+      
+      // Parse error for specific issues
+      if (errorText.includes('strategy')) {
+        throw new Error('Cart system configuration error. Please try again.')
+      }
+      if (errorText.includes('payment')) {
+        throw new Error('Payment system is being updated. Please try again.')
+      }
+      if (response.status === 500) {
+        throw new Error('Server error. Our team has been notified.')
+      }
+      
+      throw new Error(`Failed to add to cart: ${response.status}`)
     }
 
     const data = await response.json()
     return data.cart
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error adding to Medusa cart:', error)
-    return null
+    // Re-throw the error so the context can handle it
+    throw error
   }
 }
 

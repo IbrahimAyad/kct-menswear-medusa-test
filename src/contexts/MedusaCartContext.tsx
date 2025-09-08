@@ -107,7 +107,7 @@ export function MedusaCartProvider({ children }: { children: ReactNode }) {
           setCartId(currentCartId)
           setCart(newCart)
         } else {
-          throw new Error('Failed to create cart')
+          throw new Error('Unable to create shopping cart. Please refresh and try again.')
         }
       }
       
@@ -116,7 +116,7 @@ export function MedusaCartProvider({ children }: { children: ReactNode }) {
       if (updatedCart) {
         setCart(updatedCart)
       } else {
-        throw new Error('Failed to add item to cart')
+        throw new Error('Unable to add item to cart. Please try again.')
       }
       
       // Show success toast/notification (could emit event here)
@@ -124,7 +124,24 @@ export function MedusaCartProvider({ children }: { children: ReactNode }) {
       
     } catch (err: any) {
       console.error('Failed to add item:', err)
-      setError(err.message || 'Failed to add item to cart')
+      
+      // Provide user-friendly error messages
+      let userMessage = 'Unable to add item to cart. Please try again.'
+      
+      if (err.message?.includes('strategy') || err.message?.includes('payment')) {
+        userMessage = 'Cart system is being updated. Please try again in a moment.'
+      } else if (err.message?.includes('500') || err.message?.includes('server')) {
+        userMessage = 'Our servers are experiencing issues. Please try again shortly.'
+      } else if (err.message?.includes('network')) {
+        userMessage = 'Connection error. Please check your internet and try again.'
+      } else if (err.message) {
+        userMessage = err.message
+      }
+      
+      setError(userMessage)
+      
+      // Throw error for toast notifications
+      throw new Error(userMessage)
     } finally {
       setIsLoading(false)
     }
