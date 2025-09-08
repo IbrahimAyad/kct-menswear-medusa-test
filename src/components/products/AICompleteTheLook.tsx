@@ -233,7 +233,7 @@ export default function AICompleteTheLook({ currentProduct, onAddToCart }: AICom
               <div className="px-1">
                 <h3 className="text-sm font-light line-clamp-1">{item.title}</h3>
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium">${item.price.toFixed(2)}</p>
+                  <p className="text-sm font-medium">${(typeof item.price === 'number' ? item.price : 0).toFixed(2)}</p>
                   {item.visualMatch && item.visualMatch > 0.7 && (
                     <span className="text-xs text-purple-600">Visual match</span>
                   )}
@@ -257,7 +257,7 @@ export default function AICompleteTheLook({ currentProduct, onAddToCart }: AICom
               {suggestions.filter(s => selectedItems.has(s.id)).map(item => (
                 <div key={item.id} className="flex justify-between text-sm">
                   <span className="text-gray-600">+ {item.title}</span>
-                  <span className="text-gray-600">${item.price.toFixed(2)}</span>
+                  <span className="text-gray-600">${(typeof item.price === 'number' ? item.price : 0).toFixed(2)}</span>
                 </div>
               ))}
               <div className="border-t pt-2">
