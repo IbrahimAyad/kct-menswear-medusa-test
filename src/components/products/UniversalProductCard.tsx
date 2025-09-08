@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { extractProductImages, hasMultipleImages } from "@/lib/products/image-helpers";
 import { formatPrice } from "@/lib/utils/format";
+import { getProductPriceAsNumber } from "@/utils/pricing";
 
 interface UniversalProductCardProps {
   product: any;
@@ -62,8 +63,9 @@ export function UniversalProductCard({
   // Get product URL
   const productUrl = `/products/${product.slug || product.id}`;
 
-  // Format price
-  const price = product.base_price || product.price || 0;
+  // Format price using our pricing utility
+  const priceInDollars = getProductPriceAsNumber(product);
+  const price = priceInDollars * 100; // Convert to cents for formatPrice function
   const comparePrice = product.compare_at_price || product.compareAtPrice;
   const hasDiscount = comparePrice && comparePrice > price;
   const discountPercentage = hasDiscount 
