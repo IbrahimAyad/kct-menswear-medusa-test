@@ -41,7 +41,7 @@
 
 ## 🛠️ Backend Integration
 - [x] KCT Menswear sales channel configured
-- [x] Publishable key: pk_58348c0c95bd27ad28bce27481ac65396899a29c70b3b86bc129318bdef8ce14
+- [x] Publishable key: pk_4c24b336db3f8819867bec16f4b51db9654e557abbcfbbe003f7ffd8463c3c81
 - [x] Region: US (reg_01K3S6NDGAC1DSWH9MCZCWBWWD)
 - [x] Stripe Tax enabled
 - [x] 204 products accessible
