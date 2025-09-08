@@ -18,6 +18,7 @@ import {
   getColorHex
 } from '@/services/medusaProductService'
 import { fetchMedusaProducts, type MedusaProduct } from '@/services/medusaBackendService'
+import { getProductPriceAsNumber } from '@/utils/pricing'
 import { progressiveLoader } from '@/services/medusaProgressiveLoader'
 import { Button } from '@/components/ui/button'
 import { 
@@ -658,7 +659,7 @@ function CollectionsContent() {
                         )}
                         
                         <p className="text-lg font-semibold">
-                          ${((product.price || 0) / 100).toFixed(2)}
+                          ${getProductPriceAsNumber(product).toFixed(2)}
                         </p>
                         
                         {stock.inStock && stock.totalQuantity <= 5 && (

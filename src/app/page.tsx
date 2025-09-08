@@ -10,6 +10,7 @@ import LuxuryVideoShowcase from "@/components/home/LuxuryVideoShowcase";
 import { progressiveLoader } from "@/services/medusaProgressiveLoader";
 import { type MedusaProduct } from "@/services/medusaBackendService";
 import { medusaProductCache } from "@/services/medusaProductCache";
+import { getProductPriceAsNumber } from "@/utils/pricing";
 
 // Working video solution using iframe embeds instead of HLS
 const FeaturedVideo = ({ videoId, title, className = "" }: { videoId: string; title: string; className?: string }) => {
@@ -339,7 +340,7 @@ export default function HomePage() {
         products={products.map(p => ({
           id: p.id,
           name: p.title,
-          base_price: (p.price || 0) / 100, // Convert cents to dollars
+          base_price: getProductPriceAsNumber(p),
           image_url: p.thumbnail,
           slug: p.handle,
           handle: p.handle, // Add handle explicitly for robust navigation
@@ -486,7 +487,7 @@ export default function HomePage() {
                         {product.title}
                       </h3>
                       <p className="text-sm text-gray-600">
-                        ${((product.price || 0) / 100).toFixed(2)}
+                        ${getProductPriceAsNumber(product).toFixed(2)}
                       </p>
                     </div>
                   </Link>
