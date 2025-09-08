@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useMedusaCart } from '@/context/medusa-cart-context'
+import { useMedusaCart } from '@/contexts/MedusaCartContext'
 import medusaClient from '@/lib/medusa-client'
 import { CartIndicator } from '@/components/cart/CartIndicator'
 import { AddToCartButton } from '@/components/cart/AddToCartButton'

@@ -6,7 +6,7 @@ import { fetchMedusaProductByHandle, fetchMedusaProducts, MedusaProduct, getDefa
 import { getProductPrice } from '@/utils/pricing'
 import { findRelatedProducts, getComplementaryProducts } from '@/services/relatedProductsService'
 import RelatedProducts from '@/components/products/RelatedProducts'
-import { useMedusaCart } from '@/context/medusa-cart-context'
+import { useMedusaCart } from '@/contexts/MedusaCartContext'
 import { AddToCartButton } from '@/components/cart/AddToCartButton'
 import { ShoppingCart, Check, ChevronLeft, ChevronRight, Heart, Truck, Shield, Package } from 'lucide-react'
 import Link from 'next/link'

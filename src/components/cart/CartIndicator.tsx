@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { ShoppingCart } from 'lucide-react'
-import { useMedusaCart } from '@/context/medusa-cart-context'
+import { useMedusaCart } from '@/contexts/MedusaCartContext'
 import { MedusaCartDrawer } from './MedusaCartDrawer'
 
 export function CartIndicator() {

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useMedusaCart } from '@/context/medusa-cart-context'
+import { useMedusaCart } from '@/contexts/MedusaCartContext'
 import medusaClient from '@/lib/medusa-client'
 import { stripePromise } from '@/lib/stripe'
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'

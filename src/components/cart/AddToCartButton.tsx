@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { ShoppingCart, Check } from 'lucide-react'
-import { useMedusaCart } from '@/context/medusa-cart-context'
+import { useMedusaCart } from '@/contexts/MedusaCartContext'
 
 interface AddToCartButtonProps {
   variantId: string

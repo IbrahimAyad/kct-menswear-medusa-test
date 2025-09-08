@@ -1,7 +1,7 @@
 'use client'
 
 import { CheckoutForm } from '@/components/checkout/CheckoutForm'
-import { MedusaCartProvider } from '@/context/medusa-cart-context'
+import { MedusaCartProvider } from '@/contexts/MedusaCartContext'
 
 export default function MedusaCheckoutPage() {
   return (
