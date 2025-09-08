@@ -12,7 +12,7 @@ export function SimpleCartDrawer() {
   const { cart: medusaCart, removeItem, clearCart, updateQuantity, isLoading } = useMedusaCart();
   const items = medusaCart?.items || [];
   const cartSummary = {
-    totalPrice: medusaCart?.total || 0,
+    totalPrice: (medusaCart?.total || 0) / 100, // Convert from cents to dollars
     itemCount: items.length
   };
   const { isCartOpen, setIsCartOpen } = useUIStore();
@@ -182,7 +182,7 @@ export function SimpleCartDrawer() {
                               {item.variant?.title && `Size: ${item.variant.title}`}
                             </p>
                             <p className="text-sm font-semibold text-gray-900">
-                              ${(item.unit_price || 0).toFixed(2)}
+                              ${((item.unit_price || 0) / 100).toFixed(2)}
                             </p>
                             
                             {/* Quantity Controls */}
