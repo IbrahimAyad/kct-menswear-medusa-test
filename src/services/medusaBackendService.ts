@@ -284,10 +284,10 @@ export async function initializeCartPayment(cartId: string): Promise<any | null>
   }
 }
 
-// Create cart using CUSTOM endpoint (with automatic payment initialization)
+// Create cart using CUSTOM endpoint (ready to switch to workflow when deployed)
 export async function createMedusaCart(email?: string): Promise<MedusaCart | null> {
   try {
-    // Step 1: Create the cart
+    // TODO: Switch to /store/cart-workflow when deployed
     const response = await fetch(`${MEDUSA_URL}/store/cart-operations`, {
       method: 'POST',
       headers: getHeaders(),
@@ -306,12 +306,6 @@ export async function createMedusaCart(email?: string): Promise<MedusaCart | nul
     const cartId = data.cart_id || data.id
     console.log('Cart created:', cartId)
     
-    // Step 2: Initialize payment collection immediately
-    // This prevents the "strategy" error when adding items
-    if (cartId) {
-      await initializeCartPayment(cartId)
-    }
-    
     return data
   } catch (error) {
     console.error('Error creating Medusa cart:', error)
@@ -319,9 +313,10 @@ export async function createMedusaCart(email?: string): Promise<MedusaCart | nul
   }
 }
 
-// Add item to cart using CUSTOM endpoint
+// Add item to cart using CUSTOM endpoint (ready to switch to workflow when deployed)
 export async function addToMedusaCart(cartId: string, variantId: string, quantity: number = 1): Promise<MedusaCart | null> {
   try {
+    // TODO: Switch to /store/cart-workflow when deployed
     const response = await fetch(`${MEDUSA_URL}/store/cart-operations`, {
       method: 'POST',
       headers: getHeaders(),
@@ -339,10 +334,10 @@ export async function addToMedusaCart(cartId: string, variantId: string, quantit
       
       // Parse error for specific issues
       if (errorText.includes('strategy')) {
-        throw new Error('Cart system configuration error. Please try again.')
+        throw new Error('Cart system is being updated. Please try again in a moment.')
       }
       if (errorText.includes('payment')) {
-        throw new Error('Payment system is being updated. Please try again.')
+        throw new Error('Payment system is being configured. Please try again.')
       }
       if (response.status === 500) {
         throw new Error('Server error. Our team has been notified.')
