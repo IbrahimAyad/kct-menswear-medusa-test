@@ -284,10 +284,10 @@ export async function initializeCartPayment(cartId: string): Promise<any | null>
   }
 }
 
-// Create cart using CUSTOM endpoint (ready to switch to workflow when deployed)
+// Create cart using existing endpoint (workflow endpoints pending deployment)
 export async function createMedusaCart(email?: string): Promise<MedusaCart | null> {
   try {
-    // TODO: Switch to /store/cart-workflow when deployed
+    // Will switch to /store/cart-workflow once fully deployed
     const response = await fetch(`${MEDUSA_URL}/store/cart-operations`, {
       method: 'POST',
       headers: getHeaders(),
@@ -313,10 +313,10 @@ export async function createMedusaCart(email?: string): Promise<MedusaCart | nul
   }
 }
 
-// Add item to cart using CUSTOM endpoint (ready to switch to workflow when deployed)
+// Add item to cart using existing endpoint (workflow endpoints pending deployment)
 export async function addToMedusaCart(cartId: string, variantId: string, quantity: number = 1): Promise<MedusaCart | null> {
   try {
-    // TODO: Switch to /store/cart-workflow when deployed
+    // Will switch to /store/cart-workflow once fully deployed
     const response = await fetch(`${MEDUSA_URL}/store/cart-operations`, {
       method: 'POST',
       headers: getHeaders(),
