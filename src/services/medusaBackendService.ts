@@ -4,7 +4,7 @@
 
 import { medusaProductCache } from './medusaProductCache'
 
-const MEDUSA_URL = 'https://medusa-railway-v2-production.up.railway.app'
+const MEDUSA_URL = 'https://backend-production-7441.up.railway.app'
 
 // Get API headers with publishable key
 function getHeaders() {
