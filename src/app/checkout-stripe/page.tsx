@@ -180,7 +180,12 @@ export default function StripeCheckoutPage() {
     )
   }
 
-  const total = (cart.total || 0) / 100 // Convert from cents
+  // Calculate pricing details
+  const subtotal = (cart.subtotal || 0) / 100
+  const shippingCost = 10.00 // Fixed shipping for now
+  const taxRate = 0.06 // 6% tax rate (adjust based on location)
+  const taxAmount = (subtotal + shippingCost) * taxRate
+  const total = subtotal + shippingCost + taxAmount
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
@@ -190,17 +195,52 @@ export default function StripeCheckoutPage() {
         {/* Order Summary */}
         <Card className="p-6 mb-6">
           <h2 className="text-lg font-medium mb-4">Order Summary</h2>
-          <div className="space-y-2">
+          <div className="space-y-3">
             {cart.items.map(item => (
-              <div key={item.id} className="flex justify-between">
-                <span>{item.title} x {item.quantity}</span>
-                <span>${((item.unit_price || 0) / 100).toFixed(2)}</span>
+              <div key={item.id} className="border-b pb-3">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <p className="font-medium">{item.title}</p>
+                    <div className="text-sm text-gray-600 mt-1">
+                      {item.variant?.title && (
+                        <p>Size: {item.variant.title}</p>
+                      )}
+                      {item.variant?.sku && (
+                        <p>SKU: {item.variant.sku}</p>
+                      )}
+                      <p>Quantity: {item.quantity}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-medium">${((item.unit_price || 0) / 100).toFixed(2)}</p>
+                    {item.quantity > 1 && (
+                      <p className="text-sm text-gray-500">
+                        ${((item.unit_price || 0) / 100 * item.quantity).toFixed(2)} total
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
             ))}
-            <div className="border-t pt-2 mt-2">
-              <div className="flex justify-between font-medium">
-                <span>Total</span>
-                <span>${total.toFixed(2)}</span>
+            
+            <div className="pt-3 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Subtotal</span>
+                <span>${subtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span>Shipping</span>
+                <span>${shippingCost.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span>Tax ({(taxRate * 100).toFixed(0)}%)</span>
+                <span>${taxAmount.toFixed(2)}</span>
+              </div>
+              <div className="border-t pt-2">
+                <div className="flex justify-between font-semibold text-lg">
+                  <span>Total</span>
+                  <span>${total.toFixed(2)}</span>
+                </div>
               </div>
             </div>
           </div>

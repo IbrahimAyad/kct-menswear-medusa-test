@@ -178,11 +178,16 @@ export function SimpleCartDrawer() {
                             <h3 className="font-medium text-gray-900 truncate">
                               {item.title || item.variant?.product?.title || 'Product'}
                             </h3>
-                            <p className="text-sm text-gray-600">
-                              {item.variant?.title && `Size: ${item.variant.title}`}
-                            </p>
-                            <p className="text-sm font-semibold text-gray-900">
-                              ${((item.unit_price || 0) / 100).toFixed(2)}
+                            <div className="text-sm text-gray-600 space-y-0.5">
+                              {item.variant?.title && (
+                                <p>Size: {item.variant.title}</p>
+                              )}
+                              {item.variant?.sku && (
+                                <p className="text-xs">SKU: {item.variant.sku}</p>
+                              )}
+                            </div>
+                            <p className="text-sm font-semibold text-gray-900 mt-1">
+                              ${((item.unit_price || 0) / 100).toFixed(2)} each
                             </p>
                             
                             {/* Quantity Controls */}
@@ -240,8 +245,31 @@ export function SimpleCartDrawer() {
               
               {/* Footer */}
               <div className="border-t bg-gray-50 p-4 space-y-4">
+                {/* Price Breakdown */}
+                {items.length > 0 && (
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Subtotal</span>
+                      <span>${(cartSummary.totalPrice || 0).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Shipping</span>
+                      <span className="text-gray-500">Calculated at checkout</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Tax</span>
+                      <span className="text-gray-500">Calculated at checkout</span>
+                    </div>
+                    <div className="border-t pt-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-lg font-semibold">Estimated Total</span>
+                        <span className="text-lg font-semibold">${(cartSummary.totalPrice || 0).toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
                 <div className="flex justify-between items-center">
-                  <span className="text-lg font-semibold">Total: ${(cartSummary.totalPrice || 0).toFixed(2)}</span>
                   <button
                     onClick={() => {
                       clearCart();
