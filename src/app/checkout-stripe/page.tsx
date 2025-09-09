@@ -143,9 +143,15 @@ export default function StripeCheckoutPage() {
         country_code: 'us'
       })
 
-      // Step 2: Add shipping method (FREE shipping)
+      // Step 2: Add shipping method (CRITICAL - must succeed for checkout)
       console.log('Adding shipping method...')
-      await addShippingMethod(cart.id, 'Free Shipping', 0)
+      const shippingResult = await addShippingMethod(cart.id, 'Free Shipping', 0)
+      
+      if (!shippingResult?.success) {
+        throw new Error('Failed to add shipping method. The checkout cannot proceed without shipping. Please refresh and try again.')
+      }
+      
+      console.log('Shipping method added:', shippingResult)
 
       // Step 3: Create payment collection
       console.log('Creating payment collection...')

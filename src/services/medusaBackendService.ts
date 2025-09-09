@@ -480,16 +480,40 @@ export async function addShippingAddress(cartId: string, shippingData: {
 // Step 2: Add shipping method (Backend fixed - endpoint now available)
 export async function addShippingMethod(cartId: string, shippingMethod: string = 'Free Shipping', shippingAmount: number = 0) {
   try {
-    // Backend has fixed the shipping-methods endpoint, let's use it
-    // First, get available shipping options from the NEW backend endpoint
+    // First, try to get available shipping options
     const optionsResponse = await fetch(`${MEDUSA_URL}/store/carts/${cartId}/shipping-options`, {
       method: 'GET',
       headers: getHeaders()
     })
     
     if (!optionsResponse.ok) {
-      console.log('No shipping options available, continuing without shipping...')
-      return { success: true, message: 'No shipping options needed' }
+      console.log('Could not get shipping options, will try with default FREE shipping')
+      // Try to add FREE shipping directly without getting options
+      try {
+        const directResponse = await fetch(`${MEDUSA_URL}/store/carts/${cartId}/shipping-methods`, {
+          method: 'POST',
+          headers: getHeaders(),
+          body: JSON.stringify({
+            // Try with a standard free shipping option ID
+            option_id: 'so_free_shipping'
+          })
+        })
+        
+        if (directResponse.ok) {
+          console.log('Added default FREE shipping successfully')
+          return {
+            success: true,
+            message: 'FREE shipping added',
+            shipping_method: 'FREE Shipping',
+            amount: 0
+          }
+        }
+      } catch (directErr) {
+        console.error('Could not add default shipping:', directErr)
+      }
+      
+      // If we can't add shipping at all, this is a critical error
+      throw new Error('Cannot add shipping method. The checkout requires a shipping option.')
     }
     
     const optionsData = await optionsResponse.json()
@@ -524,15 +548,11 @@ export async function addShippingMethod(cartId: string, shippingMethod: string =
       })
       
       if (!response.ok) {
-        console.log('Failed to add shipping method (500 error), but continuing with checkout...')
-        // Don't fail the entire checkout just because shipping method couldn't be added
-        // The backend can handle FREE shipping by default
-        return { 
-          success: true, 
-          message: 'Using default FREE shipping',
-          shipping_method: 'FREE Shipping',
-          amount: 0
-        }
+        const errorText = await response.text()
+        console.error('Failed to add shipping method:', response.status, errorText)
+        
+        // This is critical - without shipping method, cart completion will fail
+        throw new Error(`Failed to add shipping method. The checkout cannot proceed without selecting a shipping option. Please try again.`)
       }
       
       const data = await response.json()
