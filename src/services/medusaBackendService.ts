@@ -841,21 +841,48 @@ export async function authorizePayment(
   }
 }
 
-// NEW: Complete cart and create order
+// NEW: Complete cart and create order (Medusa v2 standard endpoint)
 export async function completeCart(cartId: string): Promise<any> {
   try {
-    const response = await fetch(`${MEDUSA_URL}/store/complete-cart`, {
+    // Use the standard Medusa v2 cart completion endpoint
+    const response = await fetch(`${MEDUSA_URL}/store/carts/${cartId}/complete`, {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify({ cart_id: cartId })
+      body: JSON.stringify({})  // Medusa v2 doesn't require body for completion
     })
 
     if (!response.ok) {
-      const error = await response.json()
+      const errorText = await response.text()
+      let error: any = {}
+      try {
+        error = JSON.parse(errorText)
+      } catch {
+        error = { message: errorText }
+      }
+      
+      console.error('Cart completion failed:', error)
+      
+      // Check if it's a capture issue
+      if (error.message?.includes('capture') || error.message?.includes('payment')) {
+        throw new Error('Payment processing issue. Your payment may have been authorized but not completed. Please contact support.')
+      }
+      
       throw new Error(error.message || 'Failed to complete cart')
     }
 
-    return await response.json()
+    const data = await response.json()
+    
+    // Medusa v2 returns either {type: "order", order: {...}} or {type: "cart", cart: {...}, error: "..."}
+    if (data.type === 'order' && data.order) {
+      console.log('Order created successfully:', data.order.id)
+      return { order: data.order, success: true }
+    } else if (data.type === 'cart') {
+      console.error('Cart completion failed:', data.error)
+      throw new Error(data.error || 'Failed to create order')
+    }
+    
+    // Fallback for non-standard response
+    return data
   } catch (error) {
     console.error('Error completing cart:', error)
     throw error
