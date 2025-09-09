@@ -16,7 +16,7 @@ const stripePromise = typeof window !== 'undefined'
   : null
 
 // Payment Form Component
-function CheckoutForm({ clientSecret }: { clientSecret: string }) {
+function CheckoutForm({ clientSecret, cartId }: { clientSecret: string, cartId: string }) {
   const stripe = useStripe()
   const elements = useElements()
   const router = useRouter()
@@ -37,7 +37,7 @@ function CheckoutForm({ clientSecret }: { clientSecret: string }) {
       const result = await stripe.confirmPayment({
         elements,
         confirmParams: {
-          return_url: `${window.location.origin}/checkout/success`,
+          return_url: `${window.location.origin}/checkout/success?cart_id=${cartId}`,
         },
       })
 
@@ -414,7 +414,7 @@ export default function StripeCheckoutPage() {
             <h2 className="text-lg font-medium mb-4">Payment</h2>
             {clientSecret && stripePromise && (
               <Elements stripe={stripePromise} options={{ clientSecret }}>
-                <CheckoutForm clientSecret={clientSecret} />
+                <CheckoutForm clientSecret={clientSecret} cartId={cart.id} />
               </Elements>
             )}
           </Card>

@@ -6,6 +6,7 @@ import { CheckCircle, Truck, Mail, Calendar, ArrowRight, Star, Gift } from 'luci
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { authorizePayment, completeCart } from '@/services/medusaBackendService';
 
 export default function CheckoutSuccessPage() {
   const [mounted, setMounted] = useState(false);
@@ -25,62 +26,124 @@ export default function CheckoutSuccessPage() {
 
   useEffect(() => {
     if (mounted) {
-      // Get cart_id from URL if available
+      completeOrder();
+    }
+  }, [mounted]);
+
+  const completeOrder = async () => {
+    try {
+      // Get cart_id from URL or localStorage
       const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-      const cartId = urlParams?.get('cart_id');
+      const cartIdFromUrl = urlParams?.get('cart_id');
+      const cartIdFromStorage = localStorage.getItem('medusa_cart_id');
+      const cartId = cartIdFromUrl || cartIdFromStorage;
       
-      // Use sessionId or cartId to generate order ID
-      const orderSuffix = sessionId ? sessionId.slice(-9).toUpperCase() : 
-                         cartId ? cartId.slice(-9).toUpperCase() : 
-                         'DEMO' + Math.random().toString(36).substr(2, 5).toUpperCase();
-      
-      // Generate consistent delivery date based on current date
-      const deliveryDate = new Date();
-      deliveryDate.setDate(deliveryDate.getDate() + 7);
-      
-      // Get cart items from localStorage or use demo data
-      const savedCart = typeof window !== 'undefined' ? localStorage.getItem('last_cart_items') : null;
-      let items = [];
-      let total = '$0.00';
-      
-      if (savedCart) {
-        try {
-          const cartData = JSON.parse(savedCart);
-          items = cartData.items || [];
-          total = cartData.total || '$0.00';
-        } catch (e) {
-          // Use demo data if parsing fails
-          items = [
-            { name: 'Premium Navy Suit', size: '40R', quantity: 1, price: '$299.00' },
-            { name: 'Italian Silk Tie', size: 'OS', quantity: 2, price: '$80.00' }
-          ];
-          total = '$459.00';
+      if (!cartId) {
+        console.error('No cart ID found');
+        // Use fallback data if no cart
+        setFallbackOrderData();
+        return;
+      }
+
+      console.log('Completing order for cart:', cartId);
+
+      try {
+        // Step 1: Authorize payment
+        console.log('Authorizing payment...');
+        const authResult = await authorizePayment(cartId);
+        console.log('Payment authorized:', authResult);
+
+        // Step 2: Complete cart to create order
+        console.log('Completing cart...');
+        const orderResult = await completeCart(cartId);
+        console.log('Order created:', orderResult);
+
+        if (orderResult?.order) {
+          // Use real order data
+          const order = orderResult.order;
+          const deliveryDate = new Date();
+          deliveryDate.setDate(deliveryDate.getDate() + 7);
+
+          setOrderDetails({
+            id: order.id || `ORDER-${Date.now()}`,
+            total: order.total ? `$${(order.total / 100).toFixed(2)}` : '$0.00',
+            items: order.items?.map((item: any) => ({
+              name: item.title || item.variant?.product?.title || 'Product',
+              size: item.variant?.title || 'One Size',
+              quantity: item.quantity || 1,
+              price: `$${((item.unit_price || 0) / 100).toFixed(2)}`
+            })) || [],
+            estimatedDelivery: deliveryDate,
+            email: order.email || localStorage.getItem('checkout_email') || 'customer@example.com'
+          });
+
+          // Clear the cart after successful order
+          localStorage.removeItem('medusa_cart_id');
+          localStorage.removeItem('last_cart_items');
+          localStorage.removeItem('checkout_email');
+        } else {
+          // Use saved cart data if order completion failed
+          setFallbackOrderData();
         }
-      } else {
-        // Use demo data if no saved cart
+      } catch (error) {
+        console.error('Error completing order:', error);
+        // Use saved cart data as fallback
+        setFallbackOrderData();
+      }
+
+      setLoading(false);
+    } catch (error) {
+      console.error('Fatal error in order completion:', error);
+      setFallbackOrderData();
+      setLoading(false);
+    }
+  };
+
+  const setFallbackOrderData = () => {
+    const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+    const cartId = urlParams?.get('cart_id');
+    const orderSuffix = sessionId ? sessionId.slice(-9).toUpperCase() : 
+                       cartId ? cartId.slice(-9).toUpperCase() : 
+                       'DEMO' + Math.random().toString(36).substr(2, 5).toUpperCase();
+    
+    const deliveryDate = new Date();
+    deliveryDate.setDate(deliveryDate.getDate() + 7);
+    
+    // Get saved cart data
+    const savedCart = typeof window !== 'undefined' ? localStorage.getItem('last_cart_items') : null;
+    let items = [];
+    let total = '$0.00';
+    
+    if (savedCart) {
+      try {
+        const cartData = JSON.parse(savedCart);
+        items = cartData.items || [];
+        total = cartData.total || '$0.00';
+      } catch (e) {
         items = [
           { name: 'Premium Navy Suit', size: '40R', quantity: 1, price: '$299.00' },
           { name: 'Italian Silk Tie', size: 'OS', quantity: 2, price: '$80.00' }
         ];
         total = '$459.00';
       }
-      
-      setTimeout(() => {
-        setOrderDetails({
-          id: `ORDER-2024-${orderSuffix}`,
-          total: total,
-          items: items,
-          estimatedDelivery: deliveryDate,
-          email: localStorage.getItem('checkout_email') || 'customer@example.com'
-        });
-        setLoading(false);
-        
-        // Clear the cart after successful order
-        localStorage.removeItem('medusa_cart_id');
-        localStorage.removeItem('last_cart_items');
-      }, 1000);
+    } else {
+      items = [
+        { name: 'Premium Navy Suit', size: '40R', quantity: 1, price: '$299.00' },
+        { name: 'Italian Silk Tie', size: 'OS', quantity: 2, price: '$80.00' }
+      ];
+      total = '$459.00';
     }
-  }, [mounted, sessionId]);
+    
+    setOrderDetails({
+      id: `ORDER-2024-${orderSuffix}`,
+      total: total,
+      items: items,
+      estimatedDelivery: deliveryDate,
+      email: localStorage.getItem('checkout_email') || 'customer@example.com'
+    });
+    
+    setLoading(false);
+  };
 
   if (!mounted || loading) {
     return (

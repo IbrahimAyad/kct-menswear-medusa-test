@@ -631,3 +631,45 @@ export function isMedusaProductAvailable(variant: any): boolean {
 export function getDefaultVariant(product: MedusaProduct) {
   return product.variants?.[0] || null
 }
+
+// NEW: Authorize payment after Stripe confirmation
+export async function authorizePayment(cartId: string): Promise<any> {
+  try {
+    const response = await fetch(`${MEDUSA_URL}/store/authorize-payment`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ cart_id: cartId })
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.message || 'Failed to authorize payment')
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error('Error authorizing payment:', error)
+    throw error
+  }
+}
+
+// NEW: Complete cart and create order
+export async function completeCart(cartId: string): Promise<any> {
+  try {
+    const response = await fetch(`${MEDUSA_URL}/store/complete-cart`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ cart_id: cartId })
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.message || 'Failed to complete cart')
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error('Error completing cart:', error)
+    throw error
+  }
+}
