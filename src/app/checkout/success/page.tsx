@@ -90,56 +90,48 @@ export default function CheckoutSuccessPage() {
       const orderResult = await completeCart(cartId);
       console.log('Order created:', orderResult);
 
-        if (orderResult?.order) {
-          // Use real order data
-          const order = orderResult.order;
-          const deliveryDate = new Date();
-          deliveryDate.setDate(deliveryDate.getDate() + 7);
+      if (orderResult?.order) {
+        // Use real order data
+        const order = orderResult.order;
+        const deliveryDate = new Date();
+        deliveryDate.setDate(deliveryDate.getDate() + 7);
 
-          setOrderDetails({
-            id: order.id || `ORDER-${Date.now()}`,
-            total: order.total ? `$${(order.total / 100).toFixed(2)}` : '$0.00',
-            items: order.items?.map((item: any) => ({
-              name: item.title || item.variant?.product?.title || 'Product',
-              size: item.variant?.title || 'One Size',
-              quantity: item.quantity || 1,
-              price: `$${((item.unit_price || 0) / 100).toFixed(2)}`
-            })) || [],
-            estimatedDelivery: deliveryDate,
-            email: order.email || localStorage.getItem('checkout_email') || 'customer@example.com'
-          });
+        setOrderDetails({
+          id: order.id || `ORDER-${Date.now()}`,
+          total: order.total ? `$${(order.total / 100).toFixed(2)}` : '$0.00',
+          items: order.items?.map((item: any) => ({
+            name: item.title || item.variant?.product?.title || 'Product',
+            size: item.variant?.title || 'One Size',
+            quantity: item.quantity || 1,
+            price: `$${((item.unit_price || 0) / 100).toFixed(2)}`
+          })) || [],
+          estimatedDelivery: deliveryDate,
+          email: order.email || localStorage.getItem('checkout_email') || 'customer@example.com'
+        });
 
-          // Clear the cart after successful order
-          localStorage.removeItem('medusa_cart_id');
-          localStorage.removeItem('last_cart_items');
-          localStorage.removeItem('checkout_email');
-          setOrderError(null);
-        } else {
-          // Order completion failed but payment went through
-          console.error('Order creation failed but payment was processed');
-          setOrderError('Your payment was processed but we encountered an issue creating your order. Please contact support with your cart ID: ' + cartId);
-          // Don't use fake data - show error instead
-        }
-      } catch (error: any) {
-        console.error('Error completing order:', error);
-        
-        // Payment was processed but order creation failed
-        setOrderError(
-          `Your payment has been processed but we couldn't complete your order. ` +
-          `Please contact support immediately with this information:\n\n` +
-          `Cart ID: ${cartId}\n` +
-          `Payment Intent: ${paymentIntentId || 'Not available'}\n` +
-          `Error: ${error.message || 'Unknown error'}`
-        );
-        // Don't show fake success data
+        // Clear the cart after successful order
+        localStorage.removeItem('medusa_cart_id');
+        localStorage.removeItem('last_cart_items');
+        localStorage.removeItem('checkout_email');
+        setOrderError(null);
+      } else {
+        // Order completion failed but payment went through
+        console.error('Order creation failed but payment was processed');
+        setOrderError('Your payment was processed but we encountered an issue creating your order. Please contact support with your cart ID: ' + cartId);
+        // Don't use fake data - show error instead
       }
 
       setLoading(false);
     } catch (error: any) {
-      console.error('Fatal error in order completion:', error);
+      console.error('Error completing order:', error);
+      
+      // Payment was processed but order creation failed
       setOrderError(
-        'We encountered an issue processing your order. ' +
-        'If you were charged, please contact support for assistance.'
+        `Your payment has been processed but we couldn't complete your order. ` +
+        `Please contact support immediately with this information:\n\n` +
+        `Cart ID: ${cartId}\n` +
+        `Payment Intent: ${paymentIntentId || 'Not available'}\n` +
+        `Error: ${error.message || 'Unknown error'}`
       );
       setLoading(false);
     }
