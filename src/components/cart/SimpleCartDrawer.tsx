@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useMedusaCart } from '@/hooks/useMedusaCart';
+import { useMedusaCart } from '@/contexts/MedusaCartContext';
 import { X, ShoppingCart, Trash2, Plus, Minus } from 'lucide-react';
 import { MedusaCheckoutButton } from './MedusaCheckoutButton';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
@@ -9,10 +9,10 @@ import { cn } from '@/lib/utils';
 import { useUIStore } from '@/store/uiStore';
 
 export function SimpleCartDrawer() {
-  const { cart: medusaCart, removeItem, clearCart, updateQuantity, isLoading } = useMedusaCart();
-  const items = medusaCart?.items || [];
+  const { cart, removeItem, clearCart, updateQuantity, isLoading } = useMedusaCart();
+  const items = cart?.items || [];
   const cartSummary = {
-    totalPrice: (medusaCart?.total || 0) / 100, // Convert from cents to dollars
+    totalPrice: (cart?.total || 0) / 100, // Convert from cents to dollars
     itemCount: items.length
   };
   const { isCartOpen, setIsCartOpen } = useUIStore();

@@ -1,19 +1,19 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useMedusaCart } from '@/hooks/useMedusaCart';
+import { useMedusaCart } from '@/contexts/MedusaCartContext';
 
 export function MedusaCheckoutButton() {
   const router = useRouter();
-  const { medusaCart, isLoading } = useMedusaCart();
+  const { cart, isLoading } = useMedusaCart();
   
   const handleCheckout = () => {
     // Redirect to the Stripe checkout page
     router.push('/checkout-stripe');
   };
 
-  const total = medusaCart?.total ? medusaCart.total / 100 : 0; // Medusa 2.0 returns amount in cents, convert to dollars
-  const itemCount = medusaCart?.items?.length || 0;
+  const total = cart?.total ? cart.total / 100 : 0; // Medusa 2.0 returns amount in cents, convert to dollars
+  const itemCount = cart?.items?.length || 0;
 
   return (
     <div className="space-y-2">

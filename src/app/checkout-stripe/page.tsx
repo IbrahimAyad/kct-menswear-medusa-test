@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useMedusaCart } from '@/hooks/useMedusaCart'
+import { useMedusaCart } from '@/contexts/MedusaCartContext'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { loadStripe } from '@stripe/stripe-js'
 import { addShippingAddress, addShippingMethod, createPaymentCollection, createPaymentSession } from '@/services/medusaBackendService'
