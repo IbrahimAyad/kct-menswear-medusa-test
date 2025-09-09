@@ -115,6 +115,19 @@ export default function StripeCheckoutPage() {
     setError(null)
 
     try {
+      // Save cart data to localStorage for success page
+      const cartDataForSuccess = {
+        items: cart.items.map((item: any) => ({
+          name: item.title,
+          size: item.variant?.title || 'One Size',
+          quantity: item.quantity,
+          price: `$${((item.unit_price || 0) / 100).toFixed(2)}`
+        })),
+        total: `$${total.toFixed(2)}`
+      };
+      localStorage.setItem('last_cart_items', JSON.stringify(cartDataForSuccess));
+      localStorage.setItem('checkout_email', shippingInfo.email);
+      
       // Step 1: Add shipping address
       console.log('Adding shipping address...')
       await addShippingAddress(cart.id, {

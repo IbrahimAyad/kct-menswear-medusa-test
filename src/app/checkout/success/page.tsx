@@ -24,26 +24,60 @@ export default function CheckoutSuccessPage() {
   }, []);
 
   useEffect(() => {
-    if (mounted && sessionId) {
-      // Use sessionId to generate consistent order ID
-      const orderSuffix = sessionId ? sessionId.slice(-9).toUpperCase() : 'DEMO12345';
+    if (mounted) {
+      // Get cart_id from URL if available
+      const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+      const cartId = urlParams?.get('cart_id');
+      
+      // Use sessionId or cartId to generate order ID
+      const orderSuffix = sessionId ? sessionId.slice(-9).toUpperCase() : 
+                         cartId ? cartId.slice(-9).toUpperCase() : 
+                         'DEMO' + Math.random().toString(36).substr(2, 5).toUpperCase();
       
       // Generate consistent delivery date based on current date
       const deliveryDate = new Date();
       deliveryDate.setDate(deliveryDate.getDate() + 7);
       
+      // Get cart items from localStorage or use demo data
+      const savedCart = typeof window !== 'undefined' ? localStorage.getItem('last_cart_items') : null;
+      let items = [];
+      let total = '$0.00';
+      
+      if (savedCart) {
+        try {
+          const cartData = JSON.parse(savedCart);
+          items = cartData.items || [];
+          total = cartData.total || '$0.00';
+        } catch (e) {
+          // Use demo data if parsing fails
+          items = [
+            { name: 'Premium Navy Suit', size: '40R', quantity: 1, price: '$299.00' },
+            { name: 'Italian Silk Tie', size: 'OS', quantity: 2, price: '$80.00' }
+          ];
+          total = '$459.00';
+        }
+      } else {
+        // Use demo data if no saved cart
+        items = [
+          { name: 'Premium Navy Suit', size: '40R', quantity: 1, price: '$299.00' },
+          { name: 'Italian Silk Tie', size: 'OS', quantity: 2, price: '$80.00' }
+        ];
+        total = '$459.00';
+      }
+      
       setTimeout(() => {
         setOrderDetails({
           id: `ORDER-2024-${orderSuffix}`,
-          total: '$459.00',
-          items: [
-            { name: 'Premium Navy Suit', size: '40R', quantity: 1, price: '$299.00' },
-            { name: 'Italian Silk Tie', size: 'OS', quantity: 2, price: '$80.00' }
-          ],
+          total: total,
+          items: items,
           estimatedDelivery: deliveryDate,
-          email: 'customer@example.com'
+          email: localStorage.getItem('checkout_email') || 'customer@example.com'
         });
         setLoading(false);
+        
+        // Clear the cart after successful order
+        localStorage.removeItem('medusa_cart_id');
+        localStorage.removeItem('last_cart_items');
       }, 1000);
     }
   }, [mounted, sessionId]);
