@@ -122,9 +122,9 @@ export default function StripeCheckoutPage() {
         country_code: 'us'
       })
 
-      // Step 2: Add shipping method (using a default for now)
+      // Step 2: Add shipping method (FREE shipping)
       console.log('Adding shipping method...')
-      await addShippingMethod(cart.id, 'Standard Shipping', 10)
+      await addShippingMethod(cart.id, 'Free Shipping', 0)
 
       // Step 3: Create payment collection
       console.log('Creating payment collection...')
@@ -182,9 +182,9 @@ export default function StripeCheckoutPage() {
 
   // Calculate pricing details
   const subtotal = (cart.subtotal || 0) / 100
-  const shippingCost = 10.00 // Fixed shipping for now
+  const shippingCost = 0.00 // FREE shipping
   const taxRate = 0.06 // 6% tax rate (adjust based on location)
-  const taxAmount = (subtotal + shippingCost) * taxRate
+  const taxAmount = subtotal * taxRate
   const total = subtotal + shippingCost + taxAmount
 
   return (
@@ -198,26 +198,48 @@ export default function StripeCheckoutPage() {
           <div className="space-y-3">
             {cart.items.map(item => (
               <div key={item.id} className="border-b pb-3">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <p className="font-medium">{item.title}</p>
-                    <div className="text-sm text-gray-600 mt-1">
-                      {item.variant?.title && (
-                        <p>Size: {item.variant.title}</p>
-                      )}
-                      {item.variant?.sku && (
-                        <p>SKU: {item.variant.sku}</p>
-                      )}
-                      <p>Quantity: {item.quantity}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-medium">${((item.unit_price || 0) / 100).toFixed(2)}</p>
-                    {item.quantity > 1 && (
-                      <p className="text-sm text-gray-500">
-                        ${((item.unit_price || 0) / 100 * item.quantity).toFixed(2)} total
-                      </p>
+                <div className="flex gap-4">
+                  {/* Product Image */}
+                  <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                    {item.thumbnail ? (
+                      <img 
+                        src={item.thumbnail} 
+                        alt={item.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400">
+                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
                     )}
+                  </div>
+                  
+                  {/* Product Details */}
+                  <div className="flex-1">
+                    <div className="flex justify-between">
+                      <div>
+                        <p className="font-medium">{item.title}</p>
+                        <div className="text-sm text-gray-600 mt-1">
+                          {item.variant?.title && (
+                            <p>Size: {item.variant.title}</p>
+                          )}
+                          {item.variant?.sku && (
+                            <p className="text-xs">SKU: {item.variant.sku}</p>
+                          )}
+                          <p>Qty: {item.quantity}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium">${((item.unit_price || 0) / 100).toFixed(2)}</p>
+                        {item.quantity > 1 && (
+                          <p className="text-sm text-gray-500">
+                            ${((item.unit_price || 0) / 100 * item.quantity).toFixed(2)} total
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -230,7 +252,7 @@ export default function StripeCheckoutPage() {
               </div>
               <div className="flex justify-between text-sm">
                 <span>Shipping</span>
-                <span>${shippingCost.toFixed(2)}</span>
+                <span className="text-green-600 font-medium">FREE</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span>Tax ({(taxRate * 100).toFixed(0)}%)</span>

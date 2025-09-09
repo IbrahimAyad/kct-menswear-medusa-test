@@ -168,9 +168,19 @@ export function SimpleCartDrawer() {
                         className="bg-white border-2 border-gray-100 rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-200"
                       >
                         <div className="flex items-start gap-3">
-                          {/* Product Image Placeholder */}
-                          <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
-                            <ShoppingCart size={20} className="text-gray-400" />
+                          {/* Product Image */}
+                          <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                            {item.thumbnail ? (
+                              <img 
+                                src={item.thumbnail} 
+                                alt={item.title}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <ShoppingCart size={20} className="text-gray-400" />
+                              </div>
+                            )}
                           </div>
                           
                           {/* Product Info */}
@@ -254,7 +264,7 @@ export function SimpleCartDrawer() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Shipping</span>
-                      <span className="text-gray-500">Calculated at checkout</span>
+                      <span className="text-green-600 font-medium">FREE</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Tax</span>
