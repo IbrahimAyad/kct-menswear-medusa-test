@@ -44,12 +44,13 @@ export default function CheckoutSuccessPage() {
   }, [mounted]);
 
   const completeOrder = async () => {
+    // Get cart_id from URL or localStorage
+    const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+    const cartIdFromUrl = urlParams?.get('cart_id');
+    const cartIdFromStorage = localStorage.getItem('medusa_cart_id');
+    const cartId = cartIdFromUrl || cartIdFromStorage;
+    
     try {
-      // Get cart_id from URL or localStorage
-      const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-      const cartIdFromUrl = urlParams?.get('cart_id');
-      const cartIdFromStorage = localStorage.getItem('medusa_cart_id');
-      const cartId = cartIdFromUrl || cartIdFromStorage;
       
       if (!cartId) {
         console.error('No cart ID found');
