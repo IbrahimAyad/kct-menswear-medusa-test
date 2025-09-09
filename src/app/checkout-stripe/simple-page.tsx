@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useMedusaCart } from '@/hooks/useMedusaCart'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { loadStripe } from '@stripe/stripe-js'
-import { addShippingAddress, addShippingMethod, createPaymentCollection, createPaymentSession } from '@/services/medusaBackendService'
+import { initializeMedusaPayment, addShippingAddress, addShippingMethod, createPaymentCollection, createPaymentSession } from '@/services/medusaBackendService'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { AlertCircle, CreditCard, Loader2 } from 'lucide-react'
@@ -84,7 +84,7 @@ function CheckoutForm({ clientSecret }: { clientSecret: string }) {
   )
 }
 
-export default function StripeCheckoutPage() {
+export default function SimpleStripeCheckout() {
   const router = useRouter()
   const { cart, isLoading } = useMedusaCart()
   const [clientSecret, setClientSecret] = useState<string | null>(null)
@@ -122,7 +122,7 @@ export default function StripeCheckoutPage() {
         country_code: 'us'
       })
 
-      // Step 2: Add shipping method (using a default for now)
+      // Step 2: Add shipping method
       console.log('Adding shipping method...')
       await addShippingMethod(cart.id, 'Standard Shipping', 10)
 
