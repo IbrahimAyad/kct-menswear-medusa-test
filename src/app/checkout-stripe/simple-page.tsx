@@ -152,7 +152,20 @@ export default function SimpleStripeCheckout() {
       setStep('payment')
     } catch (err: any) {
       console.error('Checkout error:', err)
-      setError(err.message || 'Failed to initialize payment')
+      
+      // Clear cart on payment/session errors to prevent stale data
+      if (err.message?.includes('payment') || err.message?.includes('session')) {
+        console.log('Clearing cart due to payment/session error')
+        localStorage.removeItem('medusa_cart_id')
+        localStorage.removeItem('cart_id')
+        localStorage.removeItem('last_cart_items')
+        localStorage.removeItem('checkout_email')
+        
+        // Show error and suggest refresh
+        setError(err.message + '\n\nPlease refresh the page to start a new checkout.')
+      } else {
+        setError(err.message || 'Failed to initialize payment')
+      }
     } finally {
       setInitializingPayment(false)
     }

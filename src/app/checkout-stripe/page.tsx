@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useMedusaCart } from '@/contexts/MedusaCartContext'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { loadStripe } from '@stripe/stripe-js'
-import { addShippingAddress, addShippingMethod, createPaymentCollection, createPaymentSession } from '@/services/medusaBackendService'
+import { addShippingAddress, addShippingMethod, createPaymentCollection, createPaymentSession, checkBackendReady } from '@/services/medusaBackendService'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { AlertCircle, CreditCard, Loader2 } from 'lucide-react'
@@ -34,6 +34,9 @@ function CheckoutForm({ clientSecret, cartId }: { clientSecret: string, cartId: 
     setError(null)
 
     try {
+      // NOTE: This will use whatever capture_method is set on the PaymentIntent
+      // If backend sets capture_method: 'manual', payment will be authorized but not captured
+      // If backend sets capture_method: 'automatic', payment will be captured immediately
       const result = await stripe.confirmPayment({
         elements,
         confirmParams: {
@@ -115,6 +118,11 @@ export default function StripeCheckoutPage() {
     setError(null)
 
     try {
+      // Check if backend is ready
+      const backendReady = await checkBackendReady()
+      if (!backendReady) {
+        throw new Error('Payment system is updating. Please try again in a few minutes.')
+      }
       // Save cart data to localStorage for success page
       const cartDataForSuccess = {
         items: cart.items.map((item: any) => ({
@@ -165,7 +173,20 @@ export default function StripeCheckoutPage() {
       setStep('payment')
     } catch (err: any) {
       console.error('Checkout error:', err)
-      setError(err.message || 'Failed to initialize payment')
+      
+      // Clear cart on payment/session errors to prevent stale data
+      if (err.message?.includes('payment') || err.message?.includes('session')) {
+        console.log('Clearing cart due to payment/session error')
+        localStorage.removeItem('medusa_cart_id')
+        localStorage.removeItem('cart_id')
+        localStorage.removeItem('last_cart_items')
+        localStorage.removeItem('checkout_email')
+        
+        // Show error and suggest refresh
+        setError(err.message + '\n\nPlease refresh the page to start a new checkout.')
+      } else {
+        setError(err.message || 'Failed to initialize payment')
+      }
     } finally {
       setInitializingPayment(false)
     }
@@ -206,10 +227,32 @@ export default function StripeCheckoutPage() {
   const taxAmount = subtotal * taxRate
   const total = subtotal + shippingCost + taxAmount
 
+  // Debug function to clear all cache
+  const handleClearCache = () => {
+    localStorage.clear()
+    sessionStorage.clear()
+    document.cookie.split(";").forEach(c => {
+      document.cookie = c.trim().split("=")[0] + '=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;'
+    })
+    window.location.reload()
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="max-w-3xl mx-auto px-4">
-        <h1 className="text-3xl font-light mb-8">Checkout</h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-light">Checkout</h1>
+          {/* Debug button - only show in development */}
+          {process.env.NODE_ENV === 'development' && (
+            <button
+              onClick={handleClearCache}
+              className="text-xs px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+              title="Clear all browser cache and reload"
+            >
+              Clear Cache (Debug)
+            </button>
+          )}
+        </div>
 
         {/* Order Summary */}
         <Card className="p-6 mb-6">

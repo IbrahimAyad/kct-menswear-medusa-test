@@ -622,6 +622,35 @@ export async function createPaymentSession(paymentCollectionId: string, cartId?:
     const data = await response.json()
     console.log('Payment session response:', data)
     
+    // CRITICAL: Verify amount to prevent 100x charges
+    if (data.stripe_amount && data.stripe_amount_usd) {
+      // Get cart to check expected amount
+      const cartResponse = await fetch(`${MEDUSA_URL}/store/carts/${cartId}`, {
+        headers: getHeaders()
+      })
+      if (cartResponse.ok) {
+        const cartData = await cartResponse.json()
+        const cart = cartData.cart
+        const expectedAmount = (cart.total || 0) / 100 // Convert cents to dollars
+        
+        console.log('Amount verification:', {
+          expected: expectedAmount,
+          stripe_usd: data.stripe_amount_usd,
+          stripe_cents: data.stripe_amount
+        })
+        
+        // Check if amount is more than 10x expected (100x bug protection)
+        if (data.stripe_amount_usd > expectedAmount * 10) {
+          console.error('CRITICAL: Price mismatch detected!', {
+            expected: expectedAmount,
+            wouldCharge: data.stripe_amount_usd,
+            multiplier: data.stripe_amount_usd / expectedAmount
+          })
+          throw new Error(`Price mismatch! Expected $${expectedAmount.toFixed(2)}, but would charge $${data.stripe_amount_usd.toFixed(2)}. Please contact support.`)
+        }
+      }
+    }
+    
     // Handle different response formats from backend
     // The custom endpoint might return data differently
     let paymentSession = null
@@ -643,6 +672,12 @@ export async function createPaymentSession(paymentCollectionId: string, cartId?:
       if (!clientSecret) {
         console.error('Payment session missing client_secret:', paymentSession)
         throw new Error('Payment session created but missing Stripe client secret')
+      }
+      
+      // Log amount for verification
+      if (paymentSession.amount) {
+        console.log('Payment session amount (cents):', paymentSession.amount)
+        console.log('Payment session amount (USD):', paymentSession.amount / 100)
       }
       
       return {
@@ -747,6 +782,27 @@ export function isMedusaProductAvailable(variant: any): boolean {
 // Helper to get product variant
 export function getDefaultVariant(product: MedusaProduct) {
   return product.variants?.[0] || null
+}
+
+// Health check for backend readiness
+export async function checkBackendReady(): Promise<boolean> {
+  try {
+    const response = await fetch(`${MEDUSA_URL}/health`, {
+      method: 'GET',
+      headers: getHeaders()
+    })
+    
+    if (response.ok) {
+      console.log('Backend health check passed')
+      return true
+    }
+    
+    console.warn('Backend health check failed:', response.status)
+    return false
+  } catch (error) {
+    console.error('Backend health check error:', error)
+    return false
+  }
 }
 
 // NEW: Authorize payment after Stripe confirmation
