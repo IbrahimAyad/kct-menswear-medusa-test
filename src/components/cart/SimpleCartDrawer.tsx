@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { useMedusaCart } from '@/contexts/MedusaCartContext';
-import { X, ShoppingCart, Trash2, Plus, Minus } from 'lucide-react';
+import { X, ShoppingCart, Trash2, Plus, Minus, RefreshCw } from 'lucide-react';
 import { MedusaCheckoutButton } from './MedusaCheckoutButton';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useUIStore } from '@/store/uiStore';
 
 export function SimpleCartDrawer() {
-  const { cart, removeItem, clearCart, updateQuantity, isLoading } = useMedusaCart();
+  const { cart, removeItem, clearCart, updateQuantity, isLoading, resetCart, error } = useMedusaCart();
   const items = cart?.items || [];
   const cartSummary = {
     totalPrice: (cart?.total || 0) / 100, // Convert from cents to dollars
@@ -255,6 +255,25 @@ export function SimpleCartDrawer() {
               
               {/* Footer */}
               <div className="border-t bg-gray-50 p-4 space-y-4">
+                {/* Error Message */}
+                {error && (
+                  <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-sm">
+                    <div className="flex items-center justify-between">
+                      <span>{error}</span>
+                      <button
+                        onClick={() => {
+                          resetCart();
+                          triggerHaptic(50);
+                        }}
+                        className="ml-2 text-red-600 hover:text-red-800"
+                        title="Reset cart"
+                      >
+                        <RefreshCw size={16} />
+                      </button>
+                    </div>
+                  </div>
+                )}
+                
                 {/* Price Breakdown */}
                 {items.length > 0 && (
                   <div className="space-y-1 text-sm">
@@ -290,6 +309,19 @@ export function SimpleCartDrawer() {
                   >
                     Clear All
                   </button>
+                  {error && (
+                    <button
+                      onClick={() => {
+                        resetCart();
+                        triggerHaptic(50);
+                      }}
+                      className="text-sm text-blue-600 hover:text-blue-700 px-3 py-1 hover:bg-blue-50 rounded-md transition-colors flex items-center gap-1"
+                      aria-label="Reset cart to fix errors"
+                    >
+                      <RefreshCw size={14} />
+                      Reset Cart
+                    </button>
+                  )}
                 </div>
                 
                 <MedusaCheckoutButton />

@@ -25,6 +25,7 @@ interface MedusaCartContextType {
   removeItem: (itemId: string) => Promise<void>
   clearCart: () => void
   refreshCart: () => Promise<void>
+  resetCart: () => Promise<void>  // New: Force reset cart when in bad state
   
   // Helpers
   getItemCount: () => number
@@ -125,6 +126,37 @@ export function MedusaCartProvider({ children }: { children: ReactNode }) {
     } catch (err: any) {
       console.error('Failed to add item:', err)
       
+      // Check for payment session error and reset cart if needed
+      if (err.message?.includes('payment session') || err.message?.includes('Could not delete')) {
+        console.log('Cart has bad payment sessions, creating new cart...')
+        
+        // Clear the bad cart
+        setCartId(null)
+        setCart(null)
+        
+        try {
+          // Create a fresh cart
+          const newCart = await createMedusaCart()
+          if (newCart) {
+            const newCartId = newCart.cart_id || newCart.id
+            setCartId(newCartId)
+            setCart(newCart)
+            
+            // Try adding the item to the new cart
+            const updatedCart = await addToMedusaCart(newCartId, variantId, quantity)
+            if (updatedCart) {
+              setCart(updatedCart)
+              console.log('Item added to new cart successfully')
+              return // Success! Exit early
+            }
+          }
+        } catch (retryErr: any) {
+          console.error('Failed to create new cart and add item:', retryErr)
+          setError('Unable to add item to cart. Please refresh the page and try again.')
+          throw new Error('Unable to add item to cart. Please refresh the page and try again.')
+        }
+      }
+      
       // Provide user-friendly error messages
       let userMessage = 'Unable to add item to cart. Please try again.'
       
@@ -208,6 +240,32 @@ export function MedusaCartProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  const resetCart = async () => {
+    console.log('Resetting cart due to bad state...')
+    
+    // Clear the current cart completely
+    setCart(null)
+    setCartId(null)
+    setError(null)
+    
+    // Create a fresh new cart
+    try {
+      setIsLoading(true)
+      const newCart = await createMedusaCart()
+      if (newCart) {
+        const newCartId = newCart.cart_id || newCart.id
+        setCartId(newCartId)
+        setCart(newCart)
+        console.log('Cart reset successful, new cart ID:', newCartId)
+      }
+    } catch (err: any) {
+      console.error('Failed to reset cart:', err)
+      setError('Failed to reset cart. Please refresh the page.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const getItemCount = () => {
     if (!cart?.items) return 0
     return cart.items.reduce((total, item) => total + item.quantity, 0)
@@ -233,6 +291,7 @@ export function MedusaCartProvider({ children }: { children: ReactNode }) {
         removeItem,
         clearCart,
         refreshCart,
+        resetCart,
         getItemCount,
         getSubtotal
       }}
