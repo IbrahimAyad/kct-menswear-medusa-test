@@ -469,20 +469,10 @@ export async function addShippingAddress(cartId: string, shippingData: {
   }
 }
 
-// Step 2: Add shipping method (Simplified - shipping endpoints are unstable)
+// Step 2: Add shipping method (Backend fixed - endpoint now available)
 export async function addShippingMethod(cartId: string, shippingMethod: string = 'Free Shipping', shippingAmount: number = 0) {
   try {
-    // TEMPORARY: Skip shipping method selection due to backend instability
-    // The backend defaults to FREE shipping anyway
-    console.log('Skipping shipping method selection - using FREE shipping by default')
-    return { 
-      success: true, 
-      message: 'FREE shipping applied',
-      shipping_method: 'FREE Shipping',
-      amount: 0
-    }
-    
-    /* DISABLED until backend stabilizes
+    // Backend has fixed the shipping-methods endpoint, let's use it
     // First, get available shipping options from the NEW backend endpoint
     const optionsResponse = await fetch(`${MEDUSA_URL}/store/carts/${cartId}/shipping-options`, {
       method: 'GET',
@@ -596,6 +586,8 @@ export async function createPaymentSession(paymentCollectionId: string, cartId?:
       : `${MEDUSA_URL}/store/payment-collections/${paymentCollectionId}/payment-sessions`; // Fallback
     
     console.log('Creating payment session with endpoint:', endpoint);
+    console.log('Payment collection ID:', paymentCollectionId);
+    console.log('Cart ID:', cartId);
     
     const response = await fetch(endpoint, {
       method: 'POST',
@@ -608,23 +600,64 @@ export async function createPaymentSession(paymentCollectionId: string, cartId?:
 
     if (!response.ok) {
       const errorText = await response.text()
-      throw new Error(`Failed to create payment session: ${response.status} - ${errorText}`)
+      console.error(`Payment session creation failed: ${response.status}`, errorText)
+      
+      // Parse error to provide better feedback
+      let errorMessage = 'Failed to create payment session'
+      try {
+        const errorData = JSON.parse(errorText)
+        errorMessage = errorData.message || errorData.error || errorMessage
+      } catch {
+        // If not JSON, use the text directly
+        if (errorText.includes('shipping')) {
+          errorMessage = 'Shipping configuration error. Please try again.'
+        } else if (errorText.includes('payment')) {
+          errorMessage = 'Payment configuration error. Please refresh and try again.'
+        }
+      }
+      
+      throw new Error(errorMessage)
     }
 
     const data = await response.json()
-    // The payment session is in the payment_sessions array
-    const paymentSession = data.payment_collection?.payment_sessions?.[0]
+    console.log('Payment session response:', data)
+    
+    // Handle different response formats from backend
+    // The custom endpoint might return data differently
+    let paymentSession = null
+    
+    // Check multiple possible response structures
+    if (data.payment_session) {
+      paymentSession = data.payment_session
+    } else if (data.payment_collection?.payment_sessions?.[0]) {
+      paymentSession = data.payment_collection.payment_sessions[0]
+    } else if (data.payment_sessions?.[0]) {
+      paymentSession = data.payment_sessions[0]
+    }
+    
     if (paymentSession) {
+      console.log('Payment session created:', paymentSession.id)
       // Extract the Stripe client secret from the data
+      const clientSecret = paymentSession.data?.client_secret || paymentSession.client_secret
+      
+      if (!clientSecret) {
+        console.error('Payment session missing client_secret:', paymentSession)
+        throw new Error('Payment session created but missing Stripe client secret')
+      }
+      
       return {
         ...paymentSession,
-        client_secret: paymentSession.data?.client_secret
+        client_secret: clientSecret
       }
     }
-    return null
-  } catch (error) {
+    
+    console.error('No payment session in response:', data)
+    throw new Error('Payment session not created - invalid response from server')
+    
+  } catch (error: any) {
     console.error('Error creating payment session:', error)
-    return null
+    // Re-throw the error so the checkout page can handle it
+    throw error
   }
 }
 

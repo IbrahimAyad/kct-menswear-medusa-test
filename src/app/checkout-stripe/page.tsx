@@ -149,10 +149,16 @@ export default function StripeCheckoutPage() {
 
       // Step 4: Create payment session with Stripe (using custom endpoint to fix 100x bug)
       console.log('Creating payment session with custom endpoint to fix 100x bug...')
-      const paymentSession = await createPaymentSession(paymentCollection.id, cart.id)
+      let paymentSession
+      try {
+        paymentSession = await createPaymentSession(paymentCollection.id, cart.id)
+      } catch (sessionError: any) {
+        console.error('Payment session error:', sessionError)
+        throw new Error(sessionError.message || 'Failed to create payment session')
+      }
       
       if (!paymentSession?.client_secret) {
-        throw new Error('Failed to create payment session')
+        throw new Error('Payment session created but missing client secret')
       }
 
       setClientSecret(paymentSession.client_secret)

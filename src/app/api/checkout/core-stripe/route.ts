@@ -6,14 +6,17 @@ if (!process.env.STRIPE_SECRET_KEY) {
   console.error('STRIPE_SECRET_KEY is not set in environment variables')
 }
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-12-18.acacia' as any,
-})
+// Only initialize Stripe if we have a key
+const stripe = process.env.STRIPE_SECRET_KEY 
+  ? new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: '2024-12-18.acacia' as any,
+    })
+  : null
 
 export async function POST(request: NextRequest) {
   try {
     // Check if Stripe is configured
-    if (!process.env.STRIPE_SECRET_KEY) {
+    if (!stripe || !process.env.STRIPE_SECRET_KEY) {
       console.error('Stripe is not configured - missing secret key')
       return NextResponse.json({ 
         error: 'Payment system not configured' 
