@@ -511,14 +511,23 @@ export async function createPaymentCollection(cartId: string) {
   }
 }
 
-// Step 4: Create payment session with Stripe
-export async function createPaymentSession(paymentCollectionId: string) {
+// Step 4: Create payment session with Stripe (USING CUSTOM ENDPOINT TO FIX 100X BUG)
+export async function createPaymentSession(paymentCollectionId: string, cartId?: string) {
   try {
-    const response = await fetch(`${MEDUSA_URL}/store/payment-collections/${paymentCollectionId}/payment-sessions`, {
+    // Use custom endpoint that fixes the 100x pricing bug
+    // If we have cartId, use the new endpoint, otherwise fall back to standard
+    const endpoint = cartId 
+      ? `${MEDUSA_URL}/store/carts/${cartId}/payment-session`  // Custom endpoint that fixes 100x bug
+      : `${MEDUSA_URL}/store/payment-collections/${paymentCollectionId}/payment-sessions`; // Fallback
+    
+    console.log('Creating payment session with endpoint:', endpoint);
+    
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({
-        provider_id: 'pp_stripe_stripe'
+        provider_id: 'pp_stripe_stripe',
+        ...(cartId && { payment_collection_id: paymentCollectionId }) // Include collection ID if using custom endpoint
       })
     })
 

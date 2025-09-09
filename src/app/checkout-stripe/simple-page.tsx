@@ -134,9 +134,9 @@ export default function SimpleStripeCheckout() {
         throw new Error('Failed to create payment collection')
       }
 
-      // Step 4: Create payment session with Stripe
-      console.log('Creating payment session...')
-      const paymentSession = await createPaymentSession(paymentCollection.id)
+      // Step 4: Create payment session with Stripe (using custom endpoint to fix 100x bug)
+      console.log('Creating payment session with custom endpoint to fix 100x bug...')
+      const paymentSession = await createPaymentSession(paymentCollection.id, cart.id)
       
       if (!paymentSession?.client_secret) {
         throw new Error('Failed to create payment session')
