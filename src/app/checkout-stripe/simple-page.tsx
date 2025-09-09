@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useMedusaCart } from '@/hooks/useMedusaCart'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { loadStripe } from '@stripe/stripe-js'
-import { initializeMedusaPayment, addShippingAddress, addShippingMethod, createPaymentCollection, createPaymentSession } from '@/services/medusaBackendService'
+import { initializeMedusaPayment, addShippingAddress, addShippingMethod, createPaymentCollection, createPaymentSession, checkBackendReady } from '@/services/medusaBackendService'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { AlertCircle, CreditCard, Loader2 } from 'lucide-react'
@@ -115,6 +115,11 @@ export default function SimpleStripeCheckout() {
     setError(null)
 
     try {
+      // Optional health check - don't block checkout if it fails
+      // The actual API calls will fail with proper errors if backend is down
+      await checkBackendReady().catch(err => {
+        console.log('Health check skipped:', err)
+      })
       // Step 1: Add shipping address
       console.log('Adding shipping address...')
       await addShippingAddress(cart.id, {

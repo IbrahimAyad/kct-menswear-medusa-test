@@ -118,11 +118,11 @@ export default function StripeCheckoutPage() {
     setError(null)
 
     try {
-      // Check if backend is ready
-      const backendReady = await checkBackendReady()
-      if (!backendReady) {
-        throw new Error('Payment system is updating. Please try again in a few minutes.')
-      }
+      // Optional health check - don't block checkout if it fails
+      // The actual API calls will fail with proper errors if backend is down
+      await checkBackendReady().catch(err => {
+        console.log('Health check skipped:', err)
+      })
       // Save cart data to localStorage for success page
       const cartDataForSuccess = {
         items: cart.items.map((item: any) => ({
