@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle, Truck, Mail, Calendar, ArrowRight, Star, Gift } from 'lucide-react';
+import { CheckCircle, Truck, Mail, Calendar, ArrowRight, Star, Gift, AlertCircle, Phone, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -13,14 +13,27 @@ export default function CheckoutSuccessPage() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [orderDetails, setOrderDetails] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [orderError, setOrderError] = useState<string | null>(null);
+  const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
-    // Get session ID from URL on client side
+    // Get payment data from URL on client side
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
-      const id = urlParams.get('session_id');
-      setSessionId(id);
+      const sessionIdParam = urlParams.get('session_id');
+      const paymentIntentParam = urlParams.get('payment_intent');
+      const paymentIntentClientSecret = urlParams.get('payment_intent_client_secret');
+      
+      setSessionId(sessionIdParam);
+      setPaymentIntentId(paymentIntentParam);
+      
+      console.log('Payment Success URL Params:', {
+        session_id: sessionIdParam,
+        payment_intent: paymentIntentParam,
+        payment_intent_client_secret: paymentIntentClientSecret,
+        cart_id: urlParams.get('cart_id')
+      });
     }
   }, []);
 
@@ -40,23 +53,42 @@ export default function CheckoutSuccessPage() {
       
       if (!cartId) {
         console.error('No cart ID found');
-        // Use fallback data if no cart
-        setFallbackOrderData();
+        setOrderError('Unable to find your order information. Please contact support.');
+        setLoading(false);
         return;
       }
 
       console.log('Completing order for cart:', cartId);
+      
+      // Retry logic for authorization
+      let authResult = null;
+      let retryCount = 0;
+      const maxRetries = 3;
+      
+      while (retryCount < maxRetries && !authResult) {
+        try {
+          // Step 1: Authorize payment with payment_intent_id
+          console.log(`Authorizing payment (attempt ${retryCount + 1}/${maxRetries})...`);
+          authResult = await authorizePayment(cartId, paymentIntentId || undefined, sessionId || undefined);
+          console.log('Payment authorized:', authResult);
+          break;
+        } catch (authError: any) {
+          retryCount++;
+          console.error(`Authorization attempt ${retryCount} failed:`, authError);
+          
+          if (retryCount >= maxRetries) {
+            throw authError;
+          }
+          
+          // Wait before retry (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+        }
+      }
 
-      try {
-        // Step 1: Authorize payment
-        console.log('Authorizing payment...');
-        const authResult = await authorizePayment(cartId);
-        console.log('Payment authorized:', authResult);
-
-        // Step 2: Complete cart to create order
-        console.log('Completing cart...');
-        const orderResult = await completeCart(cartId);
-        console.log('Order created:', orderResult);
+      // Step 2: Complete cart to create order
+      console.log('Completing cart...');
+      const orderResult = await completeCart(cartId);
+      console.log('Order created:', orderResult);
 
         if (orderResult?.order) {
           // Use real order data
@@ -81,20 +113,34 @@ export default function CheckoutSuccessPage() {
           localStorage.removeItem('medusa_cart_id');
           localStorage.removeItem('last_cart_items');
           localStorage.removeItem('checkout_email');
+          setOrderError(null);
         } else {
-          // Use saved cart data if order completion failed
-          setFallbackOrderData();
+          // Order completion failed but payment went through
+          console.error('Order creation failed but payment was processed');
+          setOrderError('Your payment was processed but we encountered an issue creating your order. Please contact support with your cart ID: ' + cartId);
+          // Don't use fake data - show error instead
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error completing order:', error);
-        // Use saved cart data as fallback
-        setFallbackOrderData();
+        
+        // Payment was processed but order creation failed
+        setOrderError(
+          `Your payment has been processed but we couldn't complete your order. ` +
+          `Please contact support immediately with this information:\n\n` +
+          `Cart ID: ${cartId}\n` +
+          `Payment Intent: ${paymentIntentId || 'Not available'}\n` +
+          `Error: ${error.message || 'Unknown error'}`
+        );
+        // Don't show fake success data
       }
 
       setLoading(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Fatal error in order completion:', error);
-      setFallbackOrderData();
+      setOrderError(
+        'We encountered an issue processing your order. ' +
+        'If you were charged, please contact support for assistance.'
+      );
       setLoading(false);
     }
   };
@@ -159,36 +205,99 @@ export default function CheckoutSuccessPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-charcoal/5">
       <div className="max-w-4xl mx-auto px-6 py-16">
-        {/* Success Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
-        >
+        {/* Conditional Header based on error state */}
+        {orderError ? (
+          // Error State
           <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-            className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center mb-12"
           >
-            <CheckCircle className="h-12 w-12 text-green-600" />
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+              className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6"
+            >
+              <AlertCircle className="h-12 w-12 text-red-600" />
+            </motion.div>
+            
+            <h1 className="text-4xl md:text-5xl font-light mb-4 text-charcoal">
+              Order Processing Issue
+            </h1>
+            
+            <p className="text-xl text-gray-600 mb-6">
+              Your payment was received but we encountered an issue completing your order.
+            </p>
+            
+            {/* Error Details */}
+            <Card className="max-w-2xl mx-auto p-6 bg-red-50 border-red-200 mb-8">
+              <p className="text-red-800 whitespace-pre-line text-left">
+                {orderError}
+              </p>
+            </Card>
+            
+            {/* Support Contact */}
+            <Card className="max-w-2xl mx-auto p-8">
+              <h2 className="text-2xl font-light mb-6 text-charcoal">Get Help Immediately</h2>
+              <p className="text-gray-600 mb-6">
+                Don't worry - we'll resolve this quickly. Please contact our support team:
+              </p>
+              <div className="space-y-4">
+                <a 
+                  href="tel:+1-800-555-0123" 
+                  className="flex items-center justify-center gap-3 p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                >
+                  <Phone className="h-5 w-5 text-blue-600" />
+                  <span className="text-blue-900 font-medium">Call: 1-800-555-0123</span>
+                </a>
+                <a 
+                  href="mailto:support@kctmenswear.com?subject=Order Processing Issue" 
+                  className="flex items-center justify-center gap-3 p-4 bg-green-50 hover:bg-green-100 rounded-lg transition-colors"
+                >
+                  <Mail className="h-5 w-5 text-green-600" />
+                  <span className="text-green-900 font-medium">Email: support@kctmenswear.com</span>
+                </a>
+                <div className="flex items-center justify-center gap-3 p-4 bg-purple-50 rounded-lg">
+                  <MessageSquare className="h-5 w-5 text-purple-600" />
+                  <span className="text-purple-900">Live Chat: Available Mon-Fri 9am-5pm EST</span>
+                </div>
+              </div>
+              <p className="text-sm text-gray-500 mt-6">
+                Please have your payment confirmation email ready when contacting support.
+              </p>
+            </Card>
           </motion.div>
-          
-          <h1 className="text-4xl md:text-5xl font-light mb-4 text-charcoal">
-            Order Confirmed!
-          </h1>
-          
-          <p className="text-xl text-gray-600 mb-6">
-            Thank you for your purchase. Your order has been successfully placed.
-          </p>
-          
-          {orderDetails && (
+        ) : orderDetails ? (
+          // Success State
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center mb-12"
+          >
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+              className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6"
+            >
+              <CheckCircle className="h-12 w-12 text-green-600" />
+            </motion.div>
+            
+            <h1 className="text-4xl md:text-5xl font-light mb-4 text-charcoal">
+              Order Confirmed!
+            </h1>
+            
+            <p className="text-xl text-gray-600 mb-6">
+              Thank you for your purchase. Your order has been successfully placed.
+            </p>
+            
             <div className="inline-flex items-center gap-2 bg-white px-6 py-3 rounded-full shadow-lg">
               <span className="text-sm text-gray-500">Order Number:</span>
               <span className="font-medium text-charcoal">{orderDetails.id}</span>
             </div>
-          )}
-        </motion.div>
+          </motion.div>
+        ) : null}
 
         {/* Order Details */}
         {orderDetails && (

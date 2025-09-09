@@ -633,16 +633,29 @@ export function getDefaultVariant(product: MedusaProduct) {
 }
 
 // NEW: Authorize payment after Stripe confirmation
-export async function authorizePayment(cartId: string): Promise<any> {
+export async function authorizePayment(
+  cartId: string, 
+  paymentIntentId?: string,
+  sessionId?: string
+): Promise<any> {
   try {
+    const payload = {
+      cart_id: cartId,
+      ...(paymentIntentId && { payment_intent_id: paymentIntentId }),
+      ...(sessionId && { session_id: sessionId })
+    }
+    
+    console.log('Authorizing payment with:', payload)
+    
     const response = await fetch(`${MEDUSA_URL}/store/authorize-payment`, {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify({ cart_id: cartId })
+      body: JSON.stringify(payload)
     })
 
     if (!response.ok) {
       const error = await response.json()
+      console.error('Authorization failed:', error)
       throw new Error(error.message || 'Failed to authorize payment')
     }
 
