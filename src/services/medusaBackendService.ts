@@ -331,13 +331,21 @@ export async function addToMedusaCart(cartId: string, variantId: string, quantit
       console.error(`Cart API Error: ${response.status}`, errorText)
       
       // Parse error for specific issues
+      if (errorText.includes('Could not delete all payment sessions')) {
+        // Cart has stuck payment sessions - need to create new cart
+        throw new Error('CART_PAYMENT_SESSION_ERROR')
+      }
       if (errorText.includes('strategy')) {
         throw new Error('Cart system is being updated. Please try again in a moment.')
       }
       if (errorText.includes('payment')) {
-        throw new Error('Payment system is being configured. Please try again.')
+        throw new Error('CART_PAYMENT_SESSION_ERROR')
       }
       if (response.status === 500) {
+        // Check if it's the payment session error
+        if (errorText.includes('payment') || errorText.includes('session')) {
+          throw new Error('CART_PAYMENT_SESSION_ERROR')
+        }
         throw new Error('Server error. Our team has been notified.')
       }
       

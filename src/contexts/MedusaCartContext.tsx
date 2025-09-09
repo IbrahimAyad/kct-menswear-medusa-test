@@ -157,6 +157,37 @@ export function MedusaCartProvider({ children }: { children: ReactNode }) {
         }
       }
       
+      // Check if this is a payment session error that needs cart reset
+      if (err.message === 'CART_PAYMENT_SESSION_ERROR') {
+        console.log('Cart has stuck payment sessions. Creating new cart...')
+        
+        // Clear the stuck cart
+        localStorage.removeItem('medusa_cart_id')
+        setCartId(null)
+        setCart(null)
+        
+        // Try one more time with a fresh cart
+        try {
+          const newCartResponse = await createMedusaCart()
+          if (newCartResponse) {
+            const newCartId = newCartResponse.id
+            setCartId(newCartId)
+            localStorage.setItem('medusa_cart_id', newCartId)
+            
+            const updatedCart = await addToMedusaCart(newCartId, variantId, quantity)
+            if (updatedCart) {
+              setCart(updatedCart)
+              setError(null)
+              return // Success!
+            }
+          }
+        } catch (finalErr: any) {
+          console.error('Failed to recover from payment session error:', finalErr)
+          setError('Cart system needs to be reset. Please refresh the page.')
+          throw new Error('Cart system needs to be reset. Please refresh the page.')
+        }
+      }
+      
       // Provide user-friendly error messages
       let userMessage = 'Unable to add item to cart. Please try again.'
       
@@ -166,7 +197,7 @@ export function MedusaCartProvider({ children }: { children: ReactNode }) {
         userMessage = 'Our servers are experiencing issues. Please try again shortly.'
       } else if (err.message?.includes('network')) {
         userMessage = 'Connection error. Please check your internet and try again.'
-      } else if (err.message) {
+      } else if (err.message && err.message !== 'CART_PAYMENT_SESSION_ERROR') {
         userMessage = err.message
       }
       
