@@ -225,30 +225,11 @@ export default function StripeCheckoutPage() {
         )
       }
 
-      // Step 3: Create payment collection
-      console.log('Creating payment collection...')
-      const paymentCollection = await createPaymentCollection(cart.id)
+      // SKIP Medusa payment collection/session to avoid duplicate payment intents
+      // We'll use our custom Stripe integration instead
+      console.log('Skipping Medusa payment session - using direct Stripe integration')
       
-      if (!paymentCollection) {
-        throw new Error('Failed to create payment collection')
-      }
-
-      // Step 4: Create payment session with Stripe (using custom endpoint to fix 100x bug)
-      console.log('Creating payment session with custom endpoint to fix 100x bug...')
-      let paymentSession
-      try {
-        paymentSession = await createPaymentSession(paymentCollection.id, cart.id)
-      } catch (sessionError: any) {
-        console.error('Payment session error:', sessionError)
-        throw new Error(sessionError.message || 'Failed to create payment session')
-      }
-      
-      if (!paymentSession?.client_secret) {
-        throw new Error('Payment session created but missing client secret')
-      }
-
-      console.log('Setting client secret:', paymentSession.client_secret)
-      setClientSecret(paymentSession.client_secret)
+      // Just move to payment step - our StripeCheckout component will handle payment
       console.log('Moving to payment step')
       setStep('payment')
     } catch (err: any) {
