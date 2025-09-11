@@ -120,11 +120,35 @@ export function SimpleStripeForm({ amount, cartId, email, onSuccess }: SimpleStr
       }
 
       if (result.paymentIntent?.status === 'succeeded') {
-        console.log('Payment succeeded!')
+        console.log('Payment succeeded!', result.paymentIntent)
         setSuccess(true)
+        
+        // Complete the order
+        try {
+          const orderResponse = await fetch('/api/checkout/complete-order', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              cartId,
+              paymentIntentId: result.paymentIntent.id,
+              email: email || 'customer@example.com',
+              amount: amount
+            }),
+          })
+          
+          const orderData = await orderResponse.json()
+          console.log('Order completed:', orderData)
+        } catch (orderError) {
+          console.error('Order completion error:', orderError)
+          // Payment succeeded but order creation failed - still redirect
+        }
+        
+        // Redirect to success page with payment details
         setTimeout(() => {
-          onSuccess()
-        }, 2000)
+          window.location.href = `/checkout/success?payment_intent=${result.paymentIntent.id}&cart_id=${cartId}`
+        }, 1500)
       } else {
         throw new Error('Payment was not successful')
       }
