@@ -5,7 +5,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { useSimpleCart } from '@/hooks/useSimpleCart';
 import { stripeProducts } from '@/lib/services/stripeProductService';
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+const stripePromise = loadStripe('pk_live_51RAMT2CHc12x7sCzv9MxCfz8HBj76Js5MiRCa0F0o3xVOJJ0LS7pRNhDxIJZf5mQQBW6vD5h3cQzI0B5vhLSl6Y200YY9iXR7h');
 
 export function CheckoutButton() {
   const { items, cartSummary, clearCart } = useSimpleCart();
