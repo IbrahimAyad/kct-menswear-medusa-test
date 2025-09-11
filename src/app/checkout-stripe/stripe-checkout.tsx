@@ -5,28 +5,34 @@ import { loadStripe } from '@stripe/stripe-js'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { Button } from '@/components/ui/button'
 import { AlertCircle, CreditCard, Loader2 } from 'lucide-react'
+import { STRIPE_PUBLISHABLE_KEY, isValidStripeKey } from '@/lib/stripe-config'
 
-// Use the correct Stripe publishable key
-const STRIPE_PK = 'pk_live_51RAMT2CHc12x7sCzv9MxCfz8HBj76Js5MiRCa0F0o3xVOJJ0LS7pRNhDxIJZf5mQQBW6vD5h3cQzI0B5vhLSl6Y200YY9iXR7h'
+// Validate the key first
+if (!isValidStripeKey(STRIPE_PUBLISHABLE_KEY)) {
+  console.error('❌ Invalid Stripe publishable key. Payment will not work.')
+  console.error('Please update NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY in Railway environment variables')
+}
 
-console.log('Loading Stripe with publishable key:', STRIPE_PK.substring(0, 20) + '...')
+console.log('Loading Stripe with key:', STRIPE_PUBLISHABLE_KEY.substring(0, 20) + '...')
 
 // Load Stripe with explicit configuration
-const stripePromise = loadStripe(STRIPE_PK, {
-  // Ensure we're not loading any beta features
-  betas: [],
-  // Set locale explicitly
-  locale: 'en'
-}).then(stripe => {
-  console.log('Stripe loaded:', !!stripe)
-  if (!stripe) {
-    console.error('Failed to load Stripe')
-  }
-  return stripe
-}).catch(error => {
-  console.error('Error loading Stripe:', error)
-  return null
-})
+const stripePromise = isValidStripeKey(STRIPE_PUBLISHABLE_KEY) 
+  ? loadStripe(STRIPE_PUBLISHABLE_KEY, {
+      // Ensure we're not loading any beta features
+      betas: [],
+      // Set locale explicitly
+      locale: 'en'
+    }).then(stripe => {
+      console.log('Stripe loaded:', !!stripe)
+      if (!stripe) {
+        console.error('Failed to load Stripe - key may be invalid for this account')
+      }
+      return stripe
+    }).catch(error => {
+      console.error('Error loading Stripe:', error)
+      return null
+    })
+  : Promise.resolve(null)
 
 interface StripeCheckoutProps {
   amount: number

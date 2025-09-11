@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { AlertCircle, CreditCard, Loader2, CheckCircle } from 'lucide-react'
 import { loadStripe } from '@stripe/stripe-js'
+import { STRIPE_PUBLISHABLE_KEY, isValidStripeKey } from '@/lib/stripe-config'
 
 interface SimpleStripeFormProps {
   amount: number
@@ -78,8 +79,13 @@ export function SimpleStripeForm({ amount, cartId, email, onSuccess }: SimpleStr
       console.log('Payment intent created:', data.paymentIntentId)
       console.log('Client secret:', data.clientSecret?.substring(0, 20) + '...')
 
+      // Validate key before loading Stripe
+      if (!isValidStripeKey(STRIPE_PUBLISHABLE_KEY)) {
+        throw new Error('Invalid Stripe publishable key. Please contact support.')
+      }
+      
       // Load Stripe
-      const stripe = await loadStripe('pk_live_51RAMT2CHc12x7sCzv9MxCfz8HBj76Js5MiRCa0F0o3xVOJJ0LS7pRNhDxIJZf5mQQBW6vD5h3cQzI0B5vhLSl6Y200YY9iXR7h')
+      const stripe = await loadStripe(STRIPE_PUBLISHABLE_KEY)
       
       if (!stripe) {
         throw new Error('Failed to load Stripe')
