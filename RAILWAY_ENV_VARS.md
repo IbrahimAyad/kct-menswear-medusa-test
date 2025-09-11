@@ -7,7 +7,7 @@ These MUST be set in Railway Dashboard → Your Service → Variables:
 ```env
 # Stripe Configuration (REQUIRED FOR PAYMENT)
 STRIPE_SECRET_KEY=sk_live_[YOUR_STRIPE_SECRET_KEY_HERE]
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_51RAMT2CHc12x7sCzv9MxCfz8HBj76Js5MiRCa0F0o3xVOJJ0LS7pRNhDxIJZf5mQQBW6vD5h3cQzI0B5vhLSl6Y200YY9iXR7h
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_51RAMT2CHc12x7sCzz0cBxUwBPONdyvxMnhDRMwC1bgoaFlDgmEmfvcJZT7yk7jOuEo4LpWkFpb5Gv88DJ9fSB49j00QtRac8uW
 
 # Medusa Backend Configuration
 NEXT_PUBLIC_MEDUSA_BACKEND_URL=https://backend-production-7441.up.railway.app
