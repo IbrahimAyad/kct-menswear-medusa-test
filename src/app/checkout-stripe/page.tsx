@@ -550,8 +550,8 @@ export default function StripeCheckoutPage() {
                 cartId={cart.id}
                 email={shippingInfo.email}
                 onSuccess={() => {
-                  localStorage.removeItem('medusa_cart_id')
-                  router.push('/checkout/success')
+                  // Don't clear cart here - let success page handle it
+                  router.push(`/checkout/success?cart_id=${cart.id}`)
                 }}
               />
               

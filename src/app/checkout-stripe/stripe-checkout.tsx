@@ -63,7 +63,7 @@ function PaymentForm({ amount, cartId, onSuccess }: StripeCheckoutProps) {
         throw new Error(submitError.message)
       }
 
-      const { error: confirmError } = await stripe.confirmPayment({
+      const { error: confirmError, paymentIntent } = await stripe.confirmPayment({
         elements,
         confirmParams: {
           return_url: `${window.location.origin}/checkout/success?cart_id=${cartId}`,
@@ -76,7 +76,12 @@ function PaymentForm({ amount, cartId, onSuccess }: StripeCheckoutProps) {
       }
 
       // If we get here without redirect, payment succeeded
-      onSuccess()
+      if (paymentIntent && paymentIntent.status === 'succeeded') {
+        // Redirect to success page with payment details
+        window.location.href = `/checkout/success?payment_intent=${paymentIntent.id}&cart_id=${cartId}`
+      } else {
+        onSuccess()
+      }
     } catch (err: any) {
       setError(err.message || 'Payment failed')
     } finally {
