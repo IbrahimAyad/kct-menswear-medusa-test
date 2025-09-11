@@ -22,6 +22,16 @@ function CheckoutForm({ clientSecret, cartId }: { clientSecret: string, cartId: 
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [processing, setProcessing] = useState(false)
+  
+  // Debug logging
+  useEffect(() => {
+    console.log('CheckoutForm mounted:', {
+      hasStripe: !!stripe,
+      hasElements: !!elements,
+      clientSecret: clientSecret?.substring(0, 20) + '...',
+      cartId
+    })
+  }, [stripe, elements, clientSecret, cartId])
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
@@ -94,6 +104,17 @@ export default function StripeCheckoutPage() {
   const [error, setError] = useState<string | null>(null)
   const [initializingPayment, setInitializingPayment] = useState(false)
   const [step, setStep] = useState<'shipping' | 'payment'>('shipping')
+  
+  // Debug logging
+  useEffect(() => {
+    console.log('StripeCheckoutPage state:', {
+      step,
+      hasClientSecret: !!clientSecret,
+      hasStripePromise: !!stripePromise,
+      clientSecretLength: clientSecret?.length,
+      error
+    })
+  }, [step, clientSecret, error])
   
   const [shippingInfo, setShippingInfo] = useState({
     email: '',
@@ -188,7 +209,9 @@ export default function StripeCheckoutPage() {
         throw new Error('Payment session created but missing client secret')
       }
 
+      console.log('Setting client secret:', paymentSession.client_secret)
       setClientSecret(paymentSession.client_secret)
+      console.log('Moving to payment step')
       setStep('payment')
     } catch (err: any) {
       console.error('Checkout error:', err)
@@ -480,6 +503,27 @@ export default function StripeCheckoutPage() {
         ) : (
           <Card className="p-6">
             <h2 className="text-lg font-medium mb-4">Payment</h2>
+            
+            {error && (
+              <div className="mb-4 p-4 bg-red-50 text-red-700 rounded-lg flex items-start gap-2">
+                <AlertCircle className="h-5 w-5 mt-0.5" />
+                <p className="text-sm">{error}</p>
+              </div>
+            )}
+            
+            {!clientSecret && (
+              <div className="p-4 bg-yellow-50 text-yellow-700 rounded-lg">
+                <p className="text-sm">Initializing payment... Please wait.</p>
+                <p className="text-xs mt-2">If this takes more than a few seconds, please refresh the page.</p>
+              </div>
+            )}
+            
+            {!stripePromise && (
+              <div className="p-4 bg-red-50 text-red-700 rounded-lg">
+                <p className="text-sm">Error: Stripe failed to load. Please check your internet connection and refresh the page.</p>
+              </div>
+            )}
+            
             {clientSecret && stripePromise && (
               <Elements stripe={stripePromise} options={{ clientSecret }}>
                 <CheckoutForm clientSecret={clientSecret} cartId={cart.id} />
