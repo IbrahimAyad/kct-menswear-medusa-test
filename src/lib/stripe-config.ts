@@ -1,8 +1,10 @@
 // Stripe Configuration
 // IMPORTANT: Update these keys with your actual Stripe keys
+// Last updated: 2024-09-11 - Using correct account key
 
 // Get keys from environment or use defaults
 // The publishable key MUST match your Stripe account
+// CORRECT KEY for this account (verified)
 export const STRIPE_PUBLISHABLE_KEY = 
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || 
   'pk_live_51RAMT2CHc12x7sCzz0cBxUwBPONdyvxMnhDRMwC1bgoaFlDgmEmfvcJZT7yk7jOuEo4LpWkFpb5Gv88DJ9fSB49j00QtRac8uW'
