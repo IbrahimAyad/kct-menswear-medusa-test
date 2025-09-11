@@ -11,6 +11,7 @@ import { Card } from '@/components/ui/card'
 import { AlertCircle, CreditCard, Loader2 } from 'lucide-react'
 import { ManualPaymentForm } from './manual-payment'
 import { StripeCheckout } from './stripe-checkout'
+import { SimpleStripeForm } from './simple-stripe-form'
 
 // Initialize Stripe
 const stripePromise = typeof window !== 'undefined' 
@@ -578,9 +579,26 @@ export default function StripeCheckoutPage() {
                   <span className="w-full border-t" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-white px-2 text-gray-500">Or use test payment</span>
+                  <span className="bg-white px-2 text-gray-500">Alternative payment options</span>
                 </div>
               </div>
+              
+              <details className="group mb-4">
+                <summary className="cursor-pointer text-sm text-blue-600 hover:text-blue-700 font-medium">
+                  💳 Use Simple Card Form (if Payment Element fails)
+                </summary>
+                <div className="mt-4">
+                  <SimpleStripeForm 
+                    amount={total * 100}
+                    cartId={cart.id}
+                    email={shippingInfo.email}
+                    onSuccess={() => {
+                      localStorage.removeItem('medusa_cart_id')
+                      router.push('/checkout/success')
+                    }}
+                  />
+                </div>
+              </details>
               
               <details className="group">
                 <summary className="cursor-pointer text-sm text-gray-600 hover:text-gray-900">

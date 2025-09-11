@@ -7,7 +7,20 @@ import { Button } from '@/components/ui/button'
 import { AlertCircle, CreditCard, Loader2 } from 'lucide-react'
 
 // Use the correct Stripe publishable key
-const stripePromise = loadStripe('pk_live_51RAMT2CHc12x7sCzv9MxCfz8HBj76Js5MiRCa0F0o3xVOJJ0LS7pRNhDxIJZf5mQQBW6vD5h3cQzI0B5vhLSl6Y200YY9iXR7h')
+const STRIPE_PK = 'pk_live_51RAMT2CHc12x7sCzv9MxCfz8HBj76Js5MiRCa0F0o3xVOJJ0LS7pRNhDxIJZf5mQQBW6vD5h3cQzI0B5vhLSl6Y200YY9iXR7h'
+
+console.log('Loading Stripe with publishable key:', STRIPE_PK.substring(0, 20) + '...')
+
+const stripePromise = loadStripe(STRIPE_PK).then(stripe => {
+  console.log('Stripe loaded:', !!stripe)
+  if (!stripe) {
+    console.error('Failed to load Stripe')
+  }
+  return stripe
+}).catch(error => {
+  console.error('Error loading Stripe:', error)
+  return null
+})
 
 interface StripeCheckoutProps {
   amount: number
@@ -108,8 +121,11 @@ export function StripeCheckout({ amount, cartId, email, onSuccess }: StripeCheck
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [debugInfo, setDebugInfo] = useState<any>(null)
 
   useEffect(() => {
+    console.log('Creating payment intent for:', { amount, cartId, email })
+    
     // Create payment intent using our API route
     fetch('/api/checkout/stripe-payment', {
       method: 'POST',
@@ -122,11 +138,27 @@ export function StripeCheckout({ amount, cartId, email, onSuccess }: StripeCheck
         email,
       }),
     })
-      .then(res => res.json())
+      .then(res => {
+        console.log('API Response status:', res.status)
+        return res.json()
+      })
       .then(data => {
+        console.log('API Response data:', data)
+        
         if (data.error) {
+          console.error('API Error:', data.error)
+          console.error('Debug info:', data.debug)
+          setDebugInfo(data.debug)
           throw new Error(data.error)
         }
+        
+        if (!data.clientSecret) {
+          console.error('No client secret received')
+          throw new Error('No client secret received from server')
+        }
+        
+        console.log('Client secret received:', data.clientSecret.substring(0, 20) + '...')
+        console.log('Debug info:', data.debug)
         setClientSecret(data.clientSecret)
       })
       .catch(err => {
@@ -152,6 +184,12 @@ export function StripeCheckout({ amount, cartId, email, onSuccess }: StripeCheck
       <div className="p-4 bg-red-50 text-red-700 rounded-lg">
         <p className="font-medium">Payment initialization failed</p>
         <p className="text-sm mt-1">{error}</p>
+        {debugInfo && (
+          <div className="mt-2 p-2 bg-gray-100 rounded text-xs text-gray-700">
+            <p>Debug Info:</p>
+            <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
+          </div>
+        )}
         <Button 
           onClick={() => window.location.reload()} 
           className="mt-4"
@@ -167,10 +205,13 @@ export function StripeCheckout({ amount, cartId, email, onSuccess }: StripeCheck
     return (
       <div className="p-4 bg-yellow-50 text-yellow-700 rounded-lg">
         <p>Unable to initialize payment. Please try again.</p>
+        <p className="text-xs mt-2">If this persists, check browser console for errors.</p>
       </div>
     )
   }
 
+  console.log('Rendering Elements with client secret:', clientSecret.substring(0, 20) + '...')
+  
   return (
     <Elements 
       stripe={stripePromise} 
@@ -182,6 +223,7 @@ export function StripeCheckout({ amount, cartId, email, onSuccess }: StripeCheck
             colorPrimary: '#000000',
           },
         },
+        loader: 'auto',
       }}
     >
       <PaymentForm 

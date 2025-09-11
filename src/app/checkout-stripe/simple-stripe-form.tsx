@@ -1,0 +1,256 @@
+'use client'
+
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { AlertCircle, CreditCard, Loader2, CheckCircle } from 'lucide-react'
+import { loadStripe } from '@stripe/stripe-js'
+
+interface SimpleStripeFormProps {
+  amount: number
+  cartId: string
+  email?: string
+  onSuccess: () => void
+}
+
+export function SimpleStripeForm({ amount, cartId, email, onSuccess }: SimpleStripeFormProps) {
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
+  const [cardNumber, setCardNumber] = useState('')
+  const [expiry, setExpiry] = useState('')
+  const [cvc, setCvc] = useState('')
+  const [name, setName] = useState('')
+  const [postalCode, setPostalCode] = useState('')
+
+  const formatCardNumber = (value: string) => {
+    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '')
+    const matches = v.match(/\d{4,16}/g)
+    const match = (matches && matches[0]) || ''
+    const parts = []
+
+    for (let i = 0, len = match.length; i < len; i += 4) {
+      parts.push(match.substring(i, i + 4))
+    }
+
+    if (parts.length) {
+      return parts.join(' ')
+    } else {
+      return value
+    }
+  }
+
+  const formatExpiry = (value: string) => {
+    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '')
+    if (v.length >= 2) {
+      return v.slice(0, 2) + '/' + v.slice(2, 4)
+    }
+    return v
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+
+    try {
+      // First, create payment intent
+      console.log('Creating payment intent...')
+      const response = await fetch('/api/checkout/stripe-payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount,
+          cartId,
+          email: email || 'customer@example.com',
+        }),
+      })
+
+      const data = await response.json()
+      
+      if (!response.ok || data.error) {
+        throw new Error(data.error || 'Failed to create payment intent')
+      }
+
+      console.log('Payment intent created:', data.paymentIntentId)
+      console.log('Client secret:', data.clientSecret?.substring(0, 20) + '...')
+
+      // Load Stripe
+      const stripe = await loadStripe('pk_live_51RAMT2CHc12x7sCzv9MxCfz8HBj76Js5MiRCa0F0o3xVOJJ0LS7pRNhDxIJZf5mQQBW6vD5h3cQzI0B5vhLSl6Y200YY9iXR7h')
+      
+      if (!stripe) {
+        throw new Error('Failed to load Stripe')
+      }
+
+      // Parse expiry
+      const [expMonth, expYear] = expiry.split('/')
+      
+      // Confirm card payment
+      console.log('Confirming card payment...')
+      const result = await stripe.confirmCardPayment(data.clientSecret, {
+        payment_method: {
+          card: {
+            number: cardNumber.replace(/\s/g, ''),
+            exp_month: parseInt(expMonth),
+            exp_year: parseInt('20' + expYear),
+            cvc: cvc,
+          },
+          billing_details: {
+            name: name || 'Customer',
+            email: email || 'customer@example.com',
+            address: {
+              postal_code: postalCode || '10001',
+            },
+          },
+        },
+      })
+
+      if (result.error) {
+        console.error('Payment confirmation error:', result.error)
+        throw new Error(result.error.message || 'Payment failed')
+      }
+
+      if (result.paymentIntent?.status === 'succeeded') {
+        console.log('Payment succeeded!')
+        setSuccess(true)
+        setTimeout(() => {
+          onSuccess()
+        }, 2000)
+      } else {
+        throw new Error('Payment was not successful')
+      }
+    } catch (err: any) {
+      console.error('Payment error:', err)
+      setError(err.message || 'Payment failed. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (success) {
+    return (
+      <div className="p-6 bg-green-50 text-green-700 rounded-lg text-center">
+        <CheckCircle className="h-12 w-12 mx-auto mb-3" />
+        <p className="font-medium text-lg">Payment Successful!</p>
+        <p className="text-sm mt-1">Redirecting to confirmation...</p>
+      </div>
+    )
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="p-4 bg-blue-50 text-blue-700 rounded-lg">
+        <p className="text-sm font-medium">Simple Card Payment</p>
+        <p className="text-xs mt-1">Direct card processing without Payment Element</p>
+      </div>
+
+      <div>
+        <Label htmlFor="card-number">Card Number</Label>
+        <Input
+          id="card-number"
+          type="text"
+          placeholder="4242 4242 4242 4242"
+          value={cardNumber}
+          onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
+          maxLength={19}
+          required
+          disabled={loading}
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="expiry">Expiry Date</Label>
+          <Input
+            id="expiry"
+            type="text"
+            placeholder="MM/YY"
+            value={expiry}
+            onChange={(e) => setExpiry(formatExpiry(e.target.value))}
+            maxLength={5}
+            required
+            disabled={loading}
+          />
+        </div>
+        <div>
+          <Label htmlFor="cvc">CVC</Label>
+          <Input
+            id="cvc"
+            type="text"
+            placeholder="123"
+            value={cvc}
+            onChange={(e) => setCvc(e.target.value.replace(/\D/g, ''))}
+            maxLength={4}
+            required
+            disabled={loading}
+          />
+        </div>
+      </div>
+
+      <div>
+        <Label htmlFor="name">Cardholder Name</Label>
+        <Input
+          id="name"
+          type="text"
+          placeholder="John Doe"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+          disabled={loading}
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="postal">ZIP / Postal Code</Label>
+        <Input
+          id="postal"
+          type="text"
+          placeholder="10001"
+          value={postalCode}
+          onChange={(e) => setPostalCode(e.target.value)}
+          required
+          disabled={loading}
+        />
+      </div>
+
+      {error && (
+        <div className="p-3 bg-red-50 text-red-700 rounded-lg flex items-start gap-2">
+          <AlertCircle className="h-5 w-5 mt-0.5" />
+          <p className="text-sm">{error}</p>
+        </div>
+      )}
+
+      <div className="pt-2">
+        <div className="text-center text-sm text-gray-600 mb-3">
+          Total: ${(amount / 100).toFixed(2)}
+        </div>
+        
+        <Button
+          type="submit"
+          disabled={loading}
+          className="w-full"
+          size="lg"
+        >
+          {loading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Processing...
+            </>
+          ) : (
+            <>
+              <CreditCard className="mr-2 h-4 w-4" />
+              Pay ${(amount / 100).toFixed(2)}
+            </>
+          )}
+        </Button>
+      </div>
+
+      <div className="text-xs text-gray-500 text-center">
+        Test card: 4242 4242 4242 4242, 12/34, 123, 12345
+      </div>
+    </form>
+  )
+}
