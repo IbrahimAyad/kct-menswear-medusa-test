@@ -24,7 +24,7 @@ import {
   AlertCircle
 } from 'lucide-react'
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+const stripePromise = loadStripe('pk_live_51RAMT2CHc12x7sCzv9MxCfz8HBj76Js5MiRCa0F0o3xVOJJ0LS7pRNhDxIJZf5mQQBW6vD5h3cQzI0B5vhLSl6Y200YY9iXR7h')
 
 type CheckoutStep = 'cart' | 'shipping' | 'billing' | 'delivery' | 'payment' | 'confirmation'
 
@@ -217,11 +217,11 @@ export default function ProfessionalCheckout() {
       await addShippingMethod('so_01K3S6BKMKFTYS3ASAC3HBCSD5')
       
       // Initialize payment
-      const paymentCollection = await fetch(`${process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL}/store/payment-collections`, {
+      const paymentCollection = await fetch(`https://backend-production-7441.up.railway.app/store/payment-collections`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || ''
+          'x-publishable-api-key': 'pk_4c24b336db3f8819867bec16f4b51db9654e557abbcfbbe003f7ffd8463c3c81'
         },
         body: JSON.stringify({
           cart_id: medusaCart.id
@@ -236,11 +236,11 @@ export default function ProfessionalCheckout() {
       const collectionId = collection.payment_collection?.id || collection.id
 
       // Create payment session
-      const sessionResponse = await fetch(`${process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL}/store/payment-collections/${collectionId}/payment-sessions`, {
+      const sessionResponse = await fetch(`https://backend-production-7441.up.railway.app/store/payment-collections/${collectionId}/payment-sessions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || ''
+          'x-publishable-api-key': 'pk_4c24b336db3f8819867bec16f4b51db9654e557abbcfbbe003f7ffd8463c3c81'
         },
         body: JSON.stringify({
           provider_id: 'stripe'
@@ -799,18 +799,32 @@ function PaymentForm({ cartId, onSuccess }: { cartId: string; onSuccess: (order:
   const elements = useElements()
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isReady, setIsReady] = useState(false)
+
+  useEffect(() => {
+    if (stripe && elements) {
+      setIsReady(true)
+    }
+  }, [stripe, elements])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!stripe || !elements) return
+    if (!stripe || !elements) {
+      setError('Payment system not ready. Please wait a moment.')
+      return
+    }
 
     setIsProcessing(true)
     setError(null)
 
     try {
+      // First check if PaymentElement is mounted
       const { error: submitError } = await elements.submit()
       if (submitError) {
+        if (submitError.type === 'validation_error') {
+          throw new Error('Please fill in all payment details')
+        }
         throw submitError
       }
 
@@ -855,10 +869,10 @@ function PaymentForm({ cartId, onSuccess }: { cartId: string; onSuccess: (order:
       
       <button
         type="submit"
-        disabled={!stripe || isProcessing}
+        disabled={!isReady || isProcessing}
         className="w-full mt-6 bg-black text-white py-3 rounded-lg hover:bg-gray-800 disabled:bg-gray-400"
       >
-        {isProcessing ? 'Processing...' : 'Complete Order'}
+        {!isReady ? 'Loading payment...' : isProcessing ? 'Processing...' : 'Complete Order'}
       </button>
     </form>
   )
