@@ -37,6 +37,7 @@ function CheckoutForm({ clientSecret, cartId }: { clientSecret: string, cartId: 
     event.preventDefault()
 
     if (!stripe || !elements) {
+      setError('Payment system not ready. Please wait a moment and try again.')
       return
     }
 
@@ -44,6 +45,12 @@ function CheckoutForm({ clientSecret, cartId }: { clientSecret: string, cartId: 
     setError(null)
 
     try {
+      // First, check if the PaymentElement is actually mounted
+      const { error: submitError } = await elements.submit()
+      if (submitError) {
+        throw new Error(submitError.message || 'Please fill in your payment details')
+      }
+      
       // NOTE: This will use whatever capture_method is set on the PaymentIntent
       // If backend sets capture_method: 'manual', payment will be authorized but not captured
       // If backend sets capture_method: 'automatic', payment will be captured immediately
@@ -66,7 +73,18 @@ function CheckoutForm({ clientSecret, cartId }: { clientSecret: string, cartId: 
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <PaymentElement />
+      <div className="min-h-[200px]">
+        <PaymentElement 
+          options={{
+            layout: 'tabs',
+            defaultValues: {
+              billingDetails: {
+                email: '',
+              }
+            }
+          }}
+        />
+      </div>
       
       {error && (
         <div className="p-4 bg-red-50 text-red-700 rounded-lg flex items-start gap-2">
@@ -77,11 +95,16 @@ function CheckoutForm({ clientSecret, cartId }: { clientSecret: string, cartId: 
 
       <Button
         type="submit"
-        disabled={!stripe || processing}
+        disabled={!stripe || !elements || processing}
         className="w-full"
         size="lg"
       >
-        {processing ? (
+        {!stripe || !elements ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Loading payment...
+          </>
+        ) : processing ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             Processing...
