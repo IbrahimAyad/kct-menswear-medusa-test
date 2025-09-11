@@ -11,7 +11,7 @@ function getHeaders() {
   return {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-    'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || ''
+    'x-publishable-api-key': 'pk_4c24b336db3f8819867bec16f4b51db9654e557abbcfbbe003f7ffd8463c3c81'
   }
 }
 
