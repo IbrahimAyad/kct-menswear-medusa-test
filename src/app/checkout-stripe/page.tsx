@@ -135,8 +135,20 @@ export default function StripeCheckoutPage() {
       hasClientSecret: !!clientSecret,
       hasStripePromise: !!stripePromise,
       clientSecretLength: clientSecret?.length,
+      clientSecretPreview: clientSecret?.substring(0, 30),
+      stripePromiseValue: stripePromise,
       error
     })
+    
+    // Also log to page for visibility
+    if (typeof window !== 'undefined') {
+      (window as any).__CHECKOUT_DEBUG = {
+        step,
+        clientSecret: !!clientSecret,
+        stripePromise: !!stripePromise,
+        timestamp: new Date().toISOString()
+      }
+    }
   }, [step, clientSecret, error])
   
   const [shippingInfo, setShippingInfo] = useState({
@@ -547,10 +559,71 @@ export default function StripeCheckoutPage() {
               </div>
             )}
             
-            {clientSecret && stripePromise && (
-              <Elements stripe={stripePromise} options={{ clientSecret }}>
+            {clientSecret && stripePromise ? (
+              <Elements 
+                stripe={stripePromise} 
+                options={{ 
+                  clientSecret,
+                  appearance: {
+                    theme: 'stripe',
+                    variables: {
+                      colorPrimary: '#000000',
+                    }
+                  },
+                  loader: 'auto'
+                }}
+              >
                 <CheckoutForm clientSecret={clientSecret} cartId={cart.id} />
               </Elements>
+            ) : (
+              <div className="space-y-4">
+                {!clientSecret && !stripePromise && (
+                  <div className="p-4 bg-red-50 text-red-700 rounded-lg">
+                    <p className="font-medium">Payment system initialization failed</p>
+                    <p className="text-sm mt-1">Both Stripe and payment session are missing.</p>
+                  </div>
+                )}
+                
+                {/* Fallback: Manual card input form */}
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-600 mb-3">
+                    If the payment form doesn't load, you can enter your card details manually:
+                  </p>
+                  <div className="space-y-3">
+                    <input 
+                      type="text" 
+                      placeholder="Card number" 
+                      className="w-full px-3 py-2 border rounded-lg"
+                      disabled
+                    />
+                    <div className="grid grid-cols-2 gap-3">
+                      <input 
+                        type="text" 
+                        placeholder="MM/YY" 
+                        className="px-3 py-2 border rounded-lg"
+                        disabled
+                      />
+                      <input 
+                        type="text" 
+                        placeholder="CVC" 
+                        className="px-3 py-2 border rounded-lg"
+                        disabled
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-red-600 mt-2">
+                    Payment form is currently unavailable. Please refresh the page or contact support.
+                  </p>
+                </div>
+                
+                <Button
+                  onClick={() => window.location.reload()}
+                  className="w-full"
+                  variant="outline"
+                >
+                  Refresh Page
+                </Button>
+              </div>
             )}
           </Card>
         )}
