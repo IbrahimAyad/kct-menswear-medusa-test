@@ -11,7 +11,13 @@ const STRIPE_PK = 'pk_live_51RAMT2CHc12x7sCzv9MxCfz8HBj76Js5MiRCa0F0o3xVOJJ0LS7p
 
 console.log('Loading Stripe with publishable key:', STRIPE_PK.substring(0, 20) + '...')
 
-const stripePromise = loadStripe(STRIPE_PK).then(stripe => {
+// Load Stripe with explicit configuration
+const stripePromise = loadStripe(STRIPE_PK, {
+  // Ensure we're not loading any beta features
+  betas: [],
+  // Set locale explicitly
+  locale: 'en'
+}).then(stripe => {
   console.log('Stripe loaded:', !!stripe)
   if (!stripe) {
     console.error('Failed to load Stripe')
@@ -126,8 +132,8 @@ export function StripeCheckout({ amount, cartId, email, onSuccess }: StripeCheck
   useEffect(() => {
     console.log('Creating payment intent for:', { amount, cartId, email })
     
-    // Create payment intent using our API route
-    fetch('/api/checkout/stripe-payment', {
+    // Create payment intent using our CLEAN API route (no Amazon Pay params)
+    fetch('/api/checkout/stripe-clean', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

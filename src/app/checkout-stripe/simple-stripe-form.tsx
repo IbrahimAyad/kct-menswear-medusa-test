@@ -55,9 +55,9 @@ export function SimpleStripeForm({ amount, cartId, email, onSuccess }: SimpleStr
     setError(null)
 
     try {
-      // First, create payment intent
+      // First, create payment intent using CLEAN API
       console.log('Creating payment intent...')
-      const response = await fetch('/api/checkout/stripe-payment', {
+      const response = await fetch('/api/checkout/stripe-clean', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
