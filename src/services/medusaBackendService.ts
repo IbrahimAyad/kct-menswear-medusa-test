@@ -564,15 +564,16 @@ export async function addShippingMethod(cartId: string, shippingMethod: string =
         shipping_method: selectedOption.name,
         amount: selectedOption.amount || 0
       }
-    } catch (shippingError) {
-      console.log('Shipping method error, but continuing:', shippingError)
-      // Don't fail checkout, just use FREE shipping as default
-      return { 
-        success: true, 
-        message: 'Using default FREE shipping',
-        shipping_method: 'FREE Shipping',
-        amount: 0
-      }
+    } catch (shippingError: any) {
+      console.error('CRITICAL: Failed to add shipping method:', shippingError)
+      
+      // DO NOT return success when shipping fails!
+      // This was causing "No shipping method selected" errors at checkout completion
+      throw new Error(
+        shippingError.response?.data?.message || 
+        shippingError.message || 
+        'Failed to add shipping method. Please refresh and try again.'
+      )
     }
   } catch (error) {
     console.error('Error adding shipping method:', error)

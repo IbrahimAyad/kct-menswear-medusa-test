@@ -145,13 +145,26 @@ export default function StripeCheckoutPage() {
 
       // Step 2: Add shipping method (CRITICAL - must succeed for checkout)
       console.log('Adding shipping method...')
-      const shippingResult = await addShippingMethod(cart.id, 'Free Shipping', 0)
-      
-      if (!shippingResult?.success) {
-        throw new Error('Failed to add shipping method. The checkout cannot proceed without shipping. Please refresh and try again.')
+      try {
+        const shippingResult = await addShippingMethod(cart.id, 'Free Shipping', 0)
+        
+        if (!shippingResult?.success) {
+          throw new Error('Failed to add shipping method. The checkout cannot proceed without shipping. Please refresh and try again.')
+        }
+        
+        console.log('Shipping method added successfully:', shippingResult)
+      } catch (shippingError: any) {
+        console.error('Shipping method failed:', shippingError)
+        
+        // Clear the cart if shipping fails to prevent stuck state
+        localStorage.removeItem('medusa_cart_id')
+        localStorage.removeItem('cart_id')
+        
+        throw new Error(
+          shippingError.message || 
+          'Unable to add shipping method. Please refresh the page and try again.'
+        )
       }
-      
-      console.log('Shipping method added:', shippingResult)
 
       // Step 3: Create payment collection
       console.log('Creating payment collection...')
