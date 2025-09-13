@@ -13,7 +13,7 @@ export const medusa = new Medusa({
 
 // Configuration constants - all values from environment variables
 export const MEDUSA_CONFIG = {
-  regionId: process.env.NEXT_PUBLIC_MEDUSA_REGION_ID || "",
+  regionId: process.env.NEXT_PUBLIC_MEDUSA_REGION_ID || process.env.NEXT_PUBLIC_REGION_ID || "reg_01K3S6NDGAC1DSWH9MCZCWBWWD",
   regionIdEU: process.env.NEXT_PUBLIC_MEDUSA_REGION_ID_EU || "",
   salesChannelId: process.env.NEXT_PUBLIC_SALES_CHANNEL_ID || "",
   currency: "usd",

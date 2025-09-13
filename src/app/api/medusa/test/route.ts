@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { medusa } from '@/lib/medusa/client'
+import { medusa, MEDUSA_CONFIG } from '@/lib/medusa/client'
 
 export async function GET() {
   try {
@@ -52,7 +52,7 @@ export async function GET() {
 
     // 3. Test payment providers
     try {
-      const providersResponse = await fetch(`${process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL}/store/payment-providers`, {
+      const providersResponse = await fetch(`${process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL}/store/payment-providers?region_id=${MEDUSA_CONFIG.regionId}`, {
         headers: {
           'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || ''
         }
