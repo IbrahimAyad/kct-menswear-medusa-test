@@ -155,6 +155,18 @@ export function StripeCheckout({ amount, cartId, email, onSuccess }: StripeCheck
     // Create payment session directly with Medusa backend
     const initializePayment = async () => {
       try {
+        // Get cart data first to extract region_id
+        console.log('Fetching cart data for region_id...')
+        const { cart } = await medusa.store.cart.retrieve(cartId)
+        
+        if (!cart) {
+          throw new Error('Cart not found')
+        }
+        
+        if (!cart.region_id) {
+          throw new Error('Cart is missing region_id')
+        }
+        
         // First, get available payment providers to ensure Stripe is enabled
         const providers = await medusa.store.payment.listPaymentProviders()
         const stripeProvider = providers.find((p: any) => p.id === 'stripe' && p.is_enabled)
@@ -163,12 +175,16 @@ export function StripeCheckout({ amount, cartId, email, onSuccess }: StripeCheck
           throw new Error('Stripe payment provider is not available')
         }
         
-        setDebugInfo({ providers: providers.map((p: any) => ({ id: p.id, enabled: p.is_enabled })) })
+        setDebugInfo({ providers: providers.map((p: any) => ({ id: p.id, enabled: p.is_enabled })), region_id: cart.region_id })
         
-        // Initialize payment session with Stripe
+        // Initialize payment session with Stripe, including region_id
+        console.log('Creating payment session with region_id:', cart.region_id)
         const paymentCollection = await medusa.store.payment.initiatePaymentSession(
           cartId,
-          { provider_id: 'stripe' }
+          { 
+            provider_id: 'stripe',
+            region_id: cart.region_id
+          }
         )
         
         // Extract client secret from the Stripe session

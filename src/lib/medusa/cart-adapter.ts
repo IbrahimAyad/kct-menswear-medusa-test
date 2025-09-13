@@ -414,11 +414,21 @@ export class CartAdapter {
     }
 
     try {
-      // Initialize payment session with specified provider
+      // Ensure we have the cart data with region_id
+      if (!this.medusaCart?.region_id) {
+        // Refresh cart data if region_id is missing
+        await this.initialize()
+        if (!this.medusaCart?.region_id) {
+          throw new Error('Cart is missing region_id')
+        }
+      }
+      
+      // Initialize payment session with specified provider and region_id
       const paymentCollection = await medusa.store.payment.initiatePaymentSession(
         this.medusaCartId,
         {
           provider_id: providerId,
+          region_id: this.medusaCart.region_id,
         }
       )
 
