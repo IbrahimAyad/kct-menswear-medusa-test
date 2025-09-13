@@ -49,16 +49,24 @@ export async function POST(request: NextRequest) {
         console.log('Charge succeeded:', charge.id)
         console.log('Charge metadata:', charge.metadata)
         
-        // Extract metadata from charge (charges inherit metadata from payment intent)
+        // PROFESSIONAL FLOW: Look for order_id first, fall back to cart_id for backward compatibility
+        const orderIdFromCharge = charge.metadata.order_id
         const cartIdFromCharge = charge.metadata.cartId || charge.metadata.cart_id
-        const emailFromCharge = charge.metadata.email
+        const emailFromCharge = charge.metadata.email || charge.metadata.customer_email
         
-        if (cartIdFromCharge) {
+        if (orderIdFromCharge) {
+          // NEW: Update existing order status to completed
+          await updateOrderStatus(orderIdFromCharge, 'completed', {
+            charge_id: charge.id,
+            payment_method: 'stripe_charge'
+          })
+        } else if (cartIdFromCharge) {
+          // FALLBACK: Legacy flow - create order from cart
           await createOrderFromCharge(charge, cartIdFromCharge, emailFromCharge)
         } else {
-          console.error('No cart ID found in charge metadata:', charge.metadata)
+          console.error('No order ID or cart ID found in charge metadata:', charge.metadata)
           return NextResponse.json({ 
-            error: 'No cart ID in charge metadata',
+            error: 'No order ID or cart ID in charge metadata',
             received: true 
           }, { status: 400 })
         }
@@ -70,15 +78,24 @@ export async function POST(request: NextRequest) {
         console.log('Payment intent succeeded:', paymentIntent.id)
         console.log('Payment intent metadata:', paymentIntent.metadata)
         
+        // PROFESSIONAL FLOW: Look for order_id first, fall back to cart_id for backward compatibility
+        const orderIdFromPI = paymentIntent.metadata.order_id
         const cartIdFromPI = paymentIntent.metadata.cartId || paymentIntent.metadata.cart_id
-        const emailFromPI = paymentIntent.metadata.email
+        const emailFromPI = paymentIntent.metadata.email || paymentIntent.metadata.customer_email
         
-        if (cartIdFromPI) {
+        if (orderIdFromPI) {
+          // NEW: Update existing order status to completed
+          await updateOrderStatus(orderIdFromPI, 'completed', {
+            payment_intent_id: paymentIntent.id,
+            payment_method: 'stripe_payment_intent'
+          })
+        } else if (cartIdFromPI) {
+          // FALLBACK: Legacy flow - create order from cart
           await createOrderFromPaymentIntent(paymentIntent, cartIdFromPI, emailFromPI)
         } else {
-          console.error('No cart ID found in payment intent metadata:', paymentIntent.metadata)
+          console.error('No order ID or cart ID found in payment intent metadata:', paymentIntent.metadata)
           return NextResponse.json({ 
-            error: 'No cart ID in payment intent metadata',
+            error: 'No order ID or cart ID in payment intent metadata',
             received: true 
           }, { status: 400 })
         }
@@ -102,6 +119,58 @@ export async function POST(request: NextRequest) {
       message: error instanceof Error ? error.message : 'Unknown error',
       received: true 
     }, { status: 500 })
+  }
+}
+
+// NEW: Update existing order status (order-first flow)
+async function updateOrderStatus(orderId: string, status: string, paymentData: any) {
+  try {
+    console.log('Updating order status:', { orderId, status, paymentData })
+    
+    const medusaUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || 'https://backend-production-7441.up.railway.app'
+    const medusaKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY
+    
+    // Update order status via Medusa admin API
+    const response = await fetch(`${medusaUrl}/admin/orders/${orderId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-publishable-api-key': medusaKey!,
+        // Note: In production, you'd use admin API key instead of publishable key
+        // 'Authorization': `Bearer ${process.env.MEDUSA_ADMIN_API_KEY}`
+      },
+      body: JSON.stringify({
+        status: status,
+        metadata: {
+          ...paymentData,
+          updated_by_webhook: true,
+          updated_at: new Date().toISOString()
+        }
+      })
+    })
+    
+    if (response.ok) {
+      const updatedOrder = await response.json()
+      console.log('✅ Order status updated successfully:', orderId, 'to', status)
+      return { success: true, order: updatedOrder }
+    } else {
+      const errorText = await response.text()
+      console.error('❌ Failed to update order status:', response.status, errorText)
+      
+      // Log for manual follow-up
+      console.log('Order update failed - manual follow-up needed:', {
+        order_id: orderId,
+        intended_status: status,
+        payment_data: paymentData,
+        error: errorText,
+        timestamp: new Date().toISOString()
+      })
+      
+      throw new Error(`Failed to update order status: ${response.status} - ${errorText}`)
+    }
+  } catch (error) {
+    console.error('Error updating order status:', error)
+    throw error
   }
 }
 

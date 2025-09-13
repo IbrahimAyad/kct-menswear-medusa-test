@@ -305,11 +305,10 @@ export function CheckoutForm() {
   )
 }
 
-// Payment form with Stripe
+// Payment form with Stripe - Order-First Flow
 function PaymentForm({ cart, onSuccess, onBack }: any) {
   const stripe = useStripe()
   const elements = useElements()
-  const { setPaymentSession, completeCart } = useMedusaCart()
   const [processing, setProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -322,37 +321,50 @@ function PaymentForm({ cart, onSuccess, onBack }: any) {
     setError(null)
 
     try {
-      // Set Stripe as payment provider
-      await setPaymentSession('pp_stripe_stripe')
-
-      // Complete the cart to create an order
-      const result = await completeCart()
-
-      if (result.type === 'order') {
-        // Order created successfully
-        onSuccess(result.data)
-      } else if (result.type === 'cart' && result.data.payment_session) {
-        // Need to confirm payment with Stripe
-        const clientSecret = result.data.payment_session.data.client_secret
-
-        const paymentResult = await stripe.confirmCardPayment(clientSecret, {
-          payment_method: {
-            card: elements.getElement(CardElement)!,
-          },
+      // STEP 1: Create order FIRST (before payment)
+      console.log('Step 1: Creating order before payment...')
+      const createOrderResponse = await fetch('/api/checkout/create-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          cart_id: cart.id
         })
+      })
 
-        if (paymentResult.error) {
-          setError(paymentResult.error.message || 'Payment failed')
-        } else {
-          // Payment successful, complete the cart again
-          const finalResult = await completeCart()
-          if (finalResult.type === 'order') {
-            onSuccess(finalResult.data)
-          }
-        }
+      if (!createOrderResponse.ok) {
+        const errorData = await createOrderResponse.json()
+        throw new Error(errorData.error || 'Failed to create order')
+      }
+
+      const orderData = await createOrderResponse.json()
+      console.log('✅ Order created successfully:', orderData.order_id)
+
+      // STEP 2: Process payment using the order's client_secret
+      console.log('Step 2: Processing payment...')
+      const paymentResult = await stripe.confirmCardPayment(orderData.client_secret, {
+        payment_method: {
+          card: elements.getElement(CardElement)!,
+        },
+      })
+
+      if (paymentResult.error) {
+        console.error('❌ Payment failed:', paymentResult.error.message)
+        setError(paymentResult.error.message || 'Payment failed')
+      } else {
+        console.log('✅ Payment successful!')
+        
+        // STEP 3: Payment successful - webhook will update order to completed
+        // Order already exists, just needs status update via webhook
+        onSuccess({
+          id: orderData.order_id,
+          payment_intent_id: paymentResult.paymentIntent.id,
+          status: 'paid'
+        })
       }
     } catch (error: any) {
-      console.error('Payment failed:', error)
+      console.error('Payment processing failed:', error)
       setError(error.message || 'Payment processing failed')
     } finally {
       setProcessing(false)
@@ -419,11 +431,25 @@ function OrderConfirmation({ order, email }: any) {
         <Check className="w-8 h-8 text-green-600" />
       </div>
       <h2 className="text-3xl font-light mb-2">Order Confirmed!</h2>
-      <p className="text-gray-600 mb-4">Thank you for your purchase</p>
+      <p className="text-gray-600 mb-4">Your order has been created and payment processed successfully</p>
       
       <div className="bg-gray-50 rounded-lg p-6 mb-6 text-left max-w-md mx-auto">
         <p className="text-sm text-gray-600 mb-2">Order number</p>
-        <p className="font-mono text-sm mb-4">{order?.id || 'ORDER-XXXXX'}</p>
+        <p className="font-mono text-sm mb-4">{order?.id || 'Processing...'}</p>
+        
+        {order?.payment_intent_id && (
+          <>
+            <p className="text-sm text-gray-600 mb-2">Payment ID</p>
+            <p className="font-mono text-xs mb-4 text-gray-500">{order.payment_intent_id}</p>
+          </>
+        )}
+        
+        <p className="text-sm text-gray-600 mb-2">Status</p>
+        <p className="text-sm mb-4">
+          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+            {order?.status === 'paid' ? 'Payment Confirmed' : 'Processing'}
+          </span>
+        </p>
         
         <p className="text-sm text-gray-600 mb-2">Email</p>
         <p className="text-sm mb-4">{email}</p>
@@ -432,6 +458,13 @@ function OrderConfirmation({ order, email }: any) {
         <p className="text-sm flex items-center gap-2">
           <Truck className="w-4 h-4" />
           3-5 business days
+        </p>
+      </div>
+
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 max-w-md mx-auto">
+        <p className="text-sm text-blue-800">
+          <strong>Professional Order System:</strong> Your order was created before payment processing, 
+          ensuring it appears in our admin system immediately. You'll receive confirmation emails shortly.
         </p>
       </div>
       
