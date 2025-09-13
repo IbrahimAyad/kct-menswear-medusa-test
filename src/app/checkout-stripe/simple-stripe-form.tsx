@@ -80,7 +80,7 @@ export function SimpleStripeForm({ amount, cartId, email, onSuccess }: SimpleStr
       
       // Extract client secret from the Stripe session
       const stripeSession = paymentCollection.payment_sessions?.find(
-        (session: any) => session.provider_id === 'stripe'
+        (session: any) => session.provider_id === 'stripe' || session.provider_id === 'pp_stripe_stripe'
       )
       
       if (!stripeSession?.data?.client_secret) {

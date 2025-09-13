@@ -159,7 +159,9 @@ export function StripeCheckout({ amount, cartId, email, onSuccess }: StripeCheck
         const providers = await medusa.store.payment.listPaymentProviders({
           region_id: MEDUSA_CONFIG.regionId
         })
-        const stripeProvider = providers.payment_providers?.find((p: any) => p.id === 'stripe' && p.is_enabled)
+        const stripeProvider = providers.payment_providers?.find((p: any) => 
+          (p.id === 'stripe' || p.id === 'pp_stripe_stripe') && p.is_enabled
+        )
         
         if (!stripeProvider) {
           throw new Error('Stripe payment provider is not available')
