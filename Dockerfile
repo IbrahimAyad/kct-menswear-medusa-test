@@ -12,6 +12,10 @@ ENV NEXT_PUBLIC_SUPABASE_URL=https://placeholder.supabase.co
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=placeholder_key_for_build
 ENV NEXT_PUBLIC_SITE_URL=https://kct-menswear-medusa-test.vercel.app
 
+# Add dummy Stripe keys for build (will be overridden by Railway env vars at runtime)
+ENV STRIPE_SECRET_KEY=sk_test_dummy_key_for_build_only
+ENV STRIPE_WEBHOOK_SECRET=whsec_dummy_webhook_secret_for_build_only
+
 # Copy package files
 COPY package*.json ./
 
