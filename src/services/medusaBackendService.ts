@@ -67,7 +67,7 @@ export interface MedusaCart {
 export async function fetchMedusaProducts(customLimit?: number): Promise<MedusaProduct[]> {
   const limit = customLimit || 40 // Reduced from 200 for faster initial load
   const offset = 0
-  const US_REGION_ID = 'reg_01K3S6NDGAC1DSWH9MCZCWBWWD' // US region for proper pricing
+  const US_REGION_ID = process.env.NEXT_PUBLIC_MEDUSA_REGION_ID || process.env.NEXT_PUBLIC_REGION_ID || 'reg_01K3S6NDGAC1DSWH9MCZCWBWWD'
   
   // Check cache first
   const cached = medusaProductCache.get(limit, offset)
@@ -141,7 +141,7 @@ export async function fetchMedusaProductsPaginated(page: number = 1, pageSize: n
   totalPages: number
 }> {
   const offset = (page - 1) * pageSize
-  const US_REGION_ID = 'reg_01K3S6NDGAC1DSWH9MCZCWBWWD' // US region for proper pricing
+  const US_REGION_ID = process.env.NEXT_PUBLIC_MEDUSA_REGION_ID || process.env.NEXT_PUBLIC_REGION_ID || 'reg_01K3S6NDGAC1DSWH9MCZCWBWWD'
   
   // Check cache first
   const cached = medusaProductCache.get(pageSize, offset)
@@ -292,7 +292,7 @@ export async function createMedusaCart(email?: string): Promise<MedusaCart | nul
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({
-        region_id: 'reg_01K3S6NDGAC1DSWH9MCZCWBWWD',
+        region_id: process.env.NEXT_PUBLIC_MEDUSA_REGION_ID || process.env.NEXT_PUBLIC_REGION_ID || 'reg_01K3S6NDGAC1DSWH9MCZCWBWWD',
         email: email || undefined
       })
     })

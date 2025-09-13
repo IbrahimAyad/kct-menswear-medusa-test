@@ -10,4 +10,4 @@ const medusaClient = new Medusa({
 export default medusaClient
 
 // Export the region ID for consistency
-export const MEDUSA_REGION_ID = "reg_01K3S6NDGAC1DSWH9MCZCWBWWD" // US Region
+export const MEDUSA_REGION_ID = process.env.NEXT_PUBLIC_MEDUSA_REGION_ID || process.env.NEXT_PUBLIC_REGION_ID || "reg_01K3S6NDGAC1DSWH9MCZCWBWWD"

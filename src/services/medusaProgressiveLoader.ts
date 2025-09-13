@@ -72,7 +72,7 @@ export class MedusaProgressiveLoader {
       const params = new URLSearchParams({
         limit: this.batchSize.toString(),
         offset: '0',
-        region_id: 'reg_01K3S6NDGAC1DSWH9MCZCWBWWD', // Include region for proper pricing
+        region_id: process.env.NEXT_PUBLIC_MEDUSA_REGION_ID || process.env.NEXT_PUBLIC_REGION_ID || 'reg_01K3S6NDGAC1DSWH9MCZCWBWWD', // Include region for proper pricing
         fields: '*variants.calculated_price' // Request price data
       })
       
@@ -146,7 +146,7 @@ export class MedusaProgressiveLoader {
       const params = new URLSearchParams({
         limit: this.batchSize.toString(),
         offset: this.currentOffset.toString(),
-        region_id: 'reg_01K3S6NDGAC1DSWH9MCZCWBWWD', // Include region for proper pricing
+        region_id: process.env.NEXT_PUBLIC_MEDUSA_REGION_ID || process.env.NEXT_PUBLIC_REGION_ID || 'reg_01K3S6NDGAC1DSWH9MCZCWBWWD', // Include region for proper pricing
         fields: '*variants.calculated_price' // Request price data
       })
       
@@ -212,7 +212,7 @@ export class MedusaProgressiveLoader {
       const params = new URLSearchParams({
         limit: this.batchSize.toString(),
         offset: nextOffset.toString(),
-        region_id: 'reg_01K3S6NDGAC1DSWH9MCZCWBWWD', // Include region for proper pricing
+        region_id: process.env.NEXT_PUBLIC_MEDUSA_REGION_ID || process.env.NEXT_PUBLIC_REGION_ID || 'reg_01K3S6NDGAC1DSWH9MCZCWBWWD', // Include region for proper pricing
         fields: '*variants.calculated_price' // Request price data
       })
       
