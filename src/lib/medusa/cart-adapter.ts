@@ -415,10 +415,9 @@ export class CartAdapter {
 
     try {
       // Use environment variable for region_id instead of cart data
-      const regionId = process.env.NEXT_PUBLIC_REGION_ID || process.env.NEXT_PUBLIC_MEDUSA_REGION_ID
-      if (!regionId) {
-        throw new Error('Region ID not configured in environment')
-      }
+      const regionId = process.env.NEXT_PUBLIC_REGION_ID || 
+                       process.env.NEXT_PUBLIC_MEDUSA_REGION_ID || 
+                       'reg_01K3S6NDGAC1DSWH9MCZCWBWWD'
       
       // Initialize payment session with specified provider and region_id
       const paymentCollection = await medusa.store.payment.initiatePaymentSession(
@@ -454,10 +453,9 @@ export class CartAdapter {
   async getPaymentProviders() {
     try {
       // Use environment variable for region_id
-      const regionId = process.env.NEXT_PUBLIC_REGION_ID || process.env.NEXT_PUBLIC_MEDUSA_REGION_ID
-      if (!regionId) {
-        throw new Error('Region ID not configured in environment')
-      }
+      const regionId = process.env.NEXT_PUBLIC_REGION_ID || 
+                       process.env.NEXT_PUBLIC_MEDUSA_REGION_ID || 
+                       'reg_01K3S6NDGAC1DSWH9MCZCWBWWD'
 
       console.log('Getting payment providers for region:', regionId)
       

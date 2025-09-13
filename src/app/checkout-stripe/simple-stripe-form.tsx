@@ -58,10 +58,9 @@ export function SimpleStripeForm({ amount, cartId, email, onSuccess }: SimpleStr
 
     try {
       // Use environment variable for region_id instead of cart data
-      const regionId = process.env.NEXT_PUBLIC_REGION_ID || process.env.NEXT_PUBLIC_MEDUSA_REGION_ID
-      if (!regionId) {
-        throw new Error('Region ID not configured in environment')
-      }
+      const regionId = process.env.NEXT_PUBLIC_REGION_ID || 
+                       process.env.NEXT_PUBLIC_MEDUSA_REGION_ID || 
+                       'reg_01K3S6NDGAC1DSWH9MCZCWBWWD'
       
       // Create payment session directly with Medusa backend
       console.log('Creating payment session via Medusa with region_id:', regionId)

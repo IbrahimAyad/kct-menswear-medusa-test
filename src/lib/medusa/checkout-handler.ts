@@ -64,10 +64,9 @@ export class CheckoutHandler {
       }
 
       // Step 6: Initialize payment session with Stripe
-      const regionId = process.env.NEXT_PUBLIC_REGION_ID || process.env.NEXT_PUBLIC_MEDUSA_REGION_ID
-      if (!regionId) {
-        throw new Error('Region ID not configured in environment')
-      }
+      const regionId = process.env.NEXT_PUBLIC_REGION_ID || 
+                       process.env.NEXT_PUBLIC_MEDUSA_REGION_ID || 
+                       'reg_01K3S6NDGAC1DSWH9MCZCWBWWD'
       
       const paymentCollection = await medusa.store.payment.initiatePaymentSession(
         cart.id,

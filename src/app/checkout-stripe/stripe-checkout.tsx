@@ -156,10 +156,9 @@ export function StripeCheckout({ amount, cartId, email, onSuccess }: StripeCheck
     const initializePayment = async () => {
       try {
         // Use environment variable for region_id instead of cart data
-        const regionId = process.env.NEXT_PUBLIC_REGION_ID || process.env.NEXT_PUBLIC_MEDUSA_REGION_ID
-        if (!regionId) {
-          throw new Error('Region ID not configured in environment')
-        }
+        const regionId = process.env.NEXT_PUBLIC_REGION_ID || 
+                         process.env.NEXT_PUBLIC_MEDUSA_REGION_ID || 
+                         'reg_01K3S6NDGAC1DSWH9MCZCWBWWD'
         
         // First, get available payment providers to ensure Stripe is enabled
         const providers = await medusa.store.payment.listPaymentProviders()
