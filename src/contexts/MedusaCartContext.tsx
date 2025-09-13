@@ -161,10 +161,10 @@ export function MedusaCartProvider({ children }: { children: ReactNode }) {
       if (err.message === 'CART_PAYMENT_SESSION_ERROR') {
         console.log('Cart has stuck payment sessions. Creating new cart...')
         
-        // Clear the stuck cart
-        localStorage.removeItem('medusa_cart_id')
-        setCartId(null)
-        setCart(null)
+        // DISABLED: Cart deletion moved to after order confirmation
+        // localStorage.removeItem('medusa_cart_id')
+        // setCartId(null)
+        // setCart(null)
         
         // Try one more time with a fresh cart
         try {
@@ -260,9 +260,11 @@ export function MedusaCartProvider({ children }: { children: ReactNode }) {
   }
 
   const clearCart = () => {
-    setCart(null)
-    setCartId(null)
-    setError(null)
+    // DISABLED: Cart deletion moved to after order confirmation
+    // setCart(null)
+    // setCartId(null)
+    // setError(null)
+    console.log('clearCart() called but disabled to prevent webhook issues')
   }
 
   const refreshCart = async () => {

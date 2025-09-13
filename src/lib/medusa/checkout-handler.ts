@@ -97,14 +97,14 @@ export class CheckoutHandler {
       // Complete the cart which creates an order
       const result = await medusa.store.cart.complete(cartId)
       
-      // Clear local cart after successful order
-      const cartStore = (await import('@/lib/store/cartStore')).useCartStore.getState()
-      cartStore.clearCart()
+      // DISABLED: Cart deletion moved to after order confirmation
+      // const cartStore = (await import('@/lib/store/cartStore')).useCartStore.getState()
+      // cartStore.clearCart()
       
-      // Clear Medusa cart ID from storage
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('medusa_cart_id')
-      }
+      // DISABLED: Cart deletion moved to after order confirmation  
+      // if (typeof window !== 'undefined') {
+      //   localStorage.removeItem('medusa_cart_id')
+      // }
 
       return {
         success: true,

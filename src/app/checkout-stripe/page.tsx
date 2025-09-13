@@ -215,9 +215,9 @@ export default function StripeCheckoutPage() {
       } catch (shippingError: any) {
         console.error('Shipping method failed:', shippingError)
         
-        // Clear the cart if shipping fails to prevent stuck state
-        localStorage.removeItem('medusa_cart_id')
-        localStorage.removeItem('cart_id')
+        // DISABLED: Cart deletion moved to after order confirmation
+        // localStorage.removeItem('medusa_cart_id')
+        // localStorage.removeItem('cart_id')
         
         throw new Error(
           shippingError.message || 
@@ -235,19 +235,19 @@ export default function StripeCheckoutPage() {
     } catch (err: any) {
       console.error('Checkout error:', err)
       
-      // Clear cart on payment/session errors to prevent stale data
-      if (err.message?.includes('payment') || err.message?.includes('session')) {
-        console.log('Clearing cart due to payment/session error')
-        localStorage.removeItem('medusa_cart_id')
-        localStorage.removeItem('cart_id')
-        localStorage.removeItem('last_cart_items')
-        localStorage.removeItem('checkout_email')
-        
-        // Show error and suggest refresh
-        setError(err.message + '\n\nPlease refresh the page to start a new checkout.')
-      } else {
+      // DISABLED: Cart deletion moved to after order confirmation
+      // if (err.message?.includes('payment') || err.message?.includes('session')) {
+      //   console.log('Clearing cart due to payment/session error')
+      //   localStorage.removeItem('medusa_cart_id')
+      //   localStorage.removeItem('cart_id')
+      //   localStorage.removeItem('last_cart_items')
+      //   localStorage.removeItem('checkout_email')
+      //   
+      //   // Show error and suggest refresh
+      //   setError(err.message + '\n\nPlease refresh the page to start a new checkout.')
+      // } else {
         setError(err.message || 'Failed to initialize payment')
-      }
+      // }
     } finally {
       setInitializingPayment(false)
     }
@@ -288,14 +288,16 @@ export default function StripeCheckoutPage() {
   const taxAmount = subtotal * taxRate
   const total = subtotal + shippingCost + taxAmount
 
-  // Debug function to clear all cache
+  // DISABLED: Debug function - cart clearing disabled during webhook fix
   const handleClearCache = () => {
-    localStorage.clear()
-    sessionStorage.clear()
-    document.cookie.split(";").forEach(c => {
-      document.cookie = c.trim().split("=")[0] + '=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;'
-    })
-    window.location.reload()
+    // DISABLED: Cart deletion moved to after order confirmation
+    // localStorage.clear()
+    // sessionStorage.clear()
+    // document.cookie.split(";").forEach(c => {
+    //   document.cookie = c.trim().split("=")[0] + '=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;'
+    // })
+    // window.location.reload()
+    console.log('Cache clearing disabled during webhook fix')
   }
 
   return (
@@ -550,7 +552,7 @@ export default function StripeCheckoutPage() {
                 cartId={cart.id}
                 email={shippingInfo.email}
                 onSuccess={() => {
-                  // Don't clear cart here - let success page handle it
+                  // DISABLED: Cart deletion moved to after order confirmation - let success page handle it
                   router.push(`/checkout/success?cart_id=${cart.id}`)
                 }}
               />
@@ -574,7 +576,8 @@ export default function StripeCheckoutPage() {
                     cartId={cart.id}
                     email={shippingInfo.email}
                     onSuccess={() => {
-                      localStorage.removeItem('medusa_cart_id')
+                      // DISABLED: Cart deletion moved to after order confirmation
+                      // localStorage.removeItem('medusa_cart_id')
                       router.push('/checkout/success')
                     }}
                   />

@@ -46,9 +46,9 @@ export class CartAdapter {
           this.medusaCart = response.cart as unknown as MedusaCart
           return this.medusaCart
         } catch (error) {
-          // Cart not found, create new one
-          this.medusaCartId = null
-          localStorage.removeItem('medusa_cart_id')
+          // DISABLED: Cart deletion moved to after order confirmation - cart not found, create new one
+          // this.medusaCartId = null
+          // localStorage.removeItem('medusa_cart_id')
         }
       }
 
@@ -282,26 +282,29 @@ export class CartAdapter {
   }
 
   /**
-   * Clear cart
+   * Clear cart - DISABLED during webhook fix
    */
   async clearCart() {
-    try {
-      // Clear Medusa cart by removing all items
-      if (this.medusaCart?.items?.length) {
-        for (const item of this.medusaCart.items) {
-          await this.removeItem(item.id)
-        }
-      }
+    // DISABLED: Cart deletion moved to after order confirmation
+    // try {
+    //   // Clear Medusa cart by removing all items
+    //   if (this.medusaCart?.items?.length) {
+    //     for (const item of this.medusaCart.items) {
+    //       await this.removeItem(item.id)
+    //     }
+    //   }
 
-      // Clear Zustand
-      const cartStore = useCartStore.getState()
-      cartStore.clearCart()
+    //   // Clear Zustand
+    //   const cartStore = useCartStore.getState()
+    //   cartStore.clearCart()
 
-      return this.medusaCart
-    } catch (error) {
-      console.error('Failed to clear cart:', error)
-      throw error
-    }
+    //   return this.medusaCart
+    // } catch (error) {
+    //   console.error('Failed to clear cart:', error)
+    //   throw error
+    // }
+    console.log('clearCart() called but disabled to prevent webhook issues')
+    return this.medusaCart
   }
 
   /**
@@ -483,21 +486,21 @@ export class CartAdapter {
     try {
       const result = await medusa.store.cart.complete(this.medusaCartId)
       
-      // Clear local cart after successful order
-      if (result.order?.id) {
-        // Clear Zustand
-        const cartStore = useCartStore.getState()
-        cartStore.clearCart()
-        
-        // Clear Medusa cart ID from storage
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('medusa_cart_id')
-        }
+      // DISABLED: Cart deletion moved to after order confirmation
+      // if (result.order?.id) {
+      //   // Clear Zustand
+      //   const cartStore = useCartStore.getState()
+      //   cartStore.clearCart()
+      //   
+      //   // Clear Medusa cart ID from storage
+      //   if (typeof window !== 'undefined') {
+      //     localStorage.removeItem('medusa_cart_id')
+      //   }
 
-        // Reset internal state
-        this.medusaCart = null
-        this.medusaCartId = null
-      }
+      //   // Reset internal state
+      //   this.medusaCart = null
+      //   this.medusaCartId = null
+      // }
 
       return {
         success: true,

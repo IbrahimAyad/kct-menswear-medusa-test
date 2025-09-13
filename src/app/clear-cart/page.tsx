@@ -16,14 +16,15 @@ export default function ClearCartPage() {
   }, [])
   
   const clearCart = () => {
-    // Clear localStorage
-    localStorage.removeItem('medusa_cart_id')
-    localStorage.removeItem('medusa_cart')
-    localStorage.removeItem('cart')
+    // DISABLED: Cart deletion moved to after order confirmation
+    // localStorage.removeItem('medusa_cart_id')
+    // localStorage.removeItem('medusa_cart')
+    // localStorage.removeItem('cart')
     
-    // Clear session storage too
-    sessionStorage.clear()
+    // DISABLED: Cart deletion moved to after order confirmation
+    // sessionStorage.clear()
     
+    console.log('Cart clearing disabled during webhook fix')
     setCleared(true)
     setCartId(null)
     

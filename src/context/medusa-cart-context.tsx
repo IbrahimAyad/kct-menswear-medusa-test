@@ -78,10 +78,10 @@ export function MedusaCartProvider({ children }: { children: ReactNode }) {
       return response.cart
     } catch (error) {
       console.error('Cart fetch error:', error)
-      // Cart might be completed or invalid, clear it
-      localStorage.removeItem('medusa_cart_id')
-      setCartId(null)
-      setCart(null)
+      // DISABLED: Cart deletion moved to after order confirmation - cart might be completed or invalid
+      // localStorage.removeItem('medusa_cart_id')
+      // setCartId(null)
+      // setCart(null)
       return null
     }
   }
@@ -131,16 +131,16 @@ export function MedusaCartProvider({ children }: { children: ReactNode }) {
       console.error('Add to cart failed:', error)
       setError(error.message || 'Failed to add to cart')
 
-      // If cart is invalid, create a new one and retry
-      if (error.message?.includes('not found') || error.message?.includes('404')) {
-        localStorage.removeItem('medusa_cart_id')
-        setCartId(null)
-        setCart(null)
-        const newCart = await createCart()
-        if (newCart) {
-          return addToCart(variantId, quantity) // Retry with new cart
-        }
-      }
+      // DISABLED: Cart deletion moved to after order confirmation
+      // if (error.message?.includes('not found') || error.message?.includes('404')) {
+      //   localStorage.removeItem('medusa_cart_id')
+      //   setCartId(null)
+      //   setCart(null)
+      //   const newCart = await createCart()
+      //   if (newCart) {
+      //     return addToCart(variantId, quantity) // Retry with new cart
+      //   }
+      // }
       throw error
     } finally {
       setLoading(false)
@@ -182,10 +182,12 @@ export function MedusaCartProvider({ children }: { children: ReactNode }) {
   }
 
   const clearCart = async () => {
-    localStorage.removeItem('medusa_cart_id')
-    setCart(null)
-    setCartId(null)
-    setError(null)
+    // DISABLED: Cart deletion moved to after order confirmation
+    // localStorage.removeItem('medusa_cart_id')
+    // setCart(null)
+    // setCartId(null)
+    // setError(null)
+    console.log('clearCart() called but disabled to prevent webhook issues')
   }
 
   const refreshCart = async () => {
@@ -266,12 +268,12 @@ export function MedusaCartProvider({ children }: { children: ReactNode }) {
     try {
       const response = await medusaClient.carts.complete(cartId)
       
-      // Clear cart after successful completion
-      if (response.type === 'order') {
-        localStorage.removeItem('medusa_cart_id')
-        setCart(null)
-        setCartId(null)
-      }
+      // DISABLED: Cart deletion moved to after order confirmation
+      // if (response.type === 'order') {
+      //   localStorage.removeItem('medusa_cart_id')
+      //   setCart(null)
+      //   setCartId(null)
+      // }
       
       return response
     } catch (error: any) {

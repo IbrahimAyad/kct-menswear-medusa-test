@@ -84,7 +84,11 @@ export const useCartStore = create<CartStore>()(
         }));
       },
 
-      clearCart: () => set({ items: [] }),
+      clearCart: () => {
+        // DISABLED: Cart deletion moved to after order confirmation
+        // set({ items: [] })
+        console.log('clearCart() called but disabled to prevent webhook issues')
+      },
 
       getTotalItems: () => {
         const { items } = get();
@@ -163,15 +167,15 @@ export const useCartStore = create<CartStore>()(
       onRehydrateStorage: () => (state, error) => {
         if (error) {
           console.error('Error loading core-cart from storage:', error);
-          // Clear corrupted localStorage data
-          if (typeof window !== 'undefined') {
-            try {
-              localStorage.removeItem('core-cart');
-              console.log('Cleared corrupted cart data');
-            } catch (e) {
-              console.error('Failed to clear corrupted cart:', e);
-            }
-          }
+          // DISABLED: Cart deletion moved to after order confirmation
+          // if (typeof window !== 'undefined') {
+          //   try {
+          //     localStorage.removeItem('core-cart');
+          //     console.log('Cleared corrupted cart data');
+          //   } catch (e) {
+          //     console.error('Failed to clear corrupted cart:', e);
+          //   }
+          // }
           // Reset to safe state on hydration error
           return { items: [], isLoading: false };
         }

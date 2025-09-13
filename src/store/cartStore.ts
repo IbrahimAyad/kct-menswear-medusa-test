@@ -98,7 +98,9 @@ export const useCartStore = create<CartStore>()(
       },
       
       clearCart: () => {
-        set({ items: [] })
+        // DISABLED: Cart deletion moved to after order confirmation
+        // set({ items: [] })
+        console.log('clearCart() called but disabled to prevent webhook issues')
       },
       
       toggleCart: () => {

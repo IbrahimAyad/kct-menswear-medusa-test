@@ -87,12 +87,12 @@ export default function CheckoutSuccessPage() {
         setOrderError(null);
         setLoading(false);
         
-        // Clear localStorage after showing order
-        setTimeout(() => {
-          localStorage.removeItem('medusa_cart_id');
-          localStorage.removeItem('last_cart_items');
-          localStorage.removeItem('checkout_email');
-        }, 2000);
+        // DISABLED: Cart deletion moved to after order confirmation
+        // setTimeout(() => {
+        //   localStorage.removeItem('medusa_cart_id');
+        //   localStorage.removeItem('last_cart_items');
+        //   localStorage.removeItem('checkout_email');
+        // }, 2000);
         return;
       }
       
@@ -147,10 +147,10 @@ export default function CheckoutSuccessPage() {
               email: order.email || localStorage.getItem('checkout_email') || 'customer@example.com'
             });
 
-            // Clear the cart after successful order
-            localStorage.removeItem('medusa_cart_id');
-            localStorage.removeItem('last_cart_items');
-            localStorage.removeItem('checkout_email');
+            // DISABLED: Cart deletion moved to after order confirmation
+            // localStorage.removeItem('medusa_cart_id');
+            // localStorage.removeItem('last_cart_items');
+            // localStorage.removeItem('checkout_email');
             setOrderError(null);
             setLoading(false);
             return; // Exit early on success
@@ -197,10 +197,10 @@ export default function CheckoutSuccessPage() {
           email: order.email || localStorage.getItem('checkout_email') || 'customer@example.com'
         });
 
-        // Clear the cart after successful order
-        localStorage.removeItem('medusa_cart_id');
-        localStorage.removeItem('last_cart_items');
-        localStorage.removeItem('checkout_email');
+        // DISABLED: Cart deletion moved to after order confirmation
+        // localStorage.removeItem('medusa_cart_id');
+        // localStorage.removeItem('last_cart_items');
+        // localStorage.removeItem('checkout_email');
         setOrderError(null);
       } else {
         // Order completion failed but payment went through
