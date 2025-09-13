@@ -15,6 +15,8 @@ export default function CheckoutSuccessPage() {
   const [loading, setLoading] = useState(true);
   const [orderError, setOrderError] = useState<string | null>(null);
   const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
+  const [pollingOrder, setPollingOrder] = useState(false);
+  const [pollingAttempts, setPollingAttempts] = useState(0);
 
   useEffect(() => {
     setMounted(true);
@@ -43,6 +45,52 @@ export default function CheckoutSuccessPage() {
     }
   }, [mounted]);
 
+  // Poll for order creation from backend
+  const pollForOrder = async (cartId: string, maxAttempts: number = 15): Promise<any> => {
+    console.log(`Starting order polling for cart: ${cartId}`);
+    setPollingOrder(true);
+    
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      setPollingAttempts(attempt);
+      
+      try {
+        console.log(`Polling attempt ${attempt}/${maxAttempts} for cart: ${cartId}`);
+        
+        const response = await fetch(`/store/orders/check?cart_id=${cartId}`, {
+          method: 'GET',
+          headers: {
+            'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || '',
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log(`Polling response:`, data);
+          
+          if (data.order) {
+            console.log(`Order found on attempt ${attempt}:`, data.order);
+            setPollingOrder(false);
+            return data.order;
+          }
+        } else {
+          console.log(`Polling attempt ${attempt} failed with status:`, response.status);
+        }
+      } catch (error) {
+        console.warn(`Polling attempt ${attempt} error:`, error);
+      }
+      
+      // Wait 2 seconds before next attempt (except on last attempt)
+      if (attempt < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    }
+    
+    console.log(`Order polling completed after ${maxAttempts} attempts - no order found`);
+    setPollingOrder(false);
+    return null;
+  };
+
   const completeOrder = async () => {
     // Get cart_id and payment_intent from URL or localStorage
     const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
@@ -52,6 +100,36 @@ export default function CheckoutSuccessPage() {
     const cartId = cartIdFromUrl || cartIdFromStorage;
     
     try {
+      // First, try polling for order creation if we have a cart ID
+      if (cartId) {
+        console.log('Attempting to poll for order creation...');
+        const polledOrder = await pollForOrder(cartId);
+        
+        if (polledOrder) {
+          // Order was created by backend, use the polled order
+          const deliveryDate = new Date();
+          deliveryDate.setDate(deliveryDate.getDate() + 7);
+
+          setOrderDetails({
+            id: polledOrder.id || `ORDER-${Date.now()}`,
+            total: polledOrder.total ? `$${(polledOrder.total / 100).toFixed(2)}` : '$0.00',
+            items: polledOrder.items?.map((item: any) => ({
+              name: item.title || item.variant?.product?.title || 'Product',
+              size: item.variant?.title || 'One Size',
+              quantity: item.quantity || 1,
+              price: `$${((item.unit_price || 0) / 100).toFixed(2)}`
+            })) || [],
+            estimatedDelivery: deliveryDate,
+            email: polledOrder.email || localStorage.getItem('checkout_email') || 'customer@example.com'
+          });
+
+          setOrderError(null);
+          setLoading(false);
+          return; // Exit early on success
+        } else {
+          console.log('Order polling completed but no order found, falling back to existing flow...');
+        }
+      }
       
       // If no cart ID but we have payment intent, payment succeeded
       if (!cartId && paymentIntentFromUrl) {
@@ -276,7 +354,17 @@ export default function CheckoutSuccessPage() {
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-charcoal/5 flex items-center justify-center">
         <div className="text-center">
           <div className="w-20 h-20 border-4 border-charcoal/20 border-t-charcoal rounded-full animate-spin mx-auto mb-6" />
-          <p className="text-xl text-gray-600 font-light">Processing your order...</p>
+          <p className="text-xl text-gray-600 font-light">
+            {pollingOrder 
+              ? `Confirming your order... (${pollingAttempts}/15)` 
+              : 'Processing your order...'
+            }
+          </p>
+          {pollingOrder && (
+            <p className="text-sm text-gray-500 mt-2">
+              Please wait while we verify your order with our backend system.
+            </p>
+          )}
         </div>
       </div>
     );
