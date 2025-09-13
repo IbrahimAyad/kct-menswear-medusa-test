@@ -57,13 +57,8 @@ export function SimpleStripeForm({ amount, cartId, email, onSuccess }: SimpleStr
     setError(null)
 
     try {
-      // Use environment variable for region_id instead of cart data
-      const regionId = process.env.NEXT_PUBLIC_REGION_ID || 
-                       process.env.NEXT_PUBLIC_MEDUSA_REGION_ID || 
-                       'reg_01K3S6NDGAC1DSWH9MCZCWBWWD'
-      
       // Create payment session directly with Medusa backend
-      console.log('Creating payment session via Medusa with region_id:', regionId)
+      console.log('Creating payment session via Medusa for cart:', cartId)
       
       // First, get available payment providers to ensure Stripe is enabled
       const providers = await medusa.store.payment.listPaymentProviders()
@@ -73,12 +68,11 @@ export function SimpleStripeForm({ amount, cartId, email, onSuccess }: SimpleStr
         throw new Error('Stripe payment provider is not available')
       }
       
-      // Initialize payment session with Stripe, including region_id
+      // Initialize payment session with Stripe
       const paymentCollection = await medusa.store.payment.initiatePaymentSession(
         cartId,
         { 
-          provider_id: 'stripe',
-          region_id: regionId
+          provider_id: 'stripe'
         }
       )
       
