@@ -6,7 +6,7 @@ import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-
 import { Button } from '@/components/ui/button'
 import { AlertCircle, CreditCard, Loader2 } from 'lucide-react'
 import { STRIPE_PUBLISHABLE_KEY, isValidStripeKey } from '@/lib/stripe-config'
-import { medusa } from '@/lib/medusa/client'
+import { medusa, MEDUSA_CONFIG } from '@/lib/medusa/client'
 
 // Validate the key first
 if (!isValidStripeKey(STRIPE_PUBLISHABLE_KEY)) {
@@ -156,14 +156,16 @@ export function StripeCheckout({ amount, cartId, email, onSuccess }: StripeCheck
     const initializePayment = async () => {
       try {
         // First, get available payment providers to ensure Stripe is enabled
-        const providers = await medusa.store.payment.listPaymentProviders()
-        const stripeProvider = providers.find((p: any) => p.id === 'stripe' && p.is_enabled)
+        const providers = await medusa.store.payment.listPaymentProviders({
+          region_id: MEDUSA_CONFIG.regionId
+        })
+        const stripeProvider = providers.payment_providers?.find((p: any) => p.id === 'stripe' && p.is_enabled)
         
         if (!stripeProvider) {
           throw new Error('Stripe payment provider is not available')
         }
         
-        setDebugInfo({ providers: providers.map((p: any) => ({ id: p.id, enabled: p.is_enabled })) })
+        setDebugInfo({ providers: providers.payment_providers?.map((p: any) => ({ id: p.id, enabled: p.is_enabled })) || [] })
         
         // Initialize payment session with Stripe
         console.log('Creating payment session for cart:', cartId)
@@ -189,7 +191,7 @@ export function StripeCheckout({ amount, cartId, email, onSuccess }: StripeCheck
         
         setClientSecret(clientSecret)
         setDebugInfo({
-          providers: providers.map((p: any) => ({ id: p.id, enabled: p.is_enabled })),
+          providers: providers.payment_providers?.map((p: any) => ({ id: p.id, enabled: p.is_enabled })) || [],
           paymentSessionId: stripeSession.id,
           hasClientSecret: !!clientSecret
         })

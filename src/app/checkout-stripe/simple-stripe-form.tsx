@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { AlertCircle, CreditCard, Loader2, CheckCircle } from 'lucide-react'
 import { loadStripe } from '@stripe/stripe-js'
 import { STRIPE_PUBLISHABLE_KEY, isValidStripeKey } from '@/lib/stripe-config'
-import { medusa } from '@/lib/medusa/client'
+import { medusa, MEDUSA_CONFIG } from '@/lib/medusa/client'
 
 interface SimpleStripeFormProps {
   amount: number
@@ -61,8 +61,10 @@ export function SimpleStripeForm({ amount, cartId, email, onSuccess }: SimpleStr
       console.log('Creating payment session via Medusa for cart:', cartId)
       
       // First, get available payment providers to ensure Stripe is enabled
-      const providers = await medusa.store.payment.listPaymentProviders()
-      const stripeProvider = providers.find((p: any) => p.id === 'stripe' && p.is_enabled)
+      const providers = await medusa.store.payment.listPaymentProviders({
+        region_id: MEDUSA_CONFIG.regionId
+      })
+      const stripeProvider = providers.payment_providers?.find((p: any) => p.id === 'stripe' && p.is_enabled)
       
       if (!stripeProvider) {
         throw new Error('Stripe payment provider is not available')

@@ -446,10 +446,12 @@ export class CartAdapter {
    */
   async getPaymentProviders() {
     try {
-      console.log('Getting payment providers')
+      console.log('Getting payment providers for region:', MEDUSA_CONFIG.regionId)
       
-      // Get payment providers (region is determined automatically from cart context)
-      const providers = await medusa.store.payment.listPaymentProviders()
+      // Get payment providers with required region_id parameter
+      const providers = await medusa.store.payment.listPaymentProviders({
+        region_id: MEDUSA_CONFIG.regionId
+      })
       
       console.log('Payment providers response:', providers)
       
