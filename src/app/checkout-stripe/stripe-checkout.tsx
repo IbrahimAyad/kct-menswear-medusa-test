@@ -155,16 +155,10 @@ export function StripeCheckout({ amount, cartId, email, onSuccess }: StripeCheck
     // Create payment session directly with Medusa backend
     const initializePayment = async () => {
       try {
-        // Get cart data first to extract region_id
-        console.log('Fetching cart data for region_id...')
-        const { cart } = await medusa.store.cart.retrieve(cartId)
-        
-        if (!cart) {
-          throw new Error('Cart not found')
-        }
-        
-        if (!cart.region_id) {
-          throw new Error('Cart is missing region_id')
+        // Use environment variable for region_id instead of cart data
+        const regionId = process.env.NEXT_PUBLIC_REGION_ID || process.env.NEXT_PUBLIC_MEDUSA_REGION_ID
+        if (!regionId) {
+          throw new Error('Region ID not configured in environment')
         }
         
         // First, get available payment providers to ensure Stripe is enabled
@@ -175,15 +169,15 @@ export function StripeCheckout({ amount, cartId, email, onSuccess }: StripeCheck
           throw new Error('Stripe payment provider is not available')
         }
         
-        setDebugInfo({ providers: providers.map((p: any) => ({ id: p.id, enabled: p.is_enabled })), region_id: cart.region_id })
+        setDebugInfo({ providers: providers.map((p: any) => ({ id: p.id, enabled: p.is_enabled })), region_id: regionId })
         
         // Initialize payment session with Stripe, including region_id
-        console.log('Creating payment session with region_id:', cart.region_id)
+        console.log('Creating payment session with region_id:', regionId)
         const paymentCollection = await medusa.store.payment.initiatePaymentSession(
           cartId,
           { 
             provider_id: 'stripe',
-            region_id: cart.region_id
+            region_id: regionId
           }
         )
         

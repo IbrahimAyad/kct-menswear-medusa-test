@@ -64,15 +64,16 @@ export class CheckoutHandler {
       }
 
       // Step 6: Initialize payment session with Stripe
-      if (!cart.region_id) {
-        throw new Error('Cart is missing region_id')
+      const regionId = process.env.NEXT_PUBLIC_REGION_ID || process.env.NEXT_PUBLIC_MEDUSA_REGION_ID
+      if (!regionId) {
+        throw new Error('Region ID not configured in environment')
       }
       
       const paymentCollection = await medusa.store.payment.initiatePaymentSession(
         cart.id,
         {
           provider_id: 'stripe',
-          region_id: cart.region_id,
+          region_id: regionId,
         }
       )
 

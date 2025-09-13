@@ -57,20 +57,14 @@ export function SimpleStripeForm({ amount, cartId, email, onSuccess }: SimpleStr
     setError(null)
 
     try {
-      // Get cart data first to extract region_id
-      console.log('Fetching cart data for region_id...')
-      const { cart } = await medusa.store.cart.retrieve(cartId)
-      
-      if (!cart) {
-        throw new Error('Cart not found')
-      }
-      
-      if (!cart.region_id) {
-        throw new Error('Cart is missing region_id')
+      // Use environment variable for region_id instead of cart data
+      const regionId = process.env.NEXT_PUBLIC_REGION_ID || process.env.NEXT_PUBLIC_MEDUSA_REGION_ID
+      if (!regionId) {
+        throw new Error('Region ID not configured in environment')
       }
       
       // Create payment session directly with Medusa backend
-      console.log('Creating payment session via Medusa with region_id:', cart.region_id)
+      console.log('Creating payment session via Medusa with region_id:', regionId)
       
       // First, get available payment providers to ensure Stripe is enabled
       const providers = await medusa.store.payment.listPaymentProviders()
@@ -85,7 +79,7 @@ export function SimpleStripeForm({ amount, cartId, email, onSuccess }: SimpleStr
         cartId,
         { 
           provider_id: 'stripe',
-          region_id: cart.region_id
+          region_id: regionId
         }
       )
       

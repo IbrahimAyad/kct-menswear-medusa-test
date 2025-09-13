@@ -414,13 +414,10 @@ export class CartAdapter {
     }
 
     try {
-      // Ensure we have the cart data with region_id
-      if (!this.medusaCart?.region_id) {
-        // Refresh cart data if region_id is missing
-        await this.initialize()
-        if (!this.medusaCart?.region_id) {
-          throw new Error('Cart is missing region_id')
-        }
+      // Use environment variable for region_id instead of cart data
+      const regionId = process.env.NEXT_PUBLIC_REGION_ID || process.env.NEXT_PUBLIC_MEDUSA_REGION_ID
+      if (!regionId) {
+        throw new Error('Region ID not configured in environment')
       }
       
       // Initialize payment session with specified provider and region_id
@@ -428,7 +425,7 @@ export class CartAdapter {
         this.medusaCartId,
         {
           provider_id: providerId,
-          region_id: this.medusaCart.region_id,
+          region_id: regionId,
         }
       )
 
@@ -456,16 +453,17 @@ export class CartAdapter {
    */
   async getPaymentProviders() {
     try {
-      // First ensure we have a cart with a region
-      if (!this.medusaCart?.region_id) {
-        await this.initialize()
+      // Use environment variable for region_id
+      const regionId = process.env.NEXT_PUBLIC_REGION_ID || process.env.NEXT_PUBLIC_MEDUSA_REGION_ID
+      if (!regionId) {
+        throw new Error('Region ID not configured in environment')
       }
 
-      console.log('Getting payment providers for region:', this.medusaCart?.region_id)
+      console.log('Getting payment providers for region:', regionId)
       
       // Try to get providers for the specific region
       const providers = await medusa.store.payment.listPaymentProviders({
-        region_id: this.medusaCart?.region_id
+        region_id: regionId
       })
       
       console.log('Payment providers response:', providers)
