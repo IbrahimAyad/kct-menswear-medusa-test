@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label'
 import { AlertCircle, CreditCard, Loader2, CheckCircle } from 'lucide-react'
 import { loadStripe } from '@stripe/stripe-js'
 import { STRIPE_PUBLISHABLE_KEY, isValidStripeKey } from '@/lib/stripe-config'
+import { medusa } from '@/lib/medusa/client'
 
 interface SimpleStripeFormProps {
   amount: number
@@ -56,28 +57,35 @@ export function SimpleStripeForm({ amount, cartId, email, onSuccess }: SimpleStr
     setError(null)
 
     try {
-      // First, create payment intent using CLEAN API
-      console.log('Creating payment intent...')
-      const response = await fetch('/api/checkout/stripe-clean', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          amount,
-          cartId,
-          email: email || 'customer@example.com',
-        }),
-      })
-
-      const data = await response.json()
+      // Create payment session directly with Medusa backend
+      console.log('Creating payment session via Medusa...')
       
-      if (!response.ok || data.error) {
-        throw new Error(data.error || 'Failed to create payment intent')
+      // First, get available payment providers to ensure Stripe is enabled
+      const providers = await medusa.store.payment.listPaymentProviders()
+      const stripeProvider = providers.find((p: any) => p.id === 'stripe' && p.is_enabled)
+      
+      if (!stripeProvider) {
+        throw new Error('Stripe payment provider is not available')
       }
-
-      console.log('Payment intent created:', data.paymentIntentId)
-      console.log('Client secret:', data.clientSecret?.substring(0, 20) + '...')
+      
+      // Initialize payment session with Stripe
+      const paymentCollection = await medusa.store.payment.initiatePaymentSession(
+        cartId,
+        { provider_id: 'stripe' }
+      )
+      
+      // Extract client secret from the Stripe session
+      const stripeSession = paymentCollection.payment_sessions?.find(
+        (session: any) => session.provider_id === 'stripe'
+      )
+      
+      if (!stripeSession?.data?.client_secret) {
+        throw new Error('Failed to create Stripe payment session - no client secret received')
+      }
+      
+      const clientSecret = stripeSession.data.client_secret
+      console.log('Payment session created via Medusa')
+      console.log('Client secret:', clientSecret.substring(0, 20) + '...')
 
       // Validate key before loading Stripe
       if (!isValidStripeKey(STRIPE_PUBLISHABLE_KEY)) {
@@ -96,7 +104,7 @@ export function SimpleStripeForm({ amount, cartId, email, onSuccess }: SimpleStr
       
       // Confirm card payment
       console.log('Confirming card payment...')
-      const result = await stripe.confirmCardPayment(data.clientSecret, {
+      const result = await stripe.confirmCardPayment(clientSecret, {
         payment_method: {
           card: {
             number: cardNumber.replace(/\s/g, ''),
@@ -123,23 +131,10 @@ export function SimpleStripeForm({ amount, cartId, email, onSuccess }: SimpleStr
         console.log('Payment succeeded!', result.paymentIntent)
         setSuccess(true)
         
-        // Complete the order
+        // Complete the order via Medusa
         try {
-          const orderResponse = await fetch('/api/checkout/complete-order', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              cartId,
-              paymentIntentId: result.paymentIntent.id,
-              email: email || 'customer@example.com',
-              amount: amount
-            }),
-          })
-          
-          const orderData = await orderResponse.json()
-          console.log('Order completed:', orderData)
+          const order = await medusa.store.cart.complete(cartId)
+          console.log('Order completed via Medusa:', order)
         } catch (orderError) {
           console.error('Order completion error:', orderError)
           // Payment succeeded but order creation failed - still redirect

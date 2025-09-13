@@ -6,6 +6,7 @@ import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-
 import { Button } from '@/components/ui/button'
 import { AlertCircle, CreditCard, Loader2 } from 'lucide-react'
 import { STRIPE_PUBLISHABLE_KEY, isValidStripeKey } from '@/lib/stripe-config'
+import { medusa } from '@/lib/medusa/client'
 
 // Validate the key first
 if (!isValidStripeKey(STRIPE_PUBLISHABLE_KEY)) {
@@ -77,6 +78,14 @@ function PaymentForm({ amount, cartId, onSuccess }: StripeCheckoutProps) {
 
       // If we get here without redirect, payment succeeded
       if (paymentIntent && paymentIntent.status === 'succeeded') {
+        // Complete the order via Medusa
+        try {
+          const order = await medusa.store.cart.complete(cartId)
+          console.log('Order completed via Medusa:', order)
+        } catch (orderError) {
+          console.error('Order completion error:', orderError)
+        }
+        
         // Redirect to success page with payment details
         window.location.href = `/checkout/success?payment_intent=${paymentIntent.id}&cart_id=${cartId}`
       } else {
@@ -141,50 +150,56 @@ export function StripeCheckout({ amount, cartId, email, onSuccess }: StripeCheck
   const [debugInfo, setDebugInfo] = useState<any>(null)
 
   useEffect(() => {
-    console.log('Creating payment intent for:', { amount, cartId, email })
+    console.log('Creating payment session for:', { amount, cartId, email })
     
-    // Create payment intent using our CLEAN API route (no Amazon Pay params)
-    fetch('/api/checkout/stripe-clean', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        amount,
-        cartId,
-        email,
-      }),
-    })
-      .then(res => {
-        console.log('API Response status:', res.status)
-        return res.json()
-      })
-      .then(data => {
-        console.log('API Response data:', data)
+    // Create payment session directly with Medusa backend
+    const initializePayment = async () => {
+      try {
+        // First, get available payment providers to ensure Stripe is enabled
+        const providers = await medusa.store.payment.listPaymentProviders()
+        const stripeProvider = providers.find((p: any) => p.id === 'stripe' && p.is_enabled)
         
-        if (data.error) {
-          console.error('API Error:', data.error)
-          console.error('Debug info:', data.debug)
-          setDebugInfo(data.debug)
-          throw new Error(data.error)
+        if (!stripeProvider) {
+          throw new Error('Stripe payment provider is not available')
         }
         
-        if (!data.clientSecret) {
-          console.error('No client secret received')
-          throw new Error('No client secret received from server')
+        setDebugInfo({ providers: providers.map((p: any) => ({ id: p.id, enabled: p.is_enabled })) })
+        
+        // Initialize payment session with Stripe
+        const paymentCollection = await medusa.store.payment.initiatePaymentSession(
+          cartId,
+          { provider_id: 'stripe' }
+        )
+        
+        // Extract client secret from the Stripe session
+        const stripeSession = paymentCollection.payment_sessions?.find(
+          (session: any) => session.provider_id === 'stripe'
+        )
+        
+        if (!stripeSession?.data?.client_secret) {
+          throw new Error('Failed to create Stripe payment session - no client secret received')
         }
         
-        console.log('Client secret received:', data.clientSecret.substring(0, 20) + '...')
-        console.log('Debug info:', data.debug)
-        setClientSecret(data.clientSecret)
-      })
-      .catch(err => {
+        const clientSecret = stripeSession.data.client_secret
+        console.log('Payment session created via Medusa')
+        console.log('Client secret received:', clientSecret.substring(0, 20) + '...')
+        
+        setClientSecret(clientSecret)
+        setDebugInfo({
+          providers: providers.map((p: any) => ({ id: p.id, enabled: p.is_enabled })),
+          paymentSessionId: stripeSession.id,
+          hasClientSecret: !!clientSecret
+        })
+      } catch (err: any) {
         console.error('Payment initialization error:', err)
         setError(err.message)
-      })
-      .finally(() => {
+        setDebugInfo({ error: err.message, stack: err.stack })
+      } finally {
         setLoading(false)
-      })
+      }
+    }
+    
+    initializePayment()
   }, [amount, cartId, email])
 
   if (loading) {
