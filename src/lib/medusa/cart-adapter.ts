@@ -414,9 +414,16 @@ export class CartAdapter {
     }
 
     try {
-      // Initialize payment session with specified provider
+      // First retrieve the cart object
+      const { cart } = await medusa.store.cart.retrieve(this.medusaCartId)
+      
+      if (!cart) {
+        throw new Error('Cart not found')
+      }
+      
+      // Initialize payment session with specified provider - pass cart object
       const paymentCollection = await medusa.store.payment.initiatePaymentSession(
-        this.medusaCartId,
+        cart,
         {
           provider_id: providerId,
         }

@@ -64,8 +64,9 @@ export class CheckoutHandler {
       }
 
       // Step 6: Initialize payment session with Stripe
+      // Need to pass the cart object, not just the ID
       const paymentCollection = await medusa.store.payment.initiatePaymentSession(
-        cart.id,
+        cart,
         {
           provider_id: 'stripe',
         }
