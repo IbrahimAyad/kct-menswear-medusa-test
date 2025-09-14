@@ -54,9 +54,7 @@ export function CheckoutForm() {
         })
       }
 
-      // Create payment sessions
-      await createPaymentSessions()
-      
+      // Skip payment sessions - handled in payment step with order-first approach
       setStep('payment')
     } catch (error) {
       console.error('Shipping update failed:', error)
