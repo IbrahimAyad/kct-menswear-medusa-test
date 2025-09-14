@@ -68,7 +68,7 @@ export class CheckoutHandler {
       const paymentCollection = await medusa.store.payment.initiatePaymentSession(
         cart,
         {
-          provider_id: 'stripe',
+          provider_id: 'pp_stripe_stripe',
         }
       )
 

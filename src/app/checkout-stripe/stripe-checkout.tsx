@@ -182,13 +182,13 @@ export function StripeCheckout({ amount, cartId, email, onSuccess }: StripeCheck
         const paymentCollection = await medusa.store.payment.initiatePaymentSession(
           cart,  // Pass cart object, not cart ID
           { 
-            provider_id: 'stripe'
+            provider_id: 'pp_stripe_stripe'
           }
         )
         
         // Extract client secret from the Stripe session
         const stripeSession = paymentCollection.payment_sessions?.find(
-          (session: any) => session.provider_id === 'stripe'
+          (session: any) => session.provider_id === 'pp_stripe_stripe'
         )
         
         if (!stripeSession?.data?.client_secret) {
