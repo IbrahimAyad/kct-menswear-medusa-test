@@ -213,6 +213,22 @@ export default function ProfessionalCheckout() {
         throw new Error('Please select a shipping method')
       }
 
+      // Validate cart has items and non-zero total
+      if (!medusaCart?.items?.length) {
+        throw new Error('Your cart is empty. Please add items before proceeding to payment.')
+      }
+
+      const cartTotal = medusaCart?.subtotal || 0
+      if (cartTotal <= 0) {
+        throw new Error('Cart total must be greater than $0 to proceed with payment.')
+      }
+
+      console.log('Cart validation passed:', {
+        itemCount: medusaCart.items.length,
+        total: cartTotal,
+        cartId: medusaCart.id
+      })
+
       // Add shipping method - use free shipping for now
       await addShippingMethod('so_01K3S6BKMKFTYS3ASAC3HBCSD5')
       
@@ -229,13 +245,20 @@ export default function ProfessionalCheckout() {
       })
 
       if (!paymentCollection.ok) {
-        throw new Error('Failed to initialize payment')
+        const errorText = await paymentCollection.text()
+        console.error('Payment collection failed:', errorText)
+        throw new Error('Failed to initialize payment collection')
       }
 
       const collection = await paymentCollection.json()
       const collectionId = collection.payment_collection?.id || collection.id
 
-      // Create payment session
+      console.log('Payment collection created:', {
+        collectionId,
+        amount: collection.payment_collection?.amount
+      })
+
+      // Create payment session with correct provider ID
       const sessionResponse = await fetch(`https://backend-production-7441.up.railway.app/store/payment-collections/${collectionId}/payment-sessions`, {
         method: 'POST',
         headers: {
@@ -243,12 +266,14 @@ export default function ProfessionalCheckout() {
           'x-publishable-api-key': 'pk_4c24b336db3f8819867bec16f4b51db9654e557abbcfbbe003f7ffd8463c3c81'
         },
         body: JSON.stringify({
-          provider_id: 'stripe'
+          provider_id: 'pp_stripe_stripe'
         })
       })
 
       if (!sessionResponse.ok) {
-        throw new Error('Failed to create payment session')
+        const errorText = await sessionResponse.text()
+        console.error('Payment session creation failed:', errorText)
+        throw new Error('Failed to create payment session. Please try again.')
       }
 
       const sessionData = await sessionResponse.json()
@@ -256,13 +281,16 @@ export default function ProfessionalCheckout() {
                      sessionData.payment_sessions?.[0]?.data?.client_secret
 
       if (!secret) {
+        console.error('No client secret in response:', sessionData)
         throw new Error('No payment client secret received')
       }
 
+      console.log('Payment session created successfully')
       setClientSecret(secret)
       handleStepComplete('delivery')
       goToStep('payment')
     } catch (err: any) {
+      console.error('Payment initialization error:', err)
       setError(err.message)
     } finally {
       setIsProcessing(false)
