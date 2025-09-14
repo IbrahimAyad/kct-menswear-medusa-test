@@ -155,7 +155,15 @@ export function StripeCheckout({ amount, cartId, email, onSuccess }: StripeCheck
     // Create payment session directly with Medusa backend
     const initializePayment = async () => {
       try {
-        // First, get available payment providers to ensure Stripe is enabled
+        // First, retrieve the full cart object
+        console.log('Retrieving cart:', cartId)
+        const { cart } = await medusa.store.cart.retrieve(cartId)
+        
+        if (!cart) {
+          throw new Error('Cart not found')
+        }
+        
+        // Get available payment providers to ensure Stripe is enabled
         const providers = await medusa.store.payment.listPaymentProviders({
           region_id: MEDUSA_CONFIG.regionId
         })
@@ -169,10 +177,10 @@ export function StripeCheckout({ amount, cartId, email, onSuccess }: StripeCheck
         
         setDebugInfo({ providers: providers.payment_providers?.map((p: any) => ({ id: p.id, enabled: p.is_enabled })) || [] })
         
-        // Initialize payment session with Stripe
+        // Initialize payment session with Stripe - passing cart object
         console.log('Creating payment session for cart:', cartId)
         const paymentCollection = await medusa.store.payment.initiatePaymentSession(
-          cartId,
+          cart,  // Pass cart object, not cart ID
           { 
             provider_id: 'stripe'
           }

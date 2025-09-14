@@ -60,19 +60,28 @@ export function SimpleStripeForm({ amount, cartId, email, onSuccess }: SimpleStr
       // Create payment session directly with Medusa backend
       console.log('Creating payment session via Medusa for cart:', cartId)
       
-      // First, get available payment providers to ensure Stripe is enabled
+      // First, retrieve the full cart object
+      const { cart } = await medusa.store.cart.retrieve(cartId)
+      
+      if (!cart) {
+        throw new Error('Cart not found')
+      }
+      
+      // Get available payment providers to ensure Stripe is enabled
       const providers = await medusa.store.payment.listPaymentProviders({
         region_id: MEDUSA_CONFIG.regionId
       })
-      const stripeProvider = providers.payment_providers?.find((p: any) => p.id === 'stripe' && p.is_enabled)
+      const stripeProvider = providers.payment_providers?.find((p: any) => 
+        (p.id === 'stripe' || p.id === 'pp_stripe_stripe') && p.is_enabled
+      )
       
       if (!stripeProvider) {
         throw new Error('Stripe payment provider is not available')
       }
       
-      // Initialize payment session with Stripe
+      // Initialize payment session with Stripe - passing cart object
       const paymentCollection = await medusa.store.payment.initiatePaymentSession(
-        cartId,
+        cart,  // Pass cart object, not cart ID
         { 
           provider_id: 'stripe'
         }
