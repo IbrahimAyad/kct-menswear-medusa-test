@@ -72,7 +72,7 @@ export function SimpleStripeForm({ amount, cartId, email, onSuccess }: SimpleStr
         region_id: MEDUSA_CONFIG.regionId
       })
       const stripeProvider = providers.payment_providers?.find((p: any) => 
-        p.id === 'stripe' && p.is_enabled
+        p.id === 'pp_stripe_stripe' && p.is_enabled
       )
       
       if (!stripeProvider) {
@@ -83,13 +83,13 @@ export function SimpleStripeForm({ amount, cartId, email, onSuccess }: SimpleStr
       const paymentCollection = await medusa.store.payment.initiatePaymentSession(
         cart,  // Pass cart object, not cart ID
         { 
-          provider_id: 'stripe'
+          provider_id: 'pp_stripe_stripe'
         }
       )
       
       // Extract client secret from the Stripe session
       const stripeSession = paymentCollection.payment_sessions?.find(
-        (session: any) => session.provider_id === 'stripe'
+        (session: any) => session.provider_id === 'pp_stripe_stripe'
       )
       
       if (!stripeSession?.data?.client_secret) {

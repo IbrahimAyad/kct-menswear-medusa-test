@@ -276,7 +276,7 @@ export function useMedusaCart() {
   }, [])
 
   // Initialize payment session
-  const initializePaymentSession = useCallback(async (providerId: string = 'stripe') => {
+  const initializePaymentSession = useCallback(async (providerId: string = 'pp_stripe_stripe') => {
     try {
       setIsLoading(true)
       setError(null)

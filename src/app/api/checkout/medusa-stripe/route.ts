@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
 
     // Step 3: Get available payment providers
     const providers = await medusa.store.payment.listPaymentProviders()
-    const hasStripe = providers.some((p: any) => p.id === 'stripe' && p.is_enabled)
+    const hasStripe = providers.some((p: any) => p.id === 'pp_stripe_stripe' && p.is_enabled)
     
     if (!hasStripe) {
       return NextResponse.json({ 
@@ -54,13 +54,13 @@ export async function POST(request: NextRequest) {
     const paymentCollection = await medusa.store.payment.initiatePaymentSession(
       cartId,
       {
-        provider_id: 'stripe'
+        provider_id: 'pp_stripe_stripe'
       }
     )
 
     // Step 5: Extract client secret
     const stripeSession = paymentCollection.payment_sessions?.find(
-      (session: any) => session.provider_id === 'stripe'
+      (session: any) => session.provider_id === 'pp_stripe_stripe'
     )
 
     if (!stripeSession?.data?.client_secret) {

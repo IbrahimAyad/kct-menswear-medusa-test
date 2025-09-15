@@ -622,7 +622,7 @@ export async function createPaymentSession(paymentCollectionId: string, cartId?:
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({
-        provider_id: 'stripe',  // Stripe module always registers as 'stripe'
+        provider_id: 'pp_stripe_stripe',  // Correct Stripe provider ID
         ...(cartId && { payment_collection_id: paymentCollectionId }) // Include collection ID if using custom endpoint
       })
     })

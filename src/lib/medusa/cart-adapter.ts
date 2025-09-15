@@ -408,7 +408,7 @@ export class CartAdapter {
   /**
    * Initialize payment session
    */
-  async initializePaymentSession(providerId: string = 'stripe') {
+  async initializePaymentSession(providerId: string = 'pp_stripe_stripe') {
     if (!this.medusaCartId) {
       throw new Error('No cart initialized')
     }
