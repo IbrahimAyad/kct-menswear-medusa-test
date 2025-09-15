@@ -56,6 +56,31 @@ export function SimpleStripeForm({ amount, cartId, email, onSuccess }: SimpleStr
     setLoading(true)
     setError(null)
 
+    // Basic validation
+    if (!cardNumber || cardNumber.replace(/\s/g, '').length < 13) {
+      setError('Please enter a valid card number')
+      setLoading(false)
+      return
+    }
+    
+    if (!expiry || expiry.length < 5) {
+      setError('Please enter a valid expiry date (MM/YY)')
+      setLoading(false)
+      return
+    }
+    
+    if (!cvc || cvc.length < 3) {
+      setError('Please enter a valid CVC code')
+      setLoading(false)
+      return
+    }
+    
+    if (!name.trim()) {
+      setError('Please enter the cardholder name')
+      setLoading(false)
+      return
+    }
+
     try {
       // Create payment session directly with Medusa backend
       console.log('Creating payment session via Medusa for cart:', cartId)
@@ -162,7 +187,27 @@ export function SimpleStripeForm({ amount, cartId, email, onSuccess }: SimpleStr
       }
     } catch (err: any) {
       console.error('Payment error:', err)
-      setError(err.message || 'Payment failed. Please try again.')
+      
+      // Provide more specific error messages
+      let errorMessage = err.message || 'Payment failed. Please try again.'
+      
+      if (err.message?.includes('Invalid API Key')) {
+        errorMessage = 'Payment system configuration error. Please contact support.'
+      } else if (err.message?.includes('payment_method')) {
+        errorMessage = 'Invalid payment details. Please check your card information.'
+      } else if (err.message?.includes('network') || err.message?.includes('fetch')) {
+        errorMessage = 'Connection error. Please check your internet connection and try again.'
+      } else if (err.message?.includes('declined')) {
+        errorMessage = 'Your card was declined. Please try a different payment method.'
+      } else if (err.message?.includes('insufficient_funds')) {
+        errorMessage = 'Insufficient funds. Please try a different payment method.'
+      } else if (err.message?.includes('expired_card')) {
+        errorMessage = 'Your card has expired. Please use a different payment method.'
+      } else if (err.message?.includes('incorrect_cvc')) {
+        errorMessage = 'Incorrect CVC code. Please check your card security code.'
+      }
+      
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -170,10 +215,19 @@ export function SimpleStripeForm({ amount, cartId, email, onSuccess }: SimpleStr
 
   if (success) {
     return (
-      <div className="p-6 bg-green-50 text-green-700 rounded-lg text-center">
-        <CheckCircle className="h-12 w-12 mx-auto mb-3" />
-        <p className="font-medium text-lg">Payment Successful!</p>
-        <p className="text-sm mt-1">Redirecting to confirmation...</p>
+      <div className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg text-center">
+        <div className="relative">
+          <CheckCircle className="h-16 w-16 mx-auto mb-4 text-green-600" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-16 h-16 border-4 border-green-200 rounded-full animate-ping"></div>
+          </div>
+        </div>
+        <h3 className="font-semibold text-xl text-green-900 mb-2">Payment Successful!</h3>
+        <p className="text-green-700 mb-4">Your payment has been processed successfully.</p>
+        <div className="flex items-center justify-center space-x-2 text-sm text-green-600">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span>Redirecting to confirmation page...</span>
+        </div>
       </div>
     )
   }

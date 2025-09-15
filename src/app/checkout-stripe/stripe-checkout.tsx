@@ -236,7 +236,7 @@ export function StripeCheckout({ amount, cartId, email, onSuccess }: StripeCheck
       }
 
       // Call our TOTAL BYPASS Stripe endpoint
-      const response = await fetch(`${MEDUSA_CONFIG.baseUrl}/stripe-bypass`, {
+      const response = await fetch('https://backend-production-7441.up.railway.app/stripe-bypass', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -279,34 +279,65 @@ export function StripeCheckout({ amount, cartId, email, onSuccess }: StripeCheck
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <span className="ml-2">Initializing payment...</span>
+      <div className="flex flex-col items-center justify-center p-8 space-y-4">
+        <div className="relative">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          <div className="absolute inset-0 rounded-full border-2 border-blue-100"></div>
+        </div>
+        <div className="text-center">
+          <p className="text-lg font-medium text-gray-900">Initializing payment...</p>
+          <p className="text-sm text-gray-500 mt-1">Setting up secure payment processing</p>
+        </div>
+        <div className="w-full max-w-xs bg-gray-200 rounded-full h-2">
+          <div className="bg-blue-600 h-2 rounded-full animate-pulse" style={{ width: '60%' }}></div>
+        </div>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="p-4 bg-red-50 text-red-700 rounded-lg">
-        <p className="font-medium">Payment initialization failed</p>
-        <p className="text-sm mt-1">{error}</p>
-        <p className="text-xs mt-1 text-gray-600">
-          Both Medusa payment system and direct Stripe fallback failed.
-        </p>
-        {debugInfo && (
-          <div className="mt-2 p-2 bg-gray-100 rounded text-xs text-gray-700">
-            <p>Debug Info:</p>
-            <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
+      <div className="p-6 bg-red-50 border border-red-200 rounded-lg">
+        <div className="flex items-start space-x-3">
+          <AlertCircle className="h-6 w-6 text-red-600 mt-0.5 flex-shrink-0" />
+          <div className="flex-1">
+            <h3 className="font-medium text-red-900">Payment initialization failed</h3>
+            <p className="text-sm mt-1 text-red-700">{error}</p>
+            <p className="text-xs mt-2 text-red-600">
+              Both Medusa payment system and direct Stripe fallback failed.
+            </p>
+            
+            {debugInfo && (
+              <details className="mt-3">
+                <summary className="text-xs cursor-pointer text-red-600 hover:text-red-800">
+                  Show technical details
+                </summary>
+                <div className="mt-2 p-2 bg-red-100 rounded text-xs text-red-700">
+                  <pre className="whitespace-pre-wrap">{JSON.stringify(debugInfo, null, 2)}</pre>
+                </div>
+              </details>
+            )}
+            
+            <div className="flex space-x-3 mt-4">
+              <Button 
+                onClick={() => window.location.reload()} 
+                size="sm"
+                variant="outline"
+                className="border-red-300 text-red-700 hover:bg-red-100"
+              >
+                Try Again
+              </Button>
+              <Button 
+                onClick={() => window.location.href = '/cart'} 
+                size="sm"
+                variant="ghost"
+                className="text-red-600 hover:text-red-800"
+              >
+                Return to Cart
+              </Button>
+            </div>
           </div>
-        )}
-        <Button 
-          onClick={() => window.location.reload()} 
-          className="mt-4"
-          variant="outline"
-        >
-          Try Again
-        </Button>
+        </div>
       </div>
     )
   }

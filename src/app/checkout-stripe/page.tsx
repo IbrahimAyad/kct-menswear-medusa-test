@@ -14,8 +14,10 @@ import { StripeCheckout } from './stripe-checkout'
 import { SimpleStripeForm } from './simple-stripe-form'
 
 // Initialize Stripe
-const stripePromise = typeof window !== 'undefined' 
-  ? loadStripe('pk_live_51RAMT2CHc12x7sCzv9MxCfz8HBj76Js5MiRCa0F0o3xVOJJ0LS7pRNhDxIJZf5mQQBW6vD5h3cQzI0B5vhLSl6Y200YY9iXR7h')
+import { STRIPE_PUBLISHABLE_KEY, isValidStripeKey } from '@/lib/stripe-config'
+
+const stripePromise = typeof window !== 'undefined' && isValidStripeKey(STRIPE_PUBLISHABLE_KEY)
+  ? loadStripe(STRIPE_PUBLISHABLE_KEY)
   : null
 
 // Payment Form Component
@@ -65,10 +67,28 @@ function CheckoutForm({ clientSecret, cartId }: { clientSecret: string, cartId: 
       })
 
       if (result.error) {
-        setError(result.error.message || 'Payment failed')
+        // More specific error messages based on error types
+        let errorMessage = result.error.message || 'Payment failed'
+        
+        if (result.error.type === 'card_error') {
+          errorMessage = `Card Error: ${result.error.message}`
+        } else if (result.error.type === 'validation_error') {
+          errorMessage = `Please check your payment details: ${result.error.message}`
+        } else if (result.error.type === 'api_connection_error') {
+          errorMessage = 'Connection error. Please check your internet connection and try again.'
+        } else if (result.error.type === 'api_error') {
+          errorMessage = 'Payment service temporarily unavailable. Please try again in a moment.'
+        } else if (result.error.type === 'authentication_error') {
+          errorMessage = 'Payment authentication failed. Please refresh the page and try again.'
+        } else if (result.error.type === 'rate_limit_error') {
+          errorMessage = 'Too many payment attempts. Please wait a moment before trying again.'
+        }
+        
+        setError(errorMessage)
       }
     } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred')
+      console.error('Payment error:', err)
+      setError(err.message || 'An unexpected error occurred. Please try again.')
     } finally {
       setProcessing(false)
     }
