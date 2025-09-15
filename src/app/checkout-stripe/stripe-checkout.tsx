@@ -168,7 +168,7 @@ export function StripeCheckout({ amount, cartId, email, onSuccess }: StripeCheck
           region_id: MEDUSA_CONFIG.regionId
         })
         const stripeProvider = providers.payment_providers?.find((p: any) => 
-          (p.id === 'stripe' || p.id === 'pp_stripe_stripe') && p.is_enabled
+          p.id === 'stripe' && p.is_enabled
         )
         
         if (!stripeProvider) {
@@ -182,13 +182,13 @@ export function StripeCheckout({ amount, cartId, email, onSuccess }: StripeCheck
         const paymentCollection = await medusa.store.payment.initiatePaymentSession(
           cart,  // Pass cart object, not cart ID
           { 
-            provider_id: 'pp_stripe_stripe'
+            provider_id: 'stripe'  // Stripe module always registers as 'stripe'
           }
         )
         
         // Extract client secret from the Stripe session
         const stripeSession = paymentCollection.payment_sessions?.find(
-          (session: any) => session.provider_id === 'pp_stripe_stripe'
+          (session: any) => session.provider_id === 'stripe'
         )
         
         if (!stripeSession?.data?.client_secret) {
