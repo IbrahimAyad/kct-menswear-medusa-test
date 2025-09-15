@@ -1,4 +1,4 @@
-import { medusa } from './client'
+import { medusa, MEDUSA_CONFIG } from './client'
 import { cartAdapter } from './cart-adapter'
 
 interface CheckoutData {
@@ -28,7 +28,7 @@ interface CheckoutData {
 
 export class CheckoutHandler {
   /**
-   * Complete checkout process with Medusa
+   * Complete checkout process with Medusa (with direct Stripe fallback)
    */
   async processCheckout(checkoutData: CheckoutData) {
     try {
@@ -63,29 +63,109 @@ export class CheckoutHandler {
         })
       }
 
-      // Step 6: Initialize payment session with Stripe
-      // Need to pass the cart object, not just the ID
-      const paymentCollection = await medusa.store.payment.initiatePaymentSession(
-        cart,
-        {
-          provider_id: 'stripe',  // Stripe module always registers as 'stripe'
+      // Step 6: Try to initialize payment with Medusa first, then fallback to direct Stripe
+      try {
+        console.log('Attempting Medusa payment initialization...')
+        
+        // Need to pass the cart object, not just the ID
+        const paymentCollection = await medusa.store.payment.initiatePaymentSession(
+          cart,
+          {
+            provider_id: 'stripe',  // Stripe module always registers as 'stripe'
+          }
+        )
+
+        // Get payment session client secret for Stripe
+        const clientSecret = paymentCollection.payment_sessions?.[0]?.data?.client_secret
+
+        if (clientSecret) {
+          console.log('✅ Medusa payment session created successfully')
+          return {
+            success: true,
+            cartId: cart.id,
+            clientSecret,
+            paymentSessionId: paymentCollection.payment_sessions?.[0]?.id,
+            method: 'medusa'
+          }
+        } else {
+          throw new Error('No client secret received from Medusa payment session')
         }
-      )
-
-      // Step 7: Get payment session client secret for Stripe
-      const clientSecret = paymentCollection.payment_sessions?.[0]?.data?.client_secret
-
-      return {
-        success: true,
-        cartId: cart.id,
-        clientSecret,
-        paymentSessionId: paymentCollection.payment_sessions?.[0]?.id,
+      } catch (medusaError) {
+        console.warn('Medusa payment failed, attempting direct Stripe fallback:', medusaError)
+        
+        // Fallback to direct Stripe payment
+        const directResult = await this.createDirectStripePayment(cart.id, checkoutData.email, checkoutData.shippingAddress, billingAddress)
+        
+        if (directResult.success) {
+          console.log('✅ Direct Stripe payment created successfully')
+          return {
+            success: true,
+            cartId: cart.id,
+            clientSecret: directResult.clientSecret,
+            paymentIntentId: directResult.paymentIntentId,
+            method: 'direct_stripe'
+          }
+        } else {
+          throw new Error(directResult.error || 'Both Medusa and direct Stripe payment failed')
+        }
       }
     } catch (error) {
       console.error('Checkout failed:', error)
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Checkout failed',
+      }
+    }
+  }
+
+  /**
+   * Create direct Stripe payment (bypass Medusa payment system)
+   */
+  async createDirectStripePayment(
+    cartId: string, 
+    email: string, 
+    shippingAddress: any, 
+    billingAddress: any
+  ) {
+    try {
+      console.log('🚀 Creating direct Stripe payment...')
+      
+      const response = await fetch(`${MEDUSA_CONFIG.baseUrl}/stripe-bypass`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          cart_id: cartId,
+          customer_email: email,
+          shipping_address: shippingAddress,
+          billing_address: billingAddress
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `Direct payment failed: ${response.status}`)
+      }
+
+      const data = await response.json()
+      
+      if (!data.success || !data.client_secret) {
+        throw new Error(data.error || 'Direct payment failed - no client secret')
+      }
+
+      return {
+        success: true,
+        clientSecret: data.client_secret,
+        paymentIntentId: data.payment_intent_id,
+        amount: data.amount,
+        currency: data.currency
+      }
+    } catch (error) {
+      console.error('Direct Stripe payment creation failed:', error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Direct payment creation failed'
       }
     }
   }

@@ -18,6 +18,7 @@ export const MEDUSA_CONFIG = {
   salesChannelId: process.env.NEXT_PUBLIC_SALES_CHANNEL_ID || "",
   currency: "usd",
   publishableKey: process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || "",
+  baseUrl: process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "https://backend-production-7441.up.railway.app",
 }
 
 // Helper to check connection

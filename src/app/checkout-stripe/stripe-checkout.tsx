@@ -152,66 +152,126 @@ export function StripeCheckout({ amount, cartId, email, onSuccess }: StripeCheck
   useEffect(() => {
     console.log('Creating payment session for:', { amount, cartId, email })
     
-    // Create payment session directly with Medusa backend
+    // Create payment session with fallback mechanism
     const initializePayment = async () => {
       try {
-        // First, retrieve the full cart object
-        console.log('Retrieving cart:', cartId)
-        const { cart } = await medusa.store.cart.retrieve(cartId)
+        // First try the regular Medusa payment system
+        console.log('Attempting Medusa payment initialization...')
+        await tryMedusaPayment()
+      } catch (medusaError: any) {
+        console.warn('Medusa payment failed, trying direct Stripe fallback:', medusaError.message)
         
-        if (!cart) {
-          throw new Error('Cart not found')
+        try {
+          await tryDirectStripePayment()
+        } catch (directError: any) {
+          console.error('Both payment methods failed:', directError.message)
+          setError(`Payment initialization failed: ${directError.message}`)
+          setLoading(false)
         }
-        
-        // Get available payment providers to ensure Stripe is enabled
-        const providers = await medusa.store.payment.listPaymentProviders({
-          region_id: MEDUSA_CONFIG.regionId
-        })
-        const stripeProvider = providers.payment_providers?.find((p: any) => 
-          p.id === 'stripe' && p.is_enabled
-        )
-        
-        if (!stripeProvider) {
-          throw new Error('Stripe payment provider is not available')
-        }
-        
-        setDebugInfo({ providers: providers.payment_providers?.map((p: any) => ({ id: p.id, enabled: p.is_enabled })) || [] })
-        
-        // Initialize payment session with Stripe - passing cart object
-        console.log('Creating payment session for cart:', cartId)
-        const paymentCollection = await medusa.store.payment.initiatePaymentSession(
-          cart,  // Pass cart object, not cart ID
-          { 
-            provider_id: 'stripe'  // Stripe module always registers as 'stripe'
-          }
-        )
-        
-        // Extract client secret from the Stripe session
-        const stripeSession = paymentCollection.payment_sessions?.find(
-          (session: any) => session.provider_id === 'stripe'
-        )
-        
-        if (!stripeSession?.data?.client_secret) {
-          throw new Error('Failed to create Stripe payment session - no client secret received')
-        }
-        
-        const clientSecret = stripeSession.data.client_secret
-        console.log('Payment session created via Medusa')
-        console.log('Client secret received:', clientSecret.substring(0, 20) + '...')
-        
-        setClientSecret(clientSecret)
-        setDebugInfo({
-          providers: providers.payment_providers?.map((p: any) => ({ id: p.id, enabled: p.is_enabled })) || [],
-          paymentSessionId: stripeSession.id,
-          hasClientSecret: !!clientSecret
-        })
-      } catch (err: any) {
-        console.error('Payment initialization error:', err)
-        setError(err.message)
-        setDebugInfo({ error: err.message, stack: err.stack })
-      } finally {
-        setLoading(false)
       }
+    }
+
+    const tryMedusaPayment = async () => {
+      // First, retrieve the full cart object
+      console.log('Retrieving cart:', cartId)
+      const { cart } = await medusa.store.cart.retrieve(cartId)
+      
+      if (!cart) {
+        throw new Error('Cart not found')
+      }
+      
+      // Get available payment providers to ensure Stripe is enabled
+      const providers = await medusa.store.payment.listPaymentProviders({
+        region_id: MEDUSA_CONFIG.regionId
+      })
+      const stripeProvider = providers.payment_providers?.find((p: any) => 
+        p.id === 'stripe' && p.is_enabled
+      )
+      
+      if (!stripeProvider) {
+        throw new Error('Stripe payment provider is not available')
+      }
+      
+      setDebugInfo({ providers: providers.payment_providers?.map((p: any) => ({ id: p.id, enabled: p.is_enabled })) || [] })
+      
+      // Initialize payment session with Stripe - passing cart object
+      console.log('Creating payment session for cart:', cartId)
+      const paymentCollection = await medusa.store.payment.initiatePaymentSession(
+        cart,  // Pass cart object, not cart ID
+        { 
+          provider_id: 'stripe'  // Stripe module always registers as 'stripe'
+        }
+      )
+      
+      // Extract client secret from the Stripe session
+      const stripeSession = paymentCollection.payment_sessions?.find(
+        (session: any) => session.provider_id === 'stripe'
+      )
+      
+      if (!stripeSession?.data?.client_secret) {
+        throw new Error('Failed to create Stripe payment session - no client secret received')
+      }
+      
+      const clientSecret = stripeSession.data.client_secret
+      console.log('✅ Payment session created via Medusa')
+      console.log('Client secret received:', clientSecret.substring(0, 20) + '...')
+      
+      setClientSecret(clientSecret)
+      setDebugInfo({
+        method: 'medusa',
+        providers: providers.payment_providers?.map((p: any) => ({ id: p.id, enabled: p.is_enabled })) || [],
+        paymentSessionId: stripeSession.id,
+        hasClientSecret: !!clientSecret
+      })
+      setLoading(false)
+    }
+
+    const tryDirectStripePayment = async () => {
+      console.log('🚀 Attempting direct Stripe payment...')
+      
+      // Get cart details first
+      const { cart } = await medusa.store.cart.retrieve(cartId)
+      if (!cart) {
+        throw new Error('Cart not found')
+      }
+
+      // Call our TOTAL BYPASS Stripe endpoint
+      const response = await fetch(`${MEDUSA_CONFIG.baseUrl}/stripe-bypass`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          cart_id: cartId,
+          customer_email: email || cart.email,
+          shipping_address: cart.shipping_address,
+          billing_address: cart.billing_address
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `Direct payment failed: ${response.status}`)
+      }
+
+      const data = await response.json()
+      
+      if (!data.success || !data.client_secret) {
+        throw new Error(data.error || 'Direct payment failed - no client secret')
+      }
+
+      console.log('✅ Direct Stripe payment initialized successfully')
+      console.log('Client secret received:', data.client_secret.substring(0, 20) + '...')
+      
+      setClientSecret(data.client_secret)
+      setDebugInfo({
+        method: 'direct_stripe',
+        payment_intent_id: data.payment_intent_id,
+        amount: data.amount,
+        currency: data.currency,
+        hasClientSecret: !!data.client_secret
+      })
+      setLoading(false)
     }
     
     initializePayment()
@@ -231,6 +291,9 @@ export function StripeCheckout({ amount, cartId, email, onSuccess }: StripeCheck
       <div className="p-4 bg-red-50 text-red-700 rounded-lg">
         <p className="font-medium">Payment initialization failed</p>
         <p className="text-sm mt-1">{error}</p>
+        <p className="text-xs mt-1 text-gray-600">
+          Both Medusa payment system and direct Stripe fallback failed.
+        </p>
         {debugInfo && (
           <div className="mt-2 p-2 bg-gray-100 rounded text-xs text-gray-700">
             <p>Debug Info:</p>
