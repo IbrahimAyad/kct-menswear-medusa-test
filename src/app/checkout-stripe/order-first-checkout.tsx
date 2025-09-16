@@ -6,6 +6,7 @@ import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-
 import { Button } from '@/components/ui/button'
 import { AlertCircle, CreditCard, Loader2 } from 'lucide-react'
 import { STRIPE_PUBLISHABLE_KEY, isValidStripeKey } from '@/lib/stripe-config'
+import { ensurePaymentConfirmed } from '@/lib/payment-confirmation'
 
 // Load Stripe
 const stripePromise = isValidStripeKey(STRIPE_PUBLISHABLE_KEY) 
@@ -71,7 +72,23 @@ function PaymentForm({ orderId, amount, onSuccess }: { orderId: string, amount: 
       }
 
       // If we get here without redirect, payment succeeded
-      if (paymentIntent && paymentIntent.status === 'succeeded') {
+      if (paymentIntent && (paymentIntent.status === 'succeeded' || paymentIntent.status === 'processing')) {
+        // Use the retry logic to confirm payment
+        console.log('Payment successful, confirming with backend...')
+        
+        const confirmResult = await ensurePaymentConfirmed(
+          paymentIntent.id,
+          orderId
+        )
+
+        if (!confirmResult.success) {
+          console.error('Failed to confirm payment after retries:', confirmResult.error)
+          // Still redirect to success page - webhook might handle it
+        } else {
+          console.log('Payment confirmed successfully:', confirmResult)
+        }
+
+        // Redirect to success page
         window.location.href = `/checkout/success?order_id=${orderId}&payment_intent=${paymentIntent.id}`
       } else {
         onSuccess()
