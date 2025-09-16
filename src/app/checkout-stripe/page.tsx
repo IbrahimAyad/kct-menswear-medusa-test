@@ -571,6 +571,26 @@ export default function StripeCheckoutPage() {
                 amount={total * 100} // Convert to cents
                 cartId={cart.id}
                 email={shippingInfo.email}
+                shippingAddress={{
+                  first_name: shippingInfo.first_name,
+                  last_name: shippingInfo.last_name,
+                  address_1: shippingInfo.address_1,
+                  address_2: '',
+                  city: shippingInfo.city,
+                  province: shippingInfo.state,
+                  postal_code: shippingInfo.postal_code,
+                  country_code: 'us',
+                  phone: shippingInfo.phone
+                }}
+                items={cart.items.map((item: any) => ({
+                  title: item.title,
+                  variant_id: item.variant?.id,
+                  product_id: item.product?.id,
+                  quantity: item.quantity,
+                  unit_price: item.unit_price || 0,
+                  variant: item.variant,
+                  product: item.product
+                }))}
                 onSuccess={() => {
                   // DISABLED: Cart deletion moved to after order confirmation - let success page handle it
                   router.push(`/checkout/success?cart_id=${cart.id}`)

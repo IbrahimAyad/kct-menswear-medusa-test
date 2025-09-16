@@ -40,6 +40,9 @@ interface StripeCheckoutProps {
   amount: number
   cartId: string
   email?: string
+  shippingAddress?: any
+  billingAddress?: any
+  items?: any[]
   onSuccess: () => void
 }
 
@@ -175,14 +178,14 @@ function PaymentForm({ amount, cartId, onSuccess, debugInfo }: PaymentFormProps)
   )
 }
 
-export function StripeCheckout({ amount, cartId, email, onSuccess }: StripeCheckoutProps) {
+export function StripeCheckout({ amount, cartId, email, shippingAddress, billingAddress, items, onSuccess }: StripeCheckoutProps) {
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [debugInfo, setDebugInfo] = useState<any>(null)
 
   useEffect(() => {
-    console.log('Creating payment session for:', { amount, cartId, email })
+    console.log('Creating payment session for:', { amount, cartId, email, hasShipping: !!shippingAddress, hasItems: !!items })
     
     // Create payment session with order-first approach (primary), then fallback to bypass
     const initializePayment = async () => {
@@ -206,12 +209,9 @@ export function StripeCheckout({ amount, cartId, email, onSuccess }: StripeCheck
     const tryOrderFirstPayment = async () => {
       console.log('🎯 Creating order-first payment...')
       
-      // Get cart details first
-      const { cart } = await medusa.store.cart.retrieve(cartId)
-      if (!cart) {
-        throw new Error('Cart not found')
-      }
-
+      // Use passed props instead of fetching cart again
+      const useBillingAddress = billingAddress || shippingAddress
+      
       // Call our order-first checkout endpoint
       const response = await fetch(`${MEDUSA_CONFIG.baseUrl}/store/checkout/create-order`, {
         method: 'POST',
@@ -220,9 +220,12 @@ export function StripeCheckout({ amount, cartId, email, onSuccess }: StripeCheck
         },
         body: JSON.stringify({
           cart_id: cartId,
-          customer_email: email || cart.email,
-          shipping_address: cart.shipping_address,
-          billing_address: cart.billing_address
+          customer_email: email,
+          shipping_address: shippingAddress,
+          billing_address: useBillingAddress,
+          items: items,
+          amount: amount,
+          currency_code: 'usd'
         })
       })
 
@@ -255,12 +258,9 @@ export function StripeCheckout({ amount, cartId, email, onSuccess }: StripeCheck
     const tryDirectStripePayment = async () => {
       console.log('🚀 Attempting bypass Stripe payment (fallback)...')
       
-      // Get cart details first
-      const { cart } = await medusa.store.cart.retrieve(cartId)
-      if (!cart) {
-        throw new Error('Cart not found')
-      }
-
+      // Use passed props instead of fetching cart again
+      const useBillingAddress = billingAddress || shippingAddress
+      
       // Call our bypass Stripe endpoint (fallback method)
       const response = await fetch(`${MEDUSA_CONFIG.baseUrl}/stripe-bypass`, {
         method: 'POST',
@@ -269,9 +269,12 @@ export function StripeCheckout({ amount, cartId, email, onSuccess }: StripeCheck
         },
         body: JSON.stringify({
           cart_id: cartId,
-          customer_email: email || cart.email,
-          shipping_address: cart.shipping_address,
-          billing_address: cart.billing_address
+          customer_email: email,
+          shipping_address: shippingAddress,
+          billing_address: useBillingAddress,
+          items: items,
+          amount: amount,
+          currency_code: 'usd'
         })
       })
 
@@ -302,7 +305,7 @@ export function StripeCheckout({ amount, cartId, email, onSuccess }: StripeCheck
     }
     
     initializePayment()
-  }, [amount, cartId, email])
+  }, [amount, cartId, email, shippingAddress, billingAddress, items])
 
   if (loading) {
     return (
