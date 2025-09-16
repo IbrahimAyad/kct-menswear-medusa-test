@@ -125,6 +125,7 @@ export class CheckoutHandler {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY!,
         },
         body: JSON.stringify({
           cart_id: cartId,
@@ -178,6 +179,7 @@ export class CheckoutHandler {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY!,
         },
         body: JSON.stringify({
           cart_id: cartId,
