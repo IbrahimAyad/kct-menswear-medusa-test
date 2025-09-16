@@ -121,10 +121,31 @@ export class CheckoutHandler {
     try {
       console.log('🎯 Creating order-first payment...')
       
+      // Get cart data first
+      const cart = cartAdapter.getCart()
+      if (!cart || !cart.items || cart.items.length === 0) {
+        throw new Error('Cart is empty or invalid')
+      }
+
+      // Extract cart items
+      const items = cart.items.map(item => ({
+        title: item.product?.title || item.title || 'Product',
+        variant_id: item.variant_id,
+        product_id: item.product?.id,
+        quantity: item.quantity,
+        unit_price: item.unit_price || item.product?.price || 0,
+        metadata: {
+          variant: item.variant,
+          product_handle: item.product?.handle
+        }
+      }))
+      
       const publishableKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || 'pk_4c24b336db3f8819867bec16f4b51db9654e557abbcfbbe003f7ffd8463c3c81';
 
       console.log('🔑 Using publishable key:', publishableKey.substring(0, 20) + '...');
       console.log('🔗 Calling endpoint:', `${MEDUSA_CONFIG.baseUrl}/store/checkout/create-order`);
+      console.log('📦 Sending items:', items.length, 'items');
+      console.log('💰 Total amount:', cart.total || 0);
 
       if (!publishableKey || !publishableKey.startsWith('pk_')) {
         console.error('Invalid publishable key:', publishableKey);
@@ -139,9 +160,12 @@ export class CheckoutHandler {
         },
         body: JSON.stringify({
           cart_id: cartId,
-          customer_email: email,
+          email: email,  // ✅ CORRECT FIELD NAME
           shipping_address: shippingAddress,
-          billing_address: billingAddress
+          billing_address: billingAddress,
+          items: items,  // ✅ ADD ITEMS
+          amount: cart.total || 0,  // ✅ ADD AMOUNT
+          currency_code: 'usd'  // ✅ ADD CURRENCY
         })
       })
 
@@ -196,6 +220,16 @@ export class CheckoutHandler {
     try {
       console.log('🚀 Creating bypass Stripe payment (fallback)...')
       
+      // Get cart data
+      const cart = cartAdapter.getCart()
+      const items = cart?.items?.map(item => ({
+        title: item.product?.title || item.title || 'Product',
+        variant_id: item.variant_id,
+        product_id: item.product?.id,
+        quantity: item.quantity,
+        unit_price: item.unit_price || item.product?.price || 0
+      })) || []
+      
       const publishableKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || 'pk_4c24b336db3f8819867bec16f4b51db9654e557abbcfbbe003f7ffd8463c3c81';
 
       console.log('🔑 Using publishable key:', publishableKey.substring(0, 20) + '...');
@@ -214,9 +248,12 @@ export class CheckoutHandler {
         },
         body: JSON.stringify({
           cart_id: cartId,
-          customer_email: email,
+          email: email,  // ✅ FIX FIELD NAME
           shipping_address: shippingAddress,
-          billing_address: billingAddress
+          billing_address: billingAddress,
+          items: items,
+          amount: cart?.total || 0,
+          currency_code: 'usd'
         })
       })
 
