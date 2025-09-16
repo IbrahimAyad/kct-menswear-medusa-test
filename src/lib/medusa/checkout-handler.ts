@@ -121,11 +121,21 @@ export class CheckoutHandler {
     try {
       console.log('🎯 Creating order-first payment...')
       
+      const publishableKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || 'pk_4c24b336db3f8819867bec16f4b51db9654e557abbcfbbe003f7ffd8463c3c81';
+
+      console.log('🔑 Using publishable key:', publishableKey.substring(0, 20) + '...');
+      console.log('🔗 Calling endpoint:', `${MEDUSA_CONFIG.baseUrl}/store/checkout/create-order`);
+
+      if (!publishableKey || !publishableKey.startsWith('pk_')) {
+        console.error('Invalid publishable key:', publishableKey);
+        throw new Error('Invalid or missing Medusa publishable key');
+      }
+      
       const response = await fetch(`${MEDUSA_CONFIG.baseUrl}/store/checkout/create-order`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY!,
+          'x-publishable-api-key': publishableKey,
         },
         body: JSON.stringify({
           cart_id: cartId,
@@ -136,8 +146,19 @@ export class CheckoutHandler {
       })
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.error || `Order-first payment failed: ${response.status}`)
+        const errorText = await response.text();
+        console.error('Request failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          body: errorText
+        });
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { error: errorText };
+        }
+        throw new Error(errorData.error || `Order-first payment failed: ${response.status}`);
       }
 
       const data = await response.json()
@@ -175,11 +196,21 @@ export class CheckoutHandler {
     try {
       console.log('🚀 Creating bypass Stripe payment (fallback)...')
       
+      const publishableKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || 'pk_4c24b336db3f8819867bec16f4b51db9654e557abbcfbbe003f7ffd8463c3c81';
+
+      console.log('🔑 Using publishable key:', publishableKey.substring(0, 20) + '...');
+      console.log('🔗 Calling endpoint:', `${MEDUSA_CONFIG.baseUrl}/stripe-bypass`);
+
+      if (!publishableKey || !publishableKey.startsWith('pk_')) {
+        console.error('Invalid publishable key:', publishableKey);
+        throw new Error('Invalid or missing Medusa publishable key');
+      }
+      
       const response = await fetch(`${MEDUSA_CONFIG.baseUrl}/stripe-bypass`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY!,
+          'x-publishable-api-key': publishableKey,
         },
         body: JSON.stringify({
           cart_id: cartId,
@@ -190,8 +221,19 @@ export class CheckoutHandler {
       })
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.error || `Bypass payment failed: ${response.status}`)
+        const errorText = await response.text();
+        console.error('Request failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          body: errorText
+        });
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { error: errorText };
+        }
+        throw new Error(errorData.error || `Bypass payment failed: ${response.status}`);
       }
 
       const data = await response.json()
