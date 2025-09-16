@@ -28,7 +28,7 @@ interface CheckoutData {
 
 export class CheckoutHandler {
   /**
-   * Complete checkout process with Medusa (with direct Stripe fallback)
+   * Complete checkout process with order-first approach (primary), then fallback to bypass
    */
   async processCheckout(checkoutData: CheckoutData) {
     try {
@@ -63,50 +63,41 @@ export class CheckoutHandler {
         })
       }
 
-      // Step 6: Try to initialize payment with Medusa first, then fallback to direct Stripe
+      // Step 6: Try order-first checkout endpoint first (primary method)
       try {
-        console.log('Attempting Medusa payment initialization...')
+        console.log('Attempting order-first checkout (primary method)...')
+        const orderFirstResult = await this.createOrderFirstPayment(cart.id, checkoutData.email, checkoutData.shippingAddress, billingAddress)
         
-        // Need to pass the cart object, not just the ID
-        const paymentCollection = await medusa.store.payment.initiatePaymentSession(
-          cart,
-          {
-            provider_id: 'pp_stripe_stripe',  // Correct Stripe provider ID
-          }
-        )
-
-        // Get payment session client secret for Stripe
-        const clientSecret = paymentCollection.payment_sessions?.[0]?.data?.client_secret
-
-        if (clientSecret) {
-          console.log('✅ Medusa payment session created successfully')
+        if (orderFirstResult.success) {
+          console.log('✅ Order-first checkout created successfully')
           return {
             success: true,
             cartId: cart.id,
-            clientSecret,
-            paymentSessionId: paymentCollection.payment_sessions?.[0]?.id,
-            method: 'medusa'
+            clientSecret: orderFirstResult.clientSecret,
+            paymentIntentId: orderFirstResult.paymentIntentId,
+            orderId: orderFirstResult.orderId,
+            method: 'order_first'
           }
         } else {
-          throw new Error('No client secret received from Medusa payment session')
+          throw new Error(orderFirstResult.error || 'Order-first checkout failed')
         }
-      } catch (medusaError) {
-        console.warn('Medusa payment failed, attempting direct Stripe fallback:', medusaError)
+      } catch (orderFirstError) {
+        console.warn('Order-first checkout failed, attempting bypass fallback:', orderFirstError)
         
-        // Fallback to direct Stripe payment
-        const directResult = await this.createDirectStripePayment(cart.id, checkoutData.email, checkoutData.shippingAddress, billingAddress)
+        // Fallback to bypass Stripe payment (only if order-first fails)
+        const bypassResult = await this.createDirectStripePayment(cart.id, checkoutData.email, checkoutData.shippingAddress, billingAddress)
         
-        if (directResult.success) {
-          console.log('✅ Direct Stripe payment created successfully')
+        if (bypassResult.success) {
+          console.log('✅ Bypass Stripe payment created successfully')
           return {
             success: true,
             cartId: cart.id,
-            clientSecret: directResult.clientSecret,
-            paymentIntentId: directResult.paymentIntentId,
-            method: 'direct_stripe'
+            clientSecret: bypassResult.clientSecret,
+            paymentIntentId: bypassResult.paymentIntentId,
+            method: 'bypass_stripe'
           }
         } else {
-          throw new Error(directResult.error || 'Both Medusa and direct Stripe payment failed')
+          throw new Error(bypassResult.error || 'Both order-first and bypass payment failed')
         }
       }
     } catch (error) {
@@ -119,7 +110,60 @@ export class CheckoutHandler {
   }
 
   /**
-   * Create direct Stripe payment (bypass Medusa payment system)
+   * Create order-first payment (primary method with proper tax calculation)
+   */
+  async createOrderFirstPayment(
+    cartId: string, 
+    email: string, 
+    shippingAddress: any, 
+    billingAddress: any
+  ) {
+    try {
+      console.log('🎯 Creating order-first payment...')
+      
+      const response = await fetch(`${MEDUSA_CONFIG.baseUrl}/store/checkout/create-order`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          cart_id: cartId,
+          customer_email: email,
+          shipping_address: shippingAddress,
+          billing_address: billingAddress
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `Order-first payment failed: ${response.status}`)
+      }
+
+      const data = await response.json()
+      
+      if (!data.success || !data.client_secret) {
+        throw new Error(data.error || 'Order-first payment failed - no client secret')
+      }
+
+      return {
+        success: true,
+        clientSecret: data.client_secret,
+        paymentIntentId: data.payment_intent_id,
+        orderId: data.order_id,
+        amount: data.amount,
+        currency: data.currency
+      }
+    } catch (error) {
+      console.error('Order-first payment creation failed:', error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Order-first payment creation failed'
+      }
+    }
+  }
+
+  /**
+   * Create direct Stripe payment (bypass Medusa payment system - fallback only)
    */
   async createDirectStripePayment(
     cartId: string, 
@@ -128,7 +172,7 @@ export class CheckoutHandler {
     billingAddress: any
   ) {
     try {
-      console.log('🚀 Creating direct Stripe payment...')
+      console.log('🚀 Creating bypass Stripe payment (fallback)...')
       
       const response = await fetch(`${MEDUSA_CONFIG.baseUrl}/stripe-bypass`, {
         method: 'POST',
@@ -145,13 +189,13 @@ export class CheckoutHandler {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.error || `Direct payment failed: ${response.status}`)
+        throw new Error(errorData.error || `Bypass payment failed: ${response.status}`)
       }
 
       const data = await response.json()
       
       if (!data.success || !data.client_secret) {
-        throw new Error(data.error || 'Direct payment failed - no client secret')
+        throw new Error(data.error || 'Bypass payment failed - no client secret')
       }
 
       return {
@@ -162,10 +206,10 @@ export class CheckoutHandler {
         currency: data.currency
       }
     } catch (error) {
-      console.error('Direct Stripe payment creation failed:', error)
+      console.error('Bypass Stripe payment creation failed:', error)
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Direct payment creation failed'
+        error: error instanceof Error ? error.message : 'Bypass payment creation failed'
       }
     }
   }

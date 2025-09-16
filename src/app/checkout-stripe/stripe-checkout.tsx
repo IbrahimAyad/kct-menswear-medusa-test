@@ -152,14 +152,14 @@ export function StripeCheckout({ amount, cartId, email, onSuccess }: StripeCheck
   useEffect(() => {
     console.log('Creating payment session for:', { amount, cartId, email })
     
-    // Create payment session with fallback mechanism
+    // Create payment session with order-first approach (primary), then fallback to bypass
     const initializePayment = async () => {
       try {
-        // First try the regular Medusa payment system
-        console.log('Attempting Medusa payment initialization...')
-        await tryMedusaPayment()
-      } catch (medusaError: any) {
-        console.warn('Medusa payment failed, trying direct Stripe fallback:', medusaError.message)
+        // First try the order-first checkout endpoint (primary method)
+        console.log('Attempting order-first checkout (primary method)...')
+        await tryOrderFirstPayment()
+      } catch (orderFirstError: any) {
+        console.warn('Order-first checkout failed, trying bypass fallback:', orderFirstError.message)
         
         try {
           await tryDirectStripePayment()
@@ -171,63 +171,8 @@ export function StripeCheckout({ amount, cartId, email, onSuccess }: StripeCheck
       }
     }
 
-    const tryMedusaPayment = async () => {
-      // First, retrieve the full cart object
-      console.log('Retrieving cart:', cartId)
-      const { cart } = await medusa.store.cart.retrieve(cartId)
-      
-      if (!cart) {
-        throw new Error('Cart not found')
-      }
-      
-      // Get available payment providers to ensure Stripe is enabled
-      const providers = await medusa.store.payment.listPaymentProviders({
-        region_id: MEDUSA_CONFIG.regionId
-      })
-      const stripeProvider = providers.payment_providers?.find((p: any) => 
-        p.id === 'pp_stripe_stripe' && p.is_enabled
-      )
-      
-      if (!stripeProvider) {
-        throw new Error('Stripe payment provider is not available')
-      }
-      
-      setDebugInfo({ providers: providers.payment_providers?.map((p: any) => ({ id: p.id, enabled: p.is_enabled })) || [] })
-      
-      // Initialize payment session with Stripe - passing cart object
-      console.log('Creating payment session for cart:', cartId)
-      const paymentCollection = await medusa.store.payment.initiatePaymentSession(
-        cart,  // Pass cart object, not cart ID
-        { 
-          provider_id: 'pp_stripe_stripe'  // Correct Stripe provider ID
-        }
-      )
-      
-      // Extract client secret from the Stripe session
-      const stripeSession = paymentCollection.payment_sessions?.find(
-        (session: any) => session.provider_id === 'pp_stripe_stripe'
-      )
-      
-      if (!stripeSession?.data?.client_secret) {
-        throw new Error('Failed to create Stripe payment session - no client secret received')
-      }
-      
-      const clientSecret = stripeSession.data.client_secret
-      console.log('✅ Payment session created via Medusa')
-      console.log('Client secret received:', clientSecret.substring(0, 20) + '...')
-      
-      setClientSecret(clientSecret)
-      setDebugInfo({
-        method: 'medusa',
-        providers: providers.payment_providers?.map((p: any) => ({ id: p.id, enabled: p.is_enabled })) || [],
-        paymentSessionId: stripeSession.id,
-        hasClientSecret: !!clientSecret
-      })
-      setLoading(false)
-    }
-
-    const tryDirectStripePayment = async () => {
-      console.log('🚀 Attempting direct Stripe payment...')
+    const tryOrderFirstPayment = async () => {
+      console.log('🎯 Creating order-first payment...')
       
       // Get cart details first
       const { cart } = await medusa.store.cart.retrieve(cartId)
@@ -235,8 +180,8 @@ export function StripeCheckout({ amount, cartId, email, onSuccess }: StripeCheck
         throw new Error('Cart not found')
       }
 
-      // Call our TOTAL BYPASS Stripe endpoint
-      const response = await fetch('https://backend-production-7441.up.railway.app/stripe-bypass', {
+      // Call our order-first checkout endpoint
+      const response = await fetch(`${MEDUSA_CONFIG.baseUrl}/store/checkout/create-order`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -251,21 +196,70 @@ export function StripeCheckout({ amount, cartId, email, onSuccess }: StripeCheck
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.error || `Direct payment failed: ${response.status}`)
+        throw new Error(errorData.error || `Order-first payment failed: ${response.status}`)
       }
 
       const data = await response.json()
       
       if (!data.success || !data.client_secret) {
-        throw new Error(data.error || 'Direct payment failed - no client secret')
+        throw new Error(data.error || 'Order-first payment failed - no client secret')
       }
 
-      console.log('✅ Direct Stripe payment initialized successfully')
+      console.log('✅ Order-first payment initialized successfully')
       console.log('Client secret received:', data.client_secret.substring(0, 20) + '...')
       
       setClientSecret(data.client_secret)
       setDebugInfo({
-        method: 'direct_stripe',
+        method: 'order_first',
+        payment_intent_id: data.payment_intent_id,
+        order_id: data.order_id,
+        amount: data.amount,
+        currency: data.currency,
+        hasClientSecret: !!data.client_secret
+      })
+      setLoading(false)
+    }
+
+    const tryDirectStripePayment = async () => {
+      console.log('🚀 Attempting bypass Stripe payment (fallback)...')
+      
+      // Get cart details first
+      const { cart } = await medusa.store.cart.retrieve(cartId)
+      if (!cart) {
+        throw new Error('Cart not found')
+      }
+
+      // Call our bypass Stripe endpoint (fallback method)
+      const response = await fetch(`${MEDUSA_CONFIG.baseUrl}/stripe-bypass`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          cart_id: cartId,
+          customer_email: email || cart.email,
+          shipping_address: cart.shipping_address,
+          billing_address: cart.billing_address
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `Bypass payment failed: ${response.status}`)
+      }
+
+      const data = await response.json()
+      
+      if (!data.success || !data.client_secret) {
+        throw new Error(data.error || 'Bypass payment failed - no client secret')
+      }
+
+      console.log('✅ Bypass Stripe payment initialized successfully')
+      console.log('Client secret received:', data.client_secret.substring(0, 20) + '...')
+      
+      setClientSecret(data.client_secret)
+      setDebugInfo({
+        method: 'bypass_stripe',
         payment_intent_id: data.payment_intent_id,
         amount: data.amount,
         currency: data.currency,
@@ -304,7 +298,7 @@ export function StripeCheckout({ amount, cartId, email, onSuccess }: StripeCheck
             <h3 className="font-medium text-red-900">Payment initialization failed</h3>
             <p className="text-sm mt-1 text-red-700">{error}</p>
             <p className="text-xs mt-2 text-red-600">
-              Both Medusa payment system and direct Stripe fallback failed.
+              Both order-first checkout and bypass Stripe fallback failed.
             </p>
             
             {debugInfo && (

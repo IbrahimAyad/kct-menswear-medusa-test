@@ -56,10 +56,10 @@ export default function CheckoutSuccessPage() {
       try {
         console.log(`Polling attempt ${attempt}/${maxAttempts} for cart: ${cartId}`);
         
-        const response = await fetch(`/store/orders/check?cart_id=${cartId}`, {
+        // Use our proxy API route to avoid CORS issues
+        const response = await fetch(`/api/orders/check?cart_id=${cartId}`, {
           method: 'GET',
           headers: {
-            'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || '',
             'Content-Type': 'application/json',
           },
         });
@@ -75,9 +75,18 @@ export default function CheckoutSuccessPage() {
           }
         } else {
           console.log(`Polling attempt ${attempt} failed with status:`, response.status);
+          if (response.status === 404) {
+            console.log('Order check endpoint not found - this is expected if order is not created yet');
+          } else if (response.status >= 500) {
+            console.log('Server error when checking order status');
+          }
         }
       } catch (error) {
         console.warn(`Polling attempt ${attempt} error:`, error);
+        // Check if it's a CORS or network error
+        if (error instanceof TypeError && error.message.includes('fetch')) {
+          console.log('Network error - possibly CORS or backend not reachable');
+        }
       }
       
       // Wait 2 seconds before next attempt (except on last attempt)
