@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { AlertCircle, CreditCard, Loader2 } from 'lucide-react'
 import { STRIPE_PUBLISHABLE_KEY, isValidStripeKey } from '@/lib/stripe-config'
 import { medusa, MEDUSA_CONFIG } from '@/lib/medusa/client'
+import { ensurePaymentConfirmed } from '@/lib/payment-confirmation'
 
 // Validate the key first
 if (!isValidStripeKey(STRIPE_PUBLISHABLE_KEY)) {
@@ -42,7 +43,11 @@ interface StripeCheckoutProps {
   onSuccess: () => void
 }
 
-function PaymentForm({ amount, cartId, onSuccess }: StripeCheckoutProps) {
+interface PaymentFormProps extends StripeCheckoutProps {
+  debugInfo: any
+}
+
+function PaymentForm({ amount, cartId, onSuccess, debugInfo }: PaymentFormProps) {
   const stripe = useStripe()
   const elements = useElements()
   const [error, setError] = useState<string | null>(null)
@@ -78,16 +83,43 @@ function PaymentForm({ amount, cartId, onSuccess }: StripeCheckoutProps) {
 
       // If we get here without redirect, payment succeeded
       if (paymentIntent && paymentIntent.status === 'succeeded') {
-        // Complete the order via Medusa
-        try {
-          const order = await medusa.store.cart.complete(cartId)
-          console.log('Order completed via Medusa:', order)
-        } catch (orderError) {
-          console.error('Order completion error:', orderError)
+        // Handle different payment methods
+        if (debugInfo?.method === 'bypass_stripe' && debugInfo?.order_id) {
+          // For bypass method, use payment confirmation with order_id
+          console.log('Payment successful via bypass, confirming with backend...')
+          
+          try {
+            const confirmResult = await ensurePaymentConfirmed(
+              paymentIntent.id,
+              debugInfo.order_id
+            )
+            
+            if (!confirmResult.success) {
+              console.error('Failed to confirm payment after retries:', confirmResult.error)
+              // Still redirect to success page - webhook might handle it
+            } else {
+              console.log('Payment confirmed successfully:', confirmResult)
+            }
+            
+            // Redirect to success page with order details
+            window.location.href = `/checkout/success?order_id=${debugInfo.order_id}&payment_intent=${paymentIntent.id}`
+          } catch (confirmError) {
+            console.error('Payment confirmation error:', confirmError)
+            // Still redirect - payment succeeded, just confirmation failed
+            window.location.href = `/checkout/success?order_id=${debugInfo.order_id}&payment_intent=${paymentIntent.id}`
+          }
+        } else {
+          // For regular method, complete order via Medusa
+          try {
+            const order = await medusa.store.cart.complete(cartId)
+            console.log('Order completed via Medusa:', order)
+          } catch (orderError) {
+            console.error('Order completion error:', orderError)
+          }
+          
+          // Redirect to success page with payment details
+          window.location.href = `/checkout/success?payment_intent=${paymentIntent.id}&cart_id=${cartId}`
         }
-        
-        // Redirect to success page with payment details
-        window.location.href = `/checkout/success?payment_intent=${paymentIntent.id}&cart_id=${cartId}`
       } else {
         onSuccess()
       }
@@ -261,6 +293,7 @@ export function StripeCheckout({ amount, cartId, email, onSuccess }: StripeCheck
       setDebugInfo({
         method: 'bypass_stripe',
         payment_intent_id: data.payment_intent_id,
+        order_id: data.order_id,
         amount: data.amount,
         currency: data.currency,
         hasClientSecret: !!data.client_secret
@@ -364,7 +397,8 @@ export function StripeCheckout({ amount, cartId, email, onSuccess }: StripeCheck
       <PaymentForm 
         amount={amount} 
         cartId={cartId} 
-        onSuccess={onSuccess} 
+        onSuccess={onSuccess}
+        debugInfo={debugInfo}
       />
     </Elements>
   )

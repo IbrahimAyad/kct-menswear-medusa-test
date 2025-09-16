@@ -94,6 +94,7 @@ export class CheckoutHandler {
             cartId: cart.id,
             clientSecret: bypassResult.clientSecret,
             paymentIntentId: bypassResult.paymentIntentId,
+            orderId: bypassResult.orderId,
             method: 'bypass_stripe'
           }
         } else {
@@ -283,6 +284,7 @@ export class CheckoutHandler {
         success: true,
         clientSecret: data.client_secret,
         paymentIntentId: data.payment_intent_id,
+        orderId: data.order_id,
         amount: data.amount,
         currency: data.currency
       }
