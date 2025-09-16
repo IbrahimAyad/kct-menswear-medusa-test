@@ -12,7 +12,7 @@ if (!process.env.STRIPE_WEBHOOK_SECRET) {
 
 // Only initialize if keys are available
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2024-04-10',
+  apiVersion: '2025-08-27.basil',
 }) : null
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET

@@ -18,7 +18,7 @@ if (!stripeKey) {
 }
 
 const stripe = stripeKey ? new Stripe(stripeKey, {
-  apiVersion: '2024-04-10', // Use latest stable API version
+  apiVersion: '2025-08-27.basil', // Use latest stable API version
   typescript: true,
 }) : null
 
