@@ -580,11 +580,12 @@ function CollectionsContent() {
                 
                 return (
                   <div key={product.id} className="group">
-                    <Link 
-                      href={`/products/${product.handle}`}
-                      className="block"
-                    >
-                      <div className="bg-white rounded-lg overflow-hidden hover:shadow-xl transition-all duration-300">
+                    <div className="bg-white rounded-lg overflow-hidden hover:shadow-xl transition-all duration-300">
+                      {/* Clickable product image and details */}
+                      <Link 
+                        href={`/products/${product.handle}`}
+                        className="block"
+                      >
                         <div className="relative aspect-[3/4] bg-gray-100">
                           {product.thumbnail && (
                             <Image
@@ -598,15 +599,8 @@ function CollectionsContent() {
                             />
                           )}
                           
-                          {/* Wishlist Button */}
-                          <div className="absolute top-2 right-2 z-10">
-                            <div className="bg-white/90 backdrop-blur-sm rounded-full">
-                              <WishlistButton product={product} size="sm" />
-                            </div>
-                          </div>
-                          
                           {/* Badges */}
-                          <div className="absolute top-2 left-2 flex flex-col gap-1">
+                          <div className="absolute top-2 left-2 flex flex-col gap-1 pointer-events-none">
                             {collections.includes('wedding') && (
                               <span className="bg-purple-600 text-white text-xs px-2 py-1 rounded">
                                 Wedding
@@ -623,22 +617,27 @@ function CollectionsContent() {
                               </span>
                             )}
                           </div>
-                          
-                          {/* Select Options Button - Always show on hover */}
-                          <div className="absolute bottom-4 left-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Link 
-                              href={`/products/${product.handle}`}
-                              className="block w-full bg-white text-black py-2 px-4 rounded-lg text-center font-medium hover:bg-gray-100 transition-colors"
-                            >
-                              Select Options
-                            </Link>
-                          </div>
                         </div>
+                      </Link>
+                      
+                      {/* Wishlist Button - Outside the link */}
+                      <div className="absolute top-2 right-2 z-10">
+                        <div className="bg-white/90 backdrop-blur-sm rounded-full">
+                          <WishlistButton product={product} size="sm" />
+                        </div>
+                      </div>
+                      
+                      {/* Product Details */}
+                      <div className="p-4">
+                        <Link 
+                          href={`/products/${product.handle}`}
+                          className="block hover:text-gray-700"
+                        >
+                          <h3 className="font-medium text-sm mb-1 line-clamp-2">
+                            {product.title}
+                          </h3>
                         
-                        <div className="p-4">
-                        <h3 className="font-medium text-sm mb-1 line-clamp-2">
-                          {product.title}
-                        </h3>
+                        </Link>
                         
                         {/* Color indicator */}
                         {color && (
@@ -653,18 +652,25 @@ function CollectionsContent() {
                           </div>
                         )}
                         
-                        <p className="text-lg font-semibold">
+                        <p className="text-lg font-semibold mb-3">
                           ${getProductPriceAsNumber(product).toFixed(2)}
                         </p>
+                        
+                        {/* Select Options Button */}
+                        <Link 
+                          href={`/products/${product.handle}`}
+                          className="block w-full bg-black text-white py-2 px-4 rounded-lg text-center font-medium hover:bg-gray-800 transition-colors"
+                        >
+                          Select Options
+                        </Link>
                         
                         {stock.inStock && stock.totalQuantity <= 5 && (
                           <p className="text-xs text-red-600 mt-1">
                             {stock.message}
                           </p>
                         )}
-                        </div>
                       </div>
-                    </Link>
+                    </div>
                   </div>
                 )
               })}
