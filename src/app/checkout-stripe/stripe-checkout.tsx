@@ -223,7 +223,7 @@ export function StripeCheckout({ amount, cartId, email, shippingAddress, billing
         },
         body: JSON.stringify({
           cart_id: cartId,
-          customer_email: email,
+          email: email,  // Fixed: backend expects 'email', not 'customer_email'
           shipping_address: shippingAddress,
           billing_address: useBillingAddress,
           items: items,
@@ -272,7 +272,7 @@ export function StripeCheckout({ amount, cartId, email, shippingAddress, billing
         },
         body: JSON.stringify({
           cart_id: cartId,
-          customer_email: email,
+          email: email,  // Fixed: backend expects 'email', not 'customer_email'
           shipping_address: shippingAddress,
           billing_address: useBillingAddress,
           items: items,
