@@ -4,7 +4,7 @@ import { Heart } from 'lucide-react'
 import { useWishlistStore } from '@/store/wishlistStore'
 import { MedusaProduct } from '@/services/medusaBackendService'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 interface WishlistButtonProps {
   product: MedusaProduct
@@ -21,7 +21,15 @@ export default function WishlistButton({
 }: WishlistButtonProps) {
   const { toggleItem, isInWishlist } = useWishlistStore()
   const [isAnimating, setIsAnimating] = useState(false)
-  const isWishlisted = isInWishlist(product.id)
+  const [mounted, setMounted] = useState(false)
+  
+  // Handle hydration mismatch with localStorage
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+  
+  // Only check wishlist status after mounting to avoid hydration mismatch
+  const isWishlisted = mounted ? isInWishlist(product.id) : false
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault()

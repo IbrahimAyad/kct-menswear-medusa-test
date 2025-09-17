@@ -580,7 +580,14 @@ function CollectionsContent() {
                 
                 return (
                   <div key={product.id} className="group">
-                    <div className="bg-white rounded-lg overflow-hidden hover:shadow-xl transition-all duration-300">
+                    <div className="bg-white rounded-lg overflow-hidden hover:shadow-xl transition-all duration-300 relative">
+                      {/* Wishlist Button - Outside the link, absolute positioned */}
+                      <div className="absolute top-2 right-2 z-10">
+                        <div className="bg-white/90 backdrop-blur-sm rounded-full">
+                          <WishlistButton product={product} size="sm" />
+                        </div>
+                      </div>
+                      
                       {/* Clickable product image and details */}
                       <Link 
                         href={`/products/medusa/${product.handle}`}
@@ -619,13 +626,6 @@ function CollectionsContent() {
                           </div>
                         </div>
                       </Link>
-                      
-                      {/* Wishlist Button - Outside the link */}
-                      <div className="absolute top-2 right-2 z-10">
-                        <div className="bg-white/90 backdrop-blur-sm rounded-full">
-                          <WishlistButton product={product} size="sm" />
-                        </div>
-                      </div>
                       
                       {/* Product Details */}
                       <div className="p-4">
