@@ -196,22 +196,16 @@ export function StripeCheckout({ amount, cartId, email, shippingAddress, billing
   useEffect(() => {
     console.log('Creating payment session for:', { amount, cartId, email, hasShipping: !!shippingAddress, hasItems: !!items })
     
-    // Create payment session with order-first approach (primary), then fallback to bypass
+    // Create payment session with optimized single method approach
     const initializePayment = async () => {
       try {
-        // First try the order-first checkout endpoint (primary method)
-        console.log('Attempting order-first checkout (primary method)...')
+        console.log('Initializing payment session...')
+        // Use order-first as primary method - no fallback for speed
         await tryOrderFirstPayment()
-      } catch (orderFirstError: any) {
-        console.warn('Order-first checkout failed, trying bypass fallback:', orderFirstError.message)
-        
-        try {
-          await tryDirectStripePayment()
-        } catch (directError: any) {
-          console.error('Both payment methods failed:', directError.message)
-          setError(`Payment initialization failed: ${directError.message}`)
-          setLoading(false)
-        }
+      } catch (error: any) {
+        console.error('Payment initialization failed:', error.message)
+        setError(`Payment initialization failed: ${error.message}`)
+        setLoading(false)
       }
     }
 
@@ -318,17 +312,10 @@ export function StripeCheckout({ amount, cartId, email, shippingAddress, billing
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center p-8 space-y-4">
-        <div className="relative">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-          <div className="absolute inset-0 rounded-full border-2 border-blue-100"></div>
-        </div>
-        <div className="text-center">
-          <p className="text-lg font-medium text-gray-900">Initializing payment...</p>
-          <p className="text-sm text-gray-500 mt-1">Setting up secure payment processing</p>
-        </div>
-        <div className="w-full max-w-xs bg-gray-200 rounded-full h-2">
-          <div className="bg-blue-600 h-2 rounded-full animate-pulse" style={{ width: '60%' }}></div>
+      <div className="flex items-center justify-center p-6">
+        <div className="flex items-center space-x-3">
+          <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+          <span className="text-sm text-gray-600">Preparing payment...</span>
         </div>
       </div>
     )

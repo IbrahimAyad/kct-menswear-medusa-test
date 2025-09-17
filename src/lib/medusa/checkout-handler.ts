@@ -29,7 +29,7 @@ interface CheckoutData {
 
 export class CheckoutHandler {
   /**
-   * Complete checkout process with order-first approach (primary), then fallback to bypass
+   * Complete checkout process with optimized order-first approach
    */
   async processCheckout(checkoutData: CheckoutData) {
     try {
@@ -38,11 +38,11 @@ export class CheckoutHandler {
         throw new Error('No cart available for checkout')
       }
 
-      // Step 1: Add customer email
-      await cartAdapter.setCustomerEmail(checkoutData.email)
-
-      // Step 2: Add shipping address
-      await cartAdapter.setShippingAddress(checkoutData.shippingAddress)
+      // Execute cart setup steps in parallel for speed
+      const [emailUpdate, shippingUpdate] = await Promise.all([
+        cartAdapter.setCustomerEmail(checkoutData.email),
+        cartAdapter.setShippingAddress(checkoutData.shippingAddress)
+      ])
 
       // Step 3: Add billing address (use shipping if not provided)
       const billingAddress = checkoutData.billingAddress || {
@@ -50,12 +50,13 @@ export class CheckoutHandler {
         phone: undefined, // billing doesn't need phone
       }
 
-      await medusa.store.cart.update(cart.id, {
-        billing_address: billingAddress,
-      })
-
-      // Step 4: List available shipping options
-      const shippingOptions = await medusa.store.shipping.listCartOptions(cart.id)
+      // Execute billing and shipping options in parallel
+      const [billingUpdate, shippingOptions] = await Promise.all([
+        medusa.store.cart.update(cart.id, {
+          billing_address: billingAddress,
+        }),
+        medusa.store.shipping.listCartOptions(cart.id)
+      ])
       
       // Step 5: Select first available shipping option
       if (shippingOptions.length > 0) {
@@ -64,43 +65,22 @@ export class CheckoutHandler {
         })
       }
 
-      // Step 6: Try order-first checkout endpoint first (primary method)
-      try {
-        console.log('Attempting order-first checkout (primary method)...')
-        const orderFirstResult = await this.createOrderFirstPayment(cart.id, checkoutData.email, checkoutData.shippingAddress, billingAddress)
-        
-        if (orderFirstResult.success) {
-          console.log('✅ Order-first checkout created successfully')
-          return {
-            success: true,
-            cartId: cart.id,
-            clientSecret: orderFirstResult.clientSecret,
-            paymentIntentId: orderFirstResult.paymentIntentId,
-            orderId: orderFirstResult.orderId,
-            method: 'order_first'
-          }
-        } else {
-          throw new Error(orderFirstResult.error || 'Order-first checkout failed')
+      // Step 6: Use order-first checkout (no fallback for speed)
+      console.log('Creating order-first payment...')
+      const orderFirstResult = await this.createOrderFirstPayment(cart.id, checkoutData.email, checkoutData.shippingAddress, billingAddress)
+      
+      if (orderFirstResult.success) {
+        console.log('✅ Order-first checkout created successfully')
+        return {
+          success: true,
+          cartId: cart.id,
+          clientSecret: orderFirstResult.clientSecret,
+          paymentIntentId: orderFirstResult.paymentIntentId,
+          orderId: orderFirstResult.orderId,
+          method: 'order_first'
         }
-      } catch (orderFirstError) {
-        console.warn('Order-first checkout failed, attempting bypass fallback:', orderFirstError)
-        
-        // Fallback to bypass Stripe payment (only if order-first fails)
-        const bypassResult = await this.createDirectStripePayment(cart.id, checkoutData.email, checkoutData.shippingAddress, billingAddress)
-        
-        if (bypassResult.success) {
-          console.log('✅ Bypass Stripe payment created successfully')
-          return {
-            success: true,
-            cartId: cart.id,
-            clientSecret: bypassResult.clientSecret,
-            paymentIntentId: bypassResult.paymentIntentId,
-            orderId: bypassResult.orderId,
-            method: 'bypass_stripe'
-          }
-        } else {
-          throw new Error(bypassResult.error || 'Both order-first and bypass payment failed')
-        }
+      } else {
+        throw new Error(orderFirstResult.error || 'Order-first checkout failed')
       }
     } catch (error) {
       console.error('Checkout failed:', error)

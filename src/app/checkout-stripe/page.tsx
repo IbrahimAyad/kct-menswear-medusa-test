@@ -533,7 +533,7 @@ export default function StripeCheckoutPage() {
                 {initializingPayment ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processing...
+                    Preparing payment...
                   </>
                 ) : (
                   'Continue to Payment'
