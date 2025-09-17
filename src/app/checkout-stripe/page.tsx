@@ -584,8 +584,8 @@ export default function StripeCheckoutPage() {
                 }}
                 items={cart.items.map((item: any) => ({
                   title: item.title,
-                  variant_id: item.variant?.id,
-                  product_id: item.product?.id,
+                  variant_id: item.variant_id,  // Use variant_id directly from cart item
+                  product_id: item.product_id,  // Use product_id directly from cart item
                   quantity: item.quantity,
                   unit_price: item.unit_price || 0,
                   thumbnail: item.thumbnail,

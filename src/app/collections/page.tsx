@@ -579,68 +579,63 @@ function CollectionsContent() {
                 const isAboveTheFold = index < 8
                 
                 return (
-                  <Link 
-                    key={product.id} 
-                    href={`/products/medusa/${product.handle}`}
-                    className="group"
-                  >
-                    <div className="bg-white rounded-lg overflow-hidden hover:shadow-xl transition-all duration-300">
-                      <div className="relative aspect-[3/4] bg-gray-100">
-                        {product.thumbnail && (
-                          <Image
-                            src={product.thumbnail}
-                            alt={product.title}
-                            fill
-                            className="object-cover group-hover:scale-105 transition-transform duration-300"
-                            sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                            priority={isAboveTheFold}
-                            loading={isAboveTheFold ? 'eager' : 'lazy'}
-                          />
-                        )}
-                        
-                        {/* Wishlist Button */}
-                        <div className="absolute top-2 right-2 z-10">
-                          <div className="bg-white/90 backdrop-blur-sm rounded-full">
-                            <WishlistButton product={product} size="sm" />
+                  <div key={product.id} className="group">
+                    <Link 
+                      href={`/products/${product.handle}`}
+                      className="block"
+                    >
+                      <div className="bg-white rounded-lg overflow-hidden hover:shadow-xl transition-all duration-300">
+                        <div className="relative aspect-[3/4] bg-gray-100">
+                          {product.thumbnail && (
+                            <Image
+                              src={product.thumbnail}
+                              alt={product.title}
+                              fill
+                              className="object-cover group-hover:scale-105 transition-transform duration-300"
+                              sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                              priority={isAboveTheFold}
+                              loading={isAboveTheFold ? 'eager' : 'lazy'}
+                            />
+                          )}
+                          
+                          {/* Wishlist Button */}
+                          <div className="absolute top-2 right-2 z-10">
+                            <div className="bg-white/90 backdrop-blur-sm rounded-full">
+                              <WishlistButton product={product} size="sm" />
+                            </div>
+                          </div>
+                          
+                          {/* Badges */}
+                          <div className="absolute top-2 left-2 flex flex-col gap-1">
+                            {collections.includes('wedding') && (
+                              <span className="bg-purple-600 text-white text-xs px-2 py-1 rounded">
+                                Wedding
+                              </span>
+                            )}
+                            {collections.includes('prom') && (
+                              <span className="bg-pink-600 text-white text-xs px-2 py-1 rounded">
+                                Prom
+                              </span>
+                            )}
+                            {!stock.inStock && (
+                              <span className="bg-gray-600 text-white text-xs px-2 py-1 rounded">
+                                Out of Stock
+                              </span>
+                            )}
+                          </div>
+                          
+                          {/* Select Options Button - Always show on hover */}
+                          <div className="absolute bottom-4 left-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Link 
+                              href={`/products/${product.handle}`}
+                              className="block w-full bg-white text-black py-2 px-4 rounded-lg text-center font-medium hover:bg-gray-100 transition-colors"
+                            >
+                              Select Options
+                            </Link>
                           </div>
                         </div>
                         
-                        {/* Badges */}
-                        <div className="absolute top-2 left-2 flex flex-col gap-1">
-                          {collections.includes('wedding') && (
-                            <span className="bg-purple-600 text-white text-xs px-2 py-1 rounded">
-                              Wedding
-                            </span>
-                          )}
-                          {collections.includes('prom') && (
-                            <span className="bg-pink-600 text-white text-xs px-2 py-1 rounded">
-                              Prom
-                            </span>
-                          )}
-                          {!stock.inStock && (
-                            <span className="bg-gray-600 text-white text-xs px-2 py-1 rounded">
-                              Out of Stock
-                            </span>
-                          )}
-                        </div>
-                        
-                        {/* Quick Actions */}
-                        <div className="absolute bottom-4 left-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                          {product.variants && product.variants.length > 0 ? (
-                            <AddToCartButton 
-                              variantId={product.variants[0].id}
-                              className="flex-1"
-                              size="sm"
-                            />
-                          ) : (
-                            <button className="flex-1 bg-gray-300 text-gray-500 py-2 rounded-lg cursor-not-allowed">
-                              No Variants
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div className="p-4">
+                        <div className="p-4">
                         <h3 className="font-medium text-sm mb-1 line-clamp-2">
                           {product.title}
                         </h3>
@@ -667,9 +662,10 @@ function CollectionsContent() {
                             {stock.message}
                           </p>
                         )}
+                        </div>
                       </div>
-                    </div>
-                  </Link>
+                    </Link>
+                  </div>
                 )
               })}
             </div>
