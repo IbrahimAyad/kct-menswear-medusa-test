@@ -1,5 +1,6 @@
 import { medusa, MEDUSA_CONFIG } from './client'
 import { cartAdapter } from './cart-adapter'
+import { useCartStore } from '@/lib/store/cartStore'
 
 interface CheckoutData {
   email: string
@@ -128,24 +129,39 @@ export class CheckoutHandler {
         throw new Error('Cart is empty or invalid')
       }
 
-      // Extract cart items WITH VARIANT DATA
-      const items = cart.items.map(item => ({
-        title: item.product?.title || item.title || 'Product',
-        variant_id: item.variant_id,
-        product_id: item.product?.id,
-        quantity: item.quantity,
-        unit_price: item.unit_price || item.product?.price || 0,
-        // Include variant object directly so backend can access variant.title
-        variant: item.variant || {
-          title: item.variant?.title || item.size || 'Standard'
-        },
-        product: item.product,
-        thumbnail: item.thumbnail,
-        metadata: {
-          variant: item.variant,
-          product_handle: item.product?.handle
+      // Get Zustand cart for size information
+      const zustandCart = useCartStore.getState().items
+
+      // Extract cart items WITH VARIANT DATA AND SIZE FROM ZUSTAND
+      const items = cart.items.map(item => {
+        // Find matching Zustand item to get the size
+        const zustandItem = zustandCart.find(z => 
+          z.productId === item.product?.id || z.productId === item.product_id
+        )
+        
+        // Get size from multiple sources: variant.title, zustand item, or fallback
+        const size = item.variant?.title || zustandItem?.size || 'Standard'
+        
+        return {
+          title: item.product?.title || item.title || 'Product',
+          variant_id: item.variant_id,
+          product_id: item.product?.id,
+          quantity: item.quantity,
+          unit_price: item.unit_price || item.product?.price || 0,
+          // Include variant object with size
+          variant: {
+            ...(item.variant || {}),
+            title: size
+          },
+          product: item.product,
+          thumbnail: item.thumbnail,
+          metadata: {
+            variant: item.variant,
+            product_handle: item.product?.handle,
+            size: size // Also include size in metadata
+          }
         }
-      }))
+      })
       
       const publishableKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY;
 
@@ -229,19 +245,37 @@ export class CheckoutHandler {
       
       // Get cart data WITH VARIANT INFO
       const cart = cartAdapter.getCart()
-      const items = cart?.items?.map(item => ({
-        title: item.product?.title || item.title || 'Product',
-        variant_id: item.variant_id,
-        product_id: item.product?.id,
-        quantity: item.quantity,
-        unit_price: item.unit_price || item.product?.price || 0,
-        // Include variant object directly so backend can access variant.title
-        variant: item.variant || {
-          title: item.variant?.title || item.size || 'Standard'
-        },
-        product: item.product,
-        thumbnail: item.thumbnail
-      })) || []
+      
+      // Get Zustand cart for size information
+      const zustandCart = useCartStore.getState().items
+      
+      const items = cart?.items?.map(item => {
+        // Find matching Zustand item to get the size
+        const zustandItem = zustandCart.find(z => 
+          z.productId === item.product?.id || z.productId === item.product_id
+        )
+        
+        // Get size from multiple sources
+        const size = item.variant?.title || zustandItem?.size || 'Standard'
+        
+        return {
+          title: item.product?.title || item.title || 'Product',
+          variant_id: item.variant_id,
+          product_id: item.product?.id,
+          quantity: item.quantity,
+          unit_price: item.unit_price || item.product?.price || 0,
+          // Include variant object with size
+          variant: {
+            ...(item.variant || {}),
+            title: size
+          },
+          product: item.product,
+          thumbnail: item.thumbnail,
+          metadata: {
+            size: size
+          }
+        }
+      }) || []
       
       const publishableKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY;
 
