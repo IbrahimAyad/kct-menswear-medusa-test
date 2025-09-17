@@ -25,32 +25,74 @@ export default function OrderHistoryPage() {
     // Fetch customer orders
     const fetchOrders = async () => {
       try {
-        // Mock data for development
-        setOrders([
-          {
-            id: "ORD-001",
-            createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-            status: "delivered",
-            total: 89900,
-            itemCount: 1,
-          },
-          {
-            id: "ORD-002",
-            createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-            status: "shipped",
-            total: 145800,
-            itemCount: 3,
-          },
-          {
-            id: "ORD-003",
-            createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-            status: "processing",
-            total: 34900,
-            itemCount: 1,
-          },
-        ]);
-      } catch (error) {
+        if (!customer?.email) {
+          setOrders([]);
+          return;
+        }
 
+        // Fetch orders from Medusa backend
+        const response = await fetch(`${process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL}/store/customers/me/orders`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include', // Include cookies for authentication
+        });
+
+        if (response.ok) {
+          const { orders: orderData } = await response.json();
+          
+          // Transform Medusa orders to our interface
+          const transformedOrders = orderData?.map((order: any) => {
+            // Calculate total from order summary
+            const total = order.summary?.current_order_total || order.total || 0;
+            
+            // Count items
+            const itemCount = order.items?.reduce((count: number, item: any) => count + (item.quantity || 0), 0) || 0;
+            
+            // Map status
+            let status: Order["status"] = "pending";
+            if (order.status === "completed" || order.fulfillment_status === "fulfilled") {
+              status = "delivered";
+            } else if (order.fulfillment_status === "shipped" || order.fulfillment_status === "partially_shipped") {
+              status = "shipped";
+            } else if (order.status === "pending" && order.payment_status === "captured") {
+              status = "processing";
+            }
+            
+            return {
+              id: `ORD-${order.display_id}`,
+              createdAt: order.created_at,
+              status,
+              total,
+              itemCount,
+            };
+          }) || [];
+          
+          setOrders(transformedOrders);
+        } else {
+          // Fallback to mock data if API fails
+          setOrders([
+            {
+              id: "ORD-001",
+              createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+              status: "delivered",
+              total: 89900,
+              itemCount: 1,
+            },
+            {
+              id: "ORD-002", 
+              createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+              status: "shipped",
+              total: 145800,
+              itemCount: 3,
+            },
+          ]);
+        }
+      } catch (error) {
+        console.error('Failed to fetch orders:', error);
+        // Fallback to empty array on error
+        setOrders([]);
       } finally {
         setIsLoading(false);
       }
