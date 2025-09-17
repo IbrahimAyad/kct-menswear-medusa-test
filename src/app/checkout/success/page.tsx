@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { authorizePayment, completeCart } from '@/services/medusaBackendService';
+import { OrderProcessingOverlay } from '@/components/checkout/order-processing-overlay';
 
 export default function CheckoutSuccessPage() {
   const [mounted, setMounted] = useState(false);
@@ -358,24 +359,24 @@ export default function CheckoutSuccessPage() {
     setLoading(false);
   };
 
+  // Show professional overlay while loading
   if (!mounted || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-charcoal/5 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-20 h-20 border-4 border-charcoal/20 border-t-charcoal rounded-full animate-spin mx-auto mb-6" />
-          <p className="text-xl text-gray-600 font-light">
-            {pollingOrder 
-              ? `Confirming your order... (${pollingAttempts}/15)` 
-              : 'Processing your order...'
-            }
-          </p>
-          {pollingOrder && (
-            <p className="text-sm text-gray-500 mt-2">
-              Please wait while we verify your order with our backend system.
-            </p>
-          )}
+      <>
+        {/* Keep the page structure but show overlay on top */}
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-charcoal/5">
+          <div className="max-w-4xl mx-auto px-6 py-16">
+            {/* Empty content while loading */}
+          </div>
         </div>
-      </div>
+        
+        {/* Professional Loading Overlay */}
+        <OrderProcessingOverlay 
+          isVisible={true}
+          currentStep={pollingAttempts}
+          totalSteps={15}
+        />
+      </>
     );
   }
 
