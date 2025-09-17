@@ -60,8 +60,8 @@ export function UniversalProductCard({
     }
   };
 
-  // Get product URL
-  const productUrl = `/products/${product.slug || product.id}`;
+  // Get product URL - prioritize handle for Medusa products, fallback to slug then id
+  const productUrl = `/products/${product.handle || product.slug || product.id}`;
 
   // Format price using our pricing utility
   const priceInDollars = getProductPriceAsNumber(product);

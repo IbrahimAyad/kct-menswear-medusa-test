@@ -47,6 +47,55 @@ export default function CheckoutSuccessPage() {
   }, [mounted]);
 
   // Poll for order creation from backend
+  // Helper function to parse variant information from order items
+  const parseItemVariant = (item: any) => {
+    // Enhanced variant title extraction - try multiple sources
+    let productName = item.title || item.variant?.product?.title || item.product?.title || 'Product'
+    let variantSize = item.variant?.title || item.variant_title || 'One Size'
+    
+    // If the title already includes the variant (like "Mint Vest - L"), parse it
+    if (productName.includes(' - ') && productName !== item.variant?.product?.title) {
+      const parts = productName.split(' - ')
+      if (parts.length === 2) {
+        productName = parts[0]
+        variantSize = parts[1]
+      }
+    }
+    
+    // Try to get variant info from metadata if not found
+    if (variantSize === 'One Size' && item.metadata?.variant_size) {
+      variantSize = item.metadata.variant_size
+    }
+    
+    // Try to get from variant_options if available
+    if (variantSize === 'One Size' && item.variant_options?.length > 0) {
+      const sizeOption = item.variant_options.find((opt: any) => opt.option?.title?.toLowerCase().includes('size'))
+      if (sizeOption?.value) {
+        variantSize = sizeOption.value
+      }
+    }
+
+    // Try getting size from admin metadata fields
+    if (variantSize === 'One Size' && item.metadata?.size) {
+      variantSize = item.metadata.size
+    }
+
+    // Try getting from admin display helpers
+    if (variantSize === 'One Size' && item.metadata?.display_name) {
+      const displayParts = item.metadata.display_name.split(' - ')
+      if (displayParts.length === 2) {
+        variantSize = displayParts[1]
+      }
+    }
+
+    return {
+      name: productName,
+      size: variantSize,
+      quantity: item.quantity || 1,
+      price: `$${((item.unit_price || 0) / 100).toFixed(2)}`
+    }
+  }
+
   const pollForOrder = async (cartId: string, maxAttempts: number = 15): Promise<any> => {
     console.log(`Starting order polling for cart: ${cartId}`);
     setPollingOrder(true);
@@ -117,18 +166,23 @@ export default function CheckoutSuccessPage() {
         
         if (polledOrder) {
           // Order was created by backend, use the polled order
+          console.log('DEBUG: Polled order data:', polledOrder);
+          console.log('DEBUG: Polled order items:', polledOrder.items?.map((item: any) => ({
+            title: item.title,
+            variant: item.variant,
+            variant_title: item.variant_title,
+            metadata: item.metadata
+          })));
+          
           const deliveryDate = new Date();
           deliveryDate.setDate(deliveryDate.getDate() + 7);
 
           setOrderDetails({
             id: polledOrder.id || `ORDER-${Date.now()}`,
+            display_id: polledOrder.display_id || polledOrder.id?.slice(-8),
+            confirmationCode: polledOrder.id?.slice(0, 20).toUpperCase(),
             total: polledOrder.total ? `$${(polledOrder.total / 100).toFixed(2)}` : '$0.00',
-            items: polledOrder.items?.map((item: any) => ({
-              name: item.title || item.variant?.product?.title || 'Product',
-              size: item.variant?.title || 'One Size',
-              quantity: item.quantity || 1,
-              price: `$${((item.unit_price || 0) / 100).toFixed(2)}`
-            })) || [],
+            items: polledOrder.items?.map((item: any) => parseItemVariant(item)) || [],
             estimatedDelivery: deliveryDate,
             email: polledOrder.email || localStorage.getItem('checkout_email') || 'customer@example.com'
           });
@@ -166,6 +220,8 @@ export default function CheckoutSuccessPage() {
         
         setOrderDetails({
           id: `ORDER-${paymentIntentFromUrl.slice(-9).toUpperCase()}`,
+          display_id: paymentIntentFromUrl.slice(-8).toUpperCase(),
+          confirmationCode: paymentIntentFromUrl.slice(0, 20).toUpperCase(),
           total: total,
           items: items,
           estimatedDelivery: deliveryDate,
@@ -222,13 +278,10 @@ export default function CheckoutSuccessPage() {
 
             setOrderDetails({
               id: order.id || `ORDER-${Date.now()}`,
+              display_id: order.display_id || order.id?.slice(-8),
+              confirmationCode: order.id?.slice(0, 20).toUpperCase(),
               total: order.total ? `$${(order.total / 100).toFixed(2)}` : '$1.06',
-              items: order.items?.length > 0 ? order.items.map((item: any) => ({
-                name: item.title || item.variant?.product?.title || 'Product',
-                size: item.variant?.title || 'One Size',
-                quantity: item.quantity || 1,
-                price: `$${((item.unit_price || 0) / 100).toFixed(2)}`
-              })) : [
+              items: order.items?.length > 0 ? order.items.map((item: any) => parseItemVariant(item)) : [
                 { name: 'Men\'s Suit', size: 'Standard', quantity: 1, price: '$1.06' }
               ],
               estimatedDelivery: deliveryDate,
@@ -274,13 +327,10 @@ export default function CheckoutSuccessPage() {
 
         setOrderDetails({
           id: order.id || `ORDER-${Date.now()}`,
+          display_id: order.display_id || order.id?.slice(-8),
+          confirmationCode: order.id?.slice(0, 20).toUpperCase(),
           total: order.total ? `$${(order.total / 100).toFixed(2)}` : '$0.00',
-          items: order.items?.map((item: any) => ({
-            name: item.title || item.variant?.product?.title || 'Product',
-            size: item.variant?.title || 'One Size',
-            quantity: item.quantity || 1,
-            price: `$${((item.unit_price || 0) / 100).toFixed(2)}`
-          })) || [],
+          items: order.items?.map((item: any) => parseItemVariant(item)) || [],
           estimatedDelivery: deliveryDate,
           email: order.email || localStorage.getItem('checkout_email') || 'customer@example.com'
         });
@@ -350,6 +400,8 @@ export default function CheckoutSuccessPage() {
     
     setOrderDetails({
       id: `ORDER-2024-${orderSuffix}`,
+      display_id: orderSuffix,
+      confirmationCode: `2024${orderSuffix}`,
       total: total,
       items: items,
       estimatedDelivery: deliveryDate,
@@ -470,9 +522,23 @@ export default function CheckoutSuccessPage() {
               Thank you for your purchase. Your order has been successfully placed.
             </p>
             
-            <div className="inline-flex items-center gap-2 bg-white px-6 py-3 rounded-full shadow-lg">
-              <span className="text-sm text-gray-500">Order Number:</span>
-              <span className="font-medium text-charcoal">{orderDetails.id}</span>
+            {/* Order Confirmation Details */}
+            <div className="space-y-4">
+              <div className="inline-flex items-center gap-2 bg-white px-6 py-3 rounded-full shadow-lg">
+                <span className="text-sm text-gray-500">Order Number:</span>
+                <span className="font-medium text-charcoal">#{orderDetails.display_id || orderDetails.id?.slice(-8) || 'N/A'}</span>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <div className="inline-flex items-center gap-2 bg-green-50 px-4 py-2 rounded-lg border border-green-200">
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                  <span className="text-sm text-green-800">Payment Status: Paid {orderDetails.total}</span>
+                </div>
+                
+                <div className="inline-flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-lg border border-blue-200">
+                  <span className="text-sm text-blue-600 font-mono">Confirmation: {orderDetails.confirmationCode || orderDetails.id?.slice(0, 20).toUpperCase() || 'CONFIRMED'}</span>
+                </div>
+              </div>
             </div>
           </motion.div>
         ) : null}
@@ -487,65 +553,112 @@ export default function CheckoutSuccessPage() {
           >
             {/* Order Summary */}
             <Card className="p-8">
-              <h2 className="text-2xl font-light mb-6 text-charcoal">Order Summary</h2>
+              <h2 className="text-2xl font-light mb-6 text-charcoal">Items Ordered</h2>
               
-              <div className="space-y-4 mb-6">
+              <div className="space-y-6 mb-6">
                 {orderDetails.items.map((item: any, index: number) => (
-                  <div key={index} className="flex justify-between items-center">
-                    <div>
-                      <div className="font-medium">{item.name}</div>
-                      <div className="text-sm text-gray-500">Size: {item.size} • Qty: {item.quantity}</div>
+                  <div key={index} className="flex justify-between items-start border-b border-gray-100 pb-4 last:border-b-0 last:pb-0">
+                    <div className="flex-1">
+                      <div className="font-medium text-lg">{item.name}</div>
+                      <div className="text-sm text-gray-600 mt-1">
+                        <span className="inline-flex items-center gap-4">
+                          <span>Size: <span className="font-medium">{item.size}</span></span>
+                          <span>Quantity: <span className="font-medium">{item.quantity}</span></span>
+                        </span>
+                      </div>
+                      {item.variant && (
+                        <div className="text-sm text-gray-500 mt-1">
+                          Variant: {item.variant}
+                        </div>
+                      )}
                     </div>
-                    <div className="font-medium">{item.price}</div>
+                    <div className="text-right">
+                      <div className="font-medium text-lg">{item.price}</div>
+                      {item.quantity > 1 && (
+                        <div className="text-sm text-gray-500">
+                          ${((parseFloat(item.price.replace('$', '')) / item.quantity).toFixed(2))} each
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
               
-              <div className="border-t pt-4">
-                <div className="flex justify-between items-center text-xl font-medium">
-                  <span>Total</span>
-                  <span>{orderDetails.total}</span>
+              <div className="border-t-2 border-gray-200 pt-4">
+                <div className="flex justify-between items-center text-xl font-semibold">
+                  <span>Order Total</span>
+                  <span className="text-green-600">{orderDetails.total}</span>
+                </div>
+                <div className="text-sm text-gray-500 mt-1 text-right">
+                  Payment completed successfully
                 </div>
               </div>
             </Card>
 
-            {/* Delivery Info */}
+            {/* Next Steps & Delivery Info */}
             <Card className="p-8">
-              <h2 className="text-2xl font-light mb-6 text-charcoal">Delivery Information</h2>
+              <h2 className="text-2xl font-light mb-6 text-charcoal">Next Steps</h2>
               
               <div className="space-y-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <CheckCircle className="h-6 w-6 text-green-600" />
+                  </div>
+                  <div>
+                    <div className="font-medium">Email Confirmation Sent</div>
+                    <div className="text-sm text-gray-600 mt-1">
+                      Order receipt sent to <span className="font-medium">{orderDetails.email}</span>
+                    </div>
+                    <div className="text-sm text-gray-500 mt-1">
+                      Check your inbox and spam folder for order details
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                     <Truck className="h-6 w-6 text-blue-600" />
                   </div>
                   <div>
-                    <div className="font-medium">Free Standard Delivery</div>
-                    <div className="text-sm text-gray-500">
-                      Estimated delivery: {orderDetails.estimatedDelivery.toLocaleDateString()}
+                    <div className="font-medium">Shipping & Tracking</div>
+                    <div className="text-sm text-gray-600 mt-1">
+                      Estimated delivery: <span className="font-medium">{orderDetails.estimatedDelivery.toLocaleDateString()}</span>
+                    </div>
+                    <div className="text-sm text-gray-500 mt-1">
+                      Tracking information will be sent within 24-48 hours
                     </div>
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                    <Mail className="h-6 w-6 text-green-600" />
-                  </div>
-                  <div>
-                    <div className="font-medium">Order Confirmation</div>
-                    <div className="text-sm text-gray-500">
-                      Sent to {orderDetails.email}
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
                     <Calendar className="h-6 w-6 text-purple-600" />
                   </div>
                   <div>
-                    <div className="font-medium">Tracking Updates</div>
-                    <div className="text-sm text-gray-500">
-                      You'll receive tracking information soon
+                    <div className="font-medium">Order Tracking</div>
+                    <div className="text-sm text-gray-600 mt-1">
+                      Track your order status and delivery progress
+                    </div>
+                    <Link 
+                      href={`/orders/track?order=${orderDetails.display_id || orderDetails.id?.slice(-8)}`}
+                      className="inline-block mt-2"
+                    >
+                      <Button variant="outline" size="sm" className="text-purple-600 border-purple-200 hover:bg-purple-50">
+                        Track Order
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+                
+                <div className="bg-gold/5 border border-gold/20 rounded-lg p-4 mt-6">
+                  <div className="flex items-start gap-3">
+                    <Star className="h-5 w-5 text-gold flex-shrink-0 mt-0.5" />
+                    <div>
+                      <div className="font-medium text-gold-dark">Premium Service Included</div>
+                      <div className="text-sm text-gray-600 mt-1">
+                        Free alterations, premium packaging, and white-glove delivery service
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -554,44 +667,53 @@ export default function CheckoutSuccessPage() {
           </motion.div>
         )}
 
-        {/* Next Steps */}
+        {/* Additional Information & Actions */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
-          className="text-center space-y-6"
+          className="text-center space-y-8"
         >
-          <h2 className="text-2xl font-light mb-8 text-charcoal">What's Next?</h2>
+          <h2 className="text-2xl font-light mb-8 text-charcoal">Need Help?</h2>
           
-          <div className="grid md:grid-cols-3 gap-6 mb-12">
-            <Card className="p-6 text-center hover:shadow-lg transition-shadow duration-300">
-              <div className="w-16 h-16 bg-gold/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Mail className="h-8 w-8 text-gold" />
-              </div>
-              <h3 className="font-medium mb-2">Order Confirmation</h3>
-              <p className="text-sm text-gray-600">
-                Check your email for order details and tracking information.
-              </p>
-            </Card>
-            
+          <div className="grid md:grid-cols-2 gap-6 mb-12">
             <Card className="p-6 text-center hover:shadow-lg transition-shadow duration-300">
               <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Truck className="h-8 w-8 text-blue-600" />
+                <Phone className="h-8 w-8 text-blue-600" />
               </div>
-              <h3 className="font-medium mb-2">Order Processing</h3>
-              <p className="text-sm text-gray-600">
-                We'll prepare your items with care and attention to detail.
+              <h3 className="font-medium mb-2">Customer Support</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Questions about your order? Our team is here to help.
               </p>
+              <div className="space-y-2">
+                <a 
+                  href="tel:+1-800-555-0123" 
+                  className="block text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  Call: 1-800-555-0123
+                </a>
+                <a 
+                  href="mailto:support@kctmenswear.com" 
+                  className="block text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  Email: support@kctmenswear.com
+                </a>
+              </div>
             </Card>
             
             <Card className="p-6 text-center hover:shadow-lg transition-shadow duration-300">
-              <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Gift className="h-8 w-8 text-green-600" />
+              <div className="w-16 h-16 bg-gold/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Star className="h-8 w-8 text-gold" />
               </div>
-              <h3 className="font-medium mb-2">Premium Delivery</h3>
-              <p className="text-sm text-gray-600">
-                Your order will arrive in premium packaging within 5-7 business days.
+              <h3 className="font-medium mb-2">KCT Menswear Premium</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Enjoy complimentary alterations and styling consultations.
               </p>
+              <Link href="/services">
+                <Button variant="outline" size="sm" className="text-gold border-gold hover:bg-gold hover:text-white">
+                  Learn More
+                </Button>
+              </Link>
             </Card>
           </div>
           
@@ -612,9 +734,19 @@ export default function CheckoutSuccessPage() {
                 size="lg" 
                 className="border-charcoal text-charcoal hover:bg-charcoal hover:text-white px-8 py-3"
               >
-                View Account
+                View My Orders
               </Button>
             </Link>
+          </div>
+          
+          {/* Order Reference Footer */}
+          <div className="mt-12 pt-8 border-t border-gray-200">
+            <p className="text-sm text-gray-500">
+              Order confirmation number: <span className="font-mono font-medium">#{orderDetails?.display_id || orderDetails?.id?.slice(-8) || 'N/A'}</span>
+            </p>
+            <p className="text-xs text-gray-400 mt-1">
+              Save this confirmation number for your records
+            </p>
           </div>
         </motion.div>
       </div>

@@ -87,7 +87,7 @@ export default function SimpleProductCard({
       </button>
 
       {/* Image - Changed from aspect-[3/4] to h-96 to match bundle cards */}
-      <Link href={`/products/${product.slug || product.id}`} className="block relative h-96 overflow-hidden bg-gray-100 group">
+      <Link href={`/products/${product.handle || product.slug || product.id}`} className="block relative h-96 overflow-hidden bg-gray-100 group">
         {product.imageUrl ? (
           <Image
             src={product.imageUrl}
@@ -145,7 +145,7 @@ export default function SimpleProductCard({
       {/* Content - Updated padding and typography to match bundle cards */}
       <div className="p-6">
         {/* Name */}
-        <Link href={`/products/${product.slug || product.id}`}>
+        <Link href={`/products/${product.handle || product.slug || product.id}`}>
           <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2 hover:text-burgundy-600 transition-colors">
             {product.name}
           </h3>
@@ -216,7 +216,7 @@ export default function SimpleProductCard({
         {/* Action Buttons */}
         <div className="flex gap-2 mt-4">
           <Link 
-            href={`/products/${product.slug || product.id}`}
+            href={`/products/${product.handle || product.slug || product.id}`}
             className="flex-1 bg-burgundy-600 text-white px-4 py-2 rounded-lg hover:bg-burgundy-700 transition-colors duration-200 flex items-center justify-center gap-2 font-medium"
           >
             View Details
