@@ -21,7 +21,7 @@ export function AddToCartButton({
   showIcon = true,
   size = 'md'
 }: AddToCartButtonProps) {
-  const { addToCart, loading } = useMedusaCart()
+  const { addItem, isLoading } = useMedusaCart()
   const [isAdding, setIsAdding] = useState(false)
   const [success, setSuccess] = useState(false)
 
@@ -30,7 +30,7 @@ export function AddToCartButton({
     
     setIsAdding(true)
     try {
-      await addToCart(variantId, quantity)
+      await addItem(variantId, quantity)
       setSuccess(true)
       setTimeout(() => setSuccess(false), 2000)
     } catch (error) {
@@ -49,7 +49,7 @@ export function AddToCartButton({
   return (
     <button
       onClick={handleAddToCart}
-      disabled={!availableForSale || isAdding || loading || !variantId}
+      disabled={!availableForSale || isAdding || isLoading || !variantId}
       className={`
         ${sizeClasses[size]}
         rounded-lg font-medium transition-all
