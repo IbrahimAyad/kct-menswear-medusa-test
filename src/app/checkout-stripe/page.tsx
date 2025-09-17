@@ -588,6 +588,7 @@ export default function StripeCheckoutPage() {
                   product_id: item.product?.id,
                   quantity: item.quantity,
                   unit_price: item.unit_price || 0,
+                  thumbnail: item.thumbnail,
                   variant: item.variant,
                   product: item.product
                 }))}

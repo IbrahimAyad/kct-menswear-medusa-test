@@ -86,22 +86,31 @@ function PaymentForm({ amount, cartId, onSuccess, debugInfo }: PaymentFormProps)
 
       // If we get here without redirect, payment succeeded
       if (paymentIntent && paymentIntent.status === 'succeeded') {
-        // Handle different payment methods
-        if (debugInfo?.method === 'bypass_stripe' && debugInfo?.order_id) {
-          // For bypass method, use payment confirmation with order_id
-          console.log('Payment successful via bypass, confirming with backend...')
+        // Handle both bypass and order-first methods
+        if ((debugInfo?.method === 'bypass_stripe' || debugInfo?.method === 'order_first') && debugInfo?.order_id) {
+          // For both bypass and order-first methods, confirm payment
+          console.log(`Payment successful via ${debugInfo.method}, confirming with backend...`)
           
           try {
-            const confirmResult = await ensurePaymentConfirmed(
-              paymentIntent.id,
-              debugInfo.order_id
-            )
+            // Call our new confirmation endpoint
+            const response = await fetch(`${MEDUSA_CONFIG.baseUrl}/store/payment/confirm-stripe`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                payment_intent_id: paymentIntent.id,
+                order_id: debugInfo.order_id
+              })
+            })
+            
+            const confirmResult = await response.json()
             
             if (!confirmResult.success) {
-              console.error('Failed to confirm payment after retries:', confirmResult.error)
-              // Still redirect to success page - webhook might handle it
+              console.error('Failed to confirm payment:', confirmResult.error)
+              // Still redirect to success page - payment succeeded
             } else {
-              console.log('Payment confirmed successfully:', confirmResult)
+              console.log('✅ Payment confirmed successfully:', confirmResult)
             }
             
             // Redirect to success page with order details
@@ -112,7 +121,7 @@ function PaymentForm({ amount, cartId, onSuccess, debugInfo }: PaymentFormProps)
             window.location.href = `/checkout/success?order_id=${debugInfo.order_id}&payment_intent=${paymentIntent.id}`
           }
         } else {
-          // For regular method, complete order via Medusa
+          // For regular Medusa method (shouldn't happen with bypass)
           try {
             const order = await medusa.store.cart.complete(cartId)
             console.log('Order completed via Medusa:', order)
