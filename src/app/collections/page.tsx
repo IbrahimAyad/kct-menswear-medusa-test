@@ -583,7 +583,7 @@ function CollectionsContent() {
                     <div className="bg-white rounded-lg overflow-hidden hover:shadow-xl transition-all duration-300">
                       {/* Clickable product image and details */}
                       <Link 
-                        href={`/products/${product.handle}`}
+                        href={`/products/medusa/${product.handle}`}
                         className="block"
                       >
                         <div className="relative aspect-[3/4] bg-gray-100">
@@ -630,7 +630,7 @@ function CollectionsContent() {
                       {/* Product Details */}
                       <div className="p-4">
                         <Link 
-                          href={`/products/${product.handle}`}
+                          href={`/products/medusa/${product.handle}`}
                           className="block hover:text-gray-700"
                         >
                           <h3 className="font-medium text-sm mb-1 line-clamp-2">
@@ -658,7 +658,7 @@ function CollectionsContent() {
                         
                         {/* Select Options Button */}
                         <Link 
-                          href={`/products/${product.handle}`}
+                          href={`/products/medusa/${product.handle}`}
                           className="block w-full bg-black text-white py-2 px-4 rounded-lg text-center font-medium hover:bg-gray-800 transition-colors"
                         >
                           Select Options
