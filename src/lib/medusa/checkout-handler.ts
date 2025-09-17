@@ -128,13 +128,19 @@ export class CheckoutHandler {
         throw new Error('Cart is empty or invalid')
       }
 
-      // Extract cart items
+      // Extract cart items WITH VARIANT DATA
       const items = cart.items.map(item => ({
         title: item.product?.title || item.title || 'Product',
         variant_id: item.variant_id,
         product_id: item.product?.id,
         quantity: item.quantity,
         unit_price: item.unit_price || item.product?.price || 0,
+        // Include variant object directly so backend can access variant.title
+        variant: item.variant || {
+          title: item.variant?.title || item.size || 'Standard'
+        },
+        product: item.product,
+        thumbnail: item.thumbnail,
         metadata: {
           variant: item.variant,
           product_handle: item.product?.handle
@@ -221,14 +227,20 @@ export class CheckoutHandler {
     try {
       console.log('🚀 Creating bypass Stripe payment (fallback)...')
       
-      // Get cart data
+      // Get cart data WITH VARIANT INFO
       const cart = cartAdapter.getCart()
       const items = cart?.items?.map(item => ({
         title: item.product?.title || item.title || 'Product',
         variant_id: item.variant_id,
         product_id: item.product?.id,
         quantity: item.quantity,
-        unit_price: item.unit_price || item.product?.price || 0
+        unit_price: item.unit_price || item.product?.price || 0,
+        // Include variant object directly so backend can access variant.title
+        variant: item.variant || {
+          title: item.variant?.title || item.size || 'Standard'
+        },
+        product: item.product,
+        thumbnail: item.thumbnail
       })) || []
       
       const publishableKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY;
