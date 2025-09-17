@@ -216,10 +216,13 @@ export function StripeCheckout({ amount, cartId, email, shippingAddress, billing
       const useBillingAddress = billingAddress || shippingAddress
       
       // Call our order-first checkout endpoint
+      const publishableKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY;
+      
       const response = await fetch(`${MEDUSA_CONFIG.baseUrl}/store/checkout/create-order`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-publishable-api-key': publishableKey,
         },
         body: JSON.stringify({
           cart_id: cartId,
@@ -265,10 +268,13 @@ export function StripeCheckout({ amount, cartId, email, shippingAddress, billing
       const useBillingAddress = billingAddress || shippingAddress
       
       // Call our bypass Stripe endpoint (fallback method)
+      const publishableKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY;
+      
       const response = await fetch(`${MEDUSA_CONFIG.baseUrl}/stripe-bypass`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-publishable-api-key': publishableKey,
         },
         body: JSON.stringify({
           cart_id: cartId,
