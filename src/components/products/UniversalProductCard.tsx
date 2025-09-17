@@ -172,14 +172,14 @@ export function UniversalProductCard({
         </div>
       </Link>
 
-      {/* Quick Add - Only on desktop hover */}
-      {!isMobile && (
+      {/* Quick Add - Temporarily disabled until add to cart logic is implemented */}
+      {/* {!isMobile && (
         <div className="absolute bottom-0 left-0 right-0 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
           <button className="w-full bg-black text-white text-sm py-3 hover:bg-gray-900 transition-colors">
             Quick Add
           </button>
         </div>
-      )}
+      )} */}
     </article>
   );
 }
