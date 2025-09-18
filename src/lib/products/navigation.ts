@@ -1,8 +1,6 @@
 // Product navigation utilities for consistent URL handling
 // This ensures product links work correctly regardless of product source
 
-import { router } from 'next/navigation';
-
 export interface ProductLinkData {
   id?: string;
   handle?: string;
@@ -80,6 +78,10 @@ export async function prefetchProduct(product: ProductLinkData) {
  * This allows instant display while fresh data loads
  */
 export function getPrefetchedProduct(identifier: string): any | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  
   try {
     const keys = [`product_prefetch_${identifier}`];
     
@@ -106,6 +108,10 @@ export function getPrefetchedProduct(identifier: string): any | null {
  * Clear old prefetch cache to prevent storage bloat
  */
 export function cleanPrefetchCache() {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  
   try {
     const now = Date.now();
     const keys = Object.keys(sessionStorage);
