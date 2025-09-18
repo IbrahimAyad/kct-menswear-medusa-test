@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KCT Navigation Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #555;
+            margin-top: 0;
+        }
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .product-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 4px;
+            background: #fafafa;
+        }
+        .product-card h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+            font-size: 16px;
+        }
+        .status {
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .link-test {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin: 5px;
+        }
+        .link-test:hover {
+            background: #0056b3;
+        }
+        .info {
+            background: #e8f4ff;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>KCT Menswear Navigation Test</h1>
+
+    <div class="test-section">
+        <h2>Test Status</h2>
+        <div id="test-status"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Medusa Backend Products</h2>
+        <div id="medusa-products"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Navigation Links Test</h2>
+        <div id="navigation-test"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Homepage Products</h2>
+        <div id="homepage-products"></div>
+    </div>
+
+    <script>
+        const MEDUSA_URL = 'https://backend-production-7441.up.railway.app';
+        const FRONTEND_URL = 'http://localhost:3000';
+
+        async function runTests() {
+            const statusDiv = document.getElementById('test-status');
+            statusDiv.innerHTML = '<div class="status warning">Running tests...</div>';
+
+            // Test 1: Fetch products from Medusa
+            const medusaDiv = document.getElementById('medusa-products');
+            try {
+                const response = await fetch(`${MEDUSA_URL}/store/products?limit=5`, {
+                    headers: {
+                        'x-publishable-api-key': 'pk_4c24b336db3f8819867bec16f4b51db9654e557abbcfbbe003f7ffd8463c3c81'
+                    }
+                });
+
+                const data = await response.json();
+                const products = data.products || [];
+
+                let html = `<div class="info">Found ${products.length} products in Medusa backend</div>`;
+                html += '<div class="product-grid">';
+
+                products.forEach(product => {
+                    const hasHandle = !!product.handle;
+                    const handleStatus = hasHandle ? 'success' : 'error';
+                    const handleText = hasHandle ? product.handle : 'NO HANDLE';
+
+                    html += `
+                        <div class="product-card">
+                            <h3>${product.title}</h3>
+                            <div class="status ${handleStatus}">
+                                Handle: ${handleText}
+                            </div>
+                            <div>ID: <code>${product.id}</code></div>
+                            <div>Price: $${product.variants?.[0]?.prices?.[0]?.amount ? (product.variants[0].prices[0].amount / 100).toFixed(2) : 'N/A'}</div>
+                            ${hasHandle ? `
+                                <a href="${FRONTEND_URL}/products/medusa/${product.handle}"
+                                   class="link-test"
+                                   target="_blank">
+                                   Test Navigation →
+                                </a>
+                            ` : '<div class="status error">Cannot navigate without handle</div>'}
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+                medusaDiv.innerHTML = html;
+
+                // Test 2: Navigation paths
+                const navDiv = document.getElementById('navigation-test');
+                let navHtml = '<div class="test-result">';
+                navHtml += '<h3>Testing Navigation Patterns</h3>';
+
+                const testPaths = [
+                    '/collections',
+                    '/products/medusa/mint-vest-accessories',
+                    '/products/medusa/sweatpants',
+                    '/products/medusa/double-breated'
+                ];
+
+                navHtml += '<div>Expected URL patterns:</div>';
+                testPaths.forEach(path => {
+                    navHtml += `<div>• <code>${FRONTEND_URL}${path}</code></div>`;
+                });
+
+                navHtml += '<div style="margin-top: 15px;">Click these links to test:</div>';
+                testPaths.forEach(path => {
+                    navHtml += `<a href="${FRONTEND_URL}${path}" class="link-test" target="_blank">${path}</a>`;
+                });
+
+                navHtml += '</div>';
+                navDiv.innerHTML = navHtml;
+
+                // Update status
+                const allHaveHandles = products.every(p => p.handle);
+                if (allHaveHandles) {
+                    statusDiv.innerHTML = '<div class="status success">✓ All products have handles and should navigate correctly</div>';
+                } else {
+                    const missingCount = products.filter(p => !p.handle).length;
+                    statusDiv.innerHTML = `<div class="status error">✗ ${missingCount} products missing handles - navigation will fail</div>`;
+                }
+
+            } catch (error) {
+                medusaDiv.innerHTML = `<div class="status error">Failed to fetch products: ${error.message}</div>`;
+                statusDiv.innerHTML = '<div class="status error">✗ Test failed - could not fetch products</div>';
+            }
+
+            // Test 3: Check homepage rendering
+            const homepageDiv = document.getElementById('homepage-products');
+            homepageDiv.innerHTML = `
+                <div class="info">
+                    <h3>Homepage Product Display</h3>
+                    <p>The homepage should show:</p>
+                    <ul>
+                        <li>Featured Products section with 6 items</li>
+                        <li>Trending Now carousel with product navigation</li>
+                        <li>Each product card should link to <code>/products/medusa/[handle]</code></li>
+                    </ul>
+                    <a href="${FRONTEND_URL}" class="link-test" target="_blank">Open Homepage →</a>
+                </div>
+            `;
+        }
+
+        // Run tests on load
+        runTests();
+    </script>
+</body>
+</html>

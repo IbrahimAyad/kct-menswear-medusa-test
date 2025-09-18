@@ -48,7 +48,7 @@ export default function OrderTrackingPage() {
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const orderId = params.id as string;
+  const orderId = params.orderId as string;
 
   useEffect(() => {
     const fetchOrder = async () => {
