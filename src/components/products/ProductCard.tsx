@@ -41,8 +41,8 @@ export function ProductCard({ product, listName = 'product_list', index = 0 }: P
       onMouseLeave={() => setShowQuickAdd(false)}
       aria-label={`${product.name} - ${formatPrice(product.price)}`}
     >
-      <Link 
-        href={`/products/${product.handle || product.slug || product.id}`}
+      <Link
+        href={`/products/medusa/${product.handle || product.slug || product.id}`}
         onClick={() => {
           trackProductClick(product, listName, index);
         }}
@@ -70,7 +70,7 @@ export function ProductCard({ product, listName = 'product_list', index = 0 }: P
       </Link>
 
       <div className="p-4">
-        <Link href={`/products/${product.handle || product.slug || product.id}`} tabIndex={-1}>
+        <Link href={`/products/medusa/${product.handle || product.slug || product.id}`} tabIndex={-1}>
           <h3 className="font-medium text-gray-900 hover:text-gold transition-colors">
             {product.name}
           </h3>

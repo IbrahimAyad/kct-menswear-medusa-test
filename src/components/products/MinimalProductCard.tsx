@@ -73,7 +73,7 @@ export default function MinimalProductCard({
       </button>
 
       {/* Main Image - Taller, cleaner */}
-      <Link href={`/products/${product.handle || product.slug || product.id}`} className="block relative aspect-[3/4] overflow-hidden bg-gray-50">
+      <Link href={`/products/medusa/${product.handle || product.slug || product.id}`} className="block relative aspect-[3/4] overflow-hidden bg-gray-50">
         {(product.imageUrl || colorVariants[selectedColor]?.image) ? (
           <Image
             src={colorVariants[selectedColor]?.image || product.imageUrl || ''}
@@ -126,7 +126,7 @@ export default function MinimalProductCard({
       {/* Minimal Content Below Image */}
       <div className="pt-4">
         {/* Product Name - Clean, no hover effects */}
-        <Link href={`/products/${product.handle || product.slug || product.id}`}>
+        <Link href={`/products/medusa/${product.handle || product.slug || product.id}`}>
           <h3 className="text-base font-normal text-gray-900 mb-1">
             {product.name}
           </h3>
