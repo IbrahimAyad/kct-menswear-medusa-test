@@ -186,12 +186,12 @@ export default function HomePage() {
 
   // Create demo products if API fails
   const createDemoProducts = () => [
-    { id: 1, name: "Classic Navy Suit", category: "suits", base_price: 599.99 },
-    { id: 2, name: "Black Tuxedo", category: "tuxedos", base_price: 799.99 },
-    { id: 3, name: "Charcoal Business Suit", category: "suits", base_price: 549.99 },
-    { id: 4, name: "Wedding Vest Set", category: "accessories", base_price: 199.99 },
-    { id: 5, name: "Prom Tuxedo", category: "tuxedos", base_price: 699.99 },
-    { id: 6, name: "Oxford Dress Shoes", category: "shoes", base_price: 299.99 }
+    { id: 'demo-1', handle: 'classic-navy-suit', title: "Classic Navy Suit", name: "Classic Navy Suit", category: "suits", base_price: 599.99, price: 599.99, thumbnail: "https://cdn.kctmenswear.com/products/suits/navy.jpg" },
+    { id: 'demo-2', handle: 'black-tuxedo', title: "Black Tuxedo", name: "Black Tuxedo", category: "tuxedos", base_price: 799.99, price: 799.99, thumbnail: "https://cdn.kctmenswear.com/products/tuxedos/black.jpg" },
+    { id: 'demo-3', handle: 'charcoal-business-suit', title: "Charcoal Business Suit", name: "Charcoal Business Suit", category: "suits", base_price: 549.99, price: 549.99, thumbnail: "https://cdn.kctmenswear.com/products/suits/charcoal.jpg" },
+    { id: 'demo-4', handle: 'wedding-vest-set', title: "Wedding Vest Set", name: "Wedding Vest Set", category: "accessories", base_price: 199.99, price: 199.99, thumbnail: "https://cdn.kctmenswear.com/products/accessories/vest.jpg" },
+    { id: 'demo-5', handle: 'prom-tuxedo', title: "Prom Tuxedo", name: "Prom Tuxedo", category: "tuxedos", base_price: 699.99, price: 699.99, thumbnail: "https://cdn.kctmenswear.com/products/tuxedos/prom.jpg" },
+    { id: 'demo-6', handle: 'oxford-dress-shoes', title: "Oxford Dress Shoes", name: "Oxford Dress Shoes", category: "shoes", base_price: 299.99, price: 299.99, thumbnail: "https://cdn.kctmenswear.com/products/shoes/oxford.jpg" }
   ];
 
   // 12 TikTok videos for luxury showcase
