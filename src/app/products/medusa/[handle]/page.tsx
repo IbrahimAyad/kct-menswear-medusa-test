@@ -50,16 +50,18 @@ export default function EnhancedProductPage() {
   const [showSizeGuide, setShowSizeGuide] = useState(false)
   const [isWishlisted, setIsWishlisted] = useState(false)
   const [showZoom, setShowZoom] = useState(false)
-  const [viewCount] = useState(Math.floor(Math.random() * 20) + 5) // Simulated
-  
+  const [viewCount] = useState(() => {
+    // Use a function to ensure same value on server and client
+    if (typeof window === 'undefined') return 12;
+    return Math.floor(Math.random() * 20) + 5;
+  })
+
   const handle = params.handle as string
 
   useEffect(() => {
     setMounted(true)
-  }, [])
-
-  useEffect(() => {
-    if (handle && mounted) {
+    // Load product data only on client side
+    if (handle) {
       // Try to get prefetched data first for instant display
       const prefetched = getPrefetchedProduct(handle)
       if (prefetched) {
@@ -71,7 +73,7 @@ export default function EnhancedProductPage() {
       // Still load fresh data
       loadProduct()
     }
-  }, [handle, mounted])
+  }, [handle])
 
   const loadProduct = async () => {
     setLoading(true)
@@ -117,8 +119,7 @@ export default function EnhancedProductPage() {
     }
   }
 
-  if (!mounted) return null
-
+  // Show loading state initially to prevent hydration mismatch
   if (loading && !product) {
     return (
       <div className="min-h-screen flex items-center justify-center">
