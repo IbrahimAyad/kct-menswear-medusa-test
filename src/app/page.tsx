@@ -87,7 +87,7 @@ export default function HomePage() {
       console.time('[Home] Loading Medusa products');
       
       // First, check if we have cached products for instant display
-      const cached = medusaProductCache.get();
+      const cached = medusaProductCache.get(12, 0);
       if (cached && cached.length > 0) {
         console.log('[Home] Using cached products for instant display');
         const homeProducts = cached.slice(0, 12);
