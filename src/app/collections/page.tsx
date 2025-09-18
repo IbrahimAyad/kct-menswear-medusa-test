@@ -28,8 +28,9 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
-import WishlistButton from '@/components/wishlist/WishlistButton'
-import { AddToCartButton } from '@/components/cart/AddToCartButton'
+// Temporarily removed to fix hydration issues
+// import WishlistButton from '@/components/wishlist/WishlistButton'
+// import { AddToCartButton } from '@/components/cart/AddToCartButton'
 
 // Collection categories with images
 const collections = [
@@ -579,65 +580,49 @@ function CollectionsContent() {
                 const isAboveTheFold = index < 8
                 
                 return (
-                  <div key={product.id} className="group">
-                    <div className="bg-white rounded-lg overflow-hidden hover:shadow-xl transition-all duration-300 relative">
-                      {/* Wishlist Button - Outside the link, absolute positioned */}
-                      <div className="absolute top-2 right-2 z-10">
-                        <div className="bg-white/90 backdrop-blur-sm rounded-full">
-                          <WishlistButton product={product} size="sm" />
+                  <Link 
+                    key={product.id} 
+                    href={`/products/medusa/${product.handle}`}
+                    className="group block"
+                  >
+                    <div className="bg-white rounded-lg overflow-hidden hover:shadow-xl transition-all duration-300">
+                      <div className="relative aspect-[3/4] bg-gray-100">
+                        {product.thumbnail && (
+                          <Image
+                            src={product.thumbnail}
+                            alt={product.title}
+                            fill
+                            className="object-cover group-hover:scale-105 transition-transform duration-300"
+                            sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                            priority={isAboveTheFold}
+                            loading={isAboveTheFold ? 'eager' : 'lazy'}
+                          />
+                        )}
+                        
+                        {/* Badges */}
+                        <div className="absolute top-2 left-2 flex flex-col gap-1">
+                          {collections.includes('wedding') && (
+                            <span className="bg-purple-600 text-white text-xs px-2 py-1 rounded">
+                              Wedding
+                            </span>
+                          )}
+                          {collections.includes('prom') && (
+                            <span className="bg-pink-600 text-white text-xs px-2 py-1 rounded">
+                              Prom
+                            </span>
+                          )}
+                          {!stock.inStock && (
+                            <span className="bg-gray-600 text-white text-xs px-2 py-1 rounded">
+                              Out of Stock
+                            </span>
+                          )}
                         </div>
                       </div>
                       
-                      {/* Clickable product image and details */}
-                      <Link 
-                        href={`/products/medusa/${product.handle}`}
-                        className="block"
-                      >
-                        <div className="relative aspect-[3/4] bg-gray-100">
-                          {product.thumbnail && (
-                            <Image
-                              src={product.thumbnail}
-                              alt={product.title}
-                              fill
-                              className="object-cover group-hover:scale-105 transition-transform duration-300"
-                              sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                              priority={isAboveTheFold}
-                              loading={isAboveTheFold ? 'eager' : 'lazy'}
-                            />
-                          )}
-                          
-                          {/* Badges */}
-                          <div className="absolute top-2 left-2 flex flex-col gap-1 pointer-events-none">
-                            {collections.includes('wedding') && (
-                              <span className="bg-purple-600 text-white text-xs px-2 py-1 rounded">
-                                Wedding
-                              </span>
-                            )}
-                            {collections.includes('prom') && (
-                              <span className="bg-pink-600 text-white text-xs px-2 py-1 rounded">
-                                Prom
-                              </span>
-                            )}
-                            {!stock.inStock && (
-                              <span className="bg-gray-600 text-white text-xs px-2 py-1 rounded">
-                                Out of Stock
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </Link>
-                      
-                      {/* Product Details */}
                       <div className="p-4">
-                        <Link 
-                          href={`/products/medusa/${product.handle}`}
-                          className="block hover:text-gray-700"
-                        >
-                          <h3 className="font-medium text-sm mb-1 line-clamp-2">
-                            {product.title}
-                          </h3>
-                        
-                        </Link>
+                        <h3 className="font-medium text-sm mb-1 line-clamp-2">
+                          {product.title}
+                        </h3>
                         
                         {/* Color indicator */}
                         {color && (
@@ -656,13 +641,10 @@ function CollectionsContent() {
                           ${getProductPriceAsNumber(product).toFixed(2)}
                         </p>
                         
-                        {/* Select Options Button */}
-                        <Link 
-                          href={`/products/medusa/${product.handle}`}
-                          className="block w-full bg-black text-white py-2 px-4 rounded-lg text-center font-medium hover:bg-gray-800 transition-colors"
-                        >
-                          Select Options
-                        </Link>
+                        {/* Simple View Product Button */}
+                        <div className="bg-black text-white py-2 px-4 rounded-lg text-center font-medium group-hover:bg-gray-800 transition-colors">
+                          View Product
+                        </div>
                         
                         {stock.inStock && stock.totalQuantity <= 5 && (
                           <p className="text-xs text-red-600 mt-1">
@@ -671,7 +653,7 @@ function CollectionsContent() {
                         )}
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 )
               })}
             </div>
