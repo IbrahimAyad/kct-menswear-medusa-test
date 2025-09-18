@@ -87,31 +87,33 @@ export default function SimpleProductCard({
       </button>
 
       {/* Image - Changed from aspect-[3/4] to h-96 to match bundle cards */}
-      <Link href={`/products/medusa/${product.handle || product.slug || product.id}`} className="block relative h-96 overflow-hidden bg-gray-100 group">
-        {product.imageUrl ? (
-          <Image
-            src={product.imageUrl}
-            alt={product.name}
-            fill
-            className="object-cover group-hover:scale-105 transition-transform duration-500"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-50">
-            <Tag className="w-16 h-16" />
-          </div>
-        )}
-        
-        {/* Hover Overlay - Enhanced to match bundle cards */}
+      <div className="relative h-96 overflow-hidden bg-gray-100 group">
+        <Link href={`/products/medusa/${product.handle || product.slug || product.id}`} className="block relative h-full w-full">
+          {product.imageUrl ? (
+            <Image
+              src={product.imageUrl}
+              alt={product.name}
+              fill
+              className="object-cover group-hover:scale-105 transition-transform duration-500"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-50">
+              <Tag className="w-16 h-16" />
+            </div>
+          )}
+        </Link>
+
+        {/* Hover Overlay - Now outside the Link to prevent click blocking */}
         <div className={cn(
-          "absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end p-4 transition-opacity duration-300",
+          "absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end p-4 transition-opacity duration-300 pointer-events-none",
           isHovered ? "opacity-100" : "opacity-0"
         )}>
-          <div className="w-full flex gap-2">
+          <div className="w-full flex gap-2 pointer-events-auto">
             {onQuickView && (
               <button
                 onClick={(e) => {
-                  e.preventDefault();
+                  e.stopPropagation();
                   onQuickView(product);
                 }}
                 className="flex-1 bg-white/90 backdrop-blur-sm text-gray-900 py-2 px-3 rounded-lg hover:bg-white transition-colors flex items-center justify-center gap-2"
@@ -122,7 +124,7 @@ export default function SimpleProductCard({
             )}
             <button
               onClick={(e) => {
-                e.preventDefault();
+                e.stopPropagation();
                 handleAddToCart();
               }}
               disabled={!product.inStock}
@@ -140,7 +142,7 @@ export default function SimpleProductCard({
             </button>
           </div>
         </div>
-      </Link>
+      </div>
 
       {/* Content - Updated padding and typography to match bundle cards */}
       <div className="p-6">

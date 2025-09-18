@@ -73,34 +73,36 @@ export default function MinimalProductCard({
       </button>
 
       {/* Main Image - Taller, cleaner */}
-      <Link href={`/products/medusa/${product.handle || product.slug || product.id}`} className="block relative aspect-[3/4] overflow-hidden bg-gray-50">
-        {(product.imageUrl || colorVariants[selectedColor]?.image) ? (
-          <Image
-            src={colorVariants[selectedColor]?.image || product.imageUrl || ''}
-            alt={product.name}
-            fill
-            className="object-cover object-center transition-transform duration-700 group-hover:scale-105"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            priority={featured}
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
-            <div className="text-center">
-              <div className="text-gray-300 mb-2">
-                <ShoppingBag className="w-16 h-16 mx-auto" />
+      <div className="relative aspect-[3/4] overflow-hidden bg-gray-50">
+        <Link href={`/products/medusa/${product.handle || product.slug || product.id}`} className="block relative h-full w-full">
+          {(product.imageUrl || colorVariants[selectedColor]?.image) ? (
+            <Image
+              src={colorVariants[selectedColor]?.image || product.imageUrl || ''}
+              alt={product.name}
+              fill
+              className="object-cover object-center transition-transform duration-700 group-hover:scale-105"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              priority={featured}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+              <div className="text-center">
+                <div className="text-gray-300 mb-2">
+                  <ShoppingBag className="w-16 h-16 mx-auto" />
+                </div>
+                <p className="text-gray-400 text-sm">{product.category || 'Product'}</p>
               </div>
-              <p className="text-gray-400 text-sm">{product.category || 'Product'}</p>
             </div>
-          </div>
-        )}
-        
-        {/* Very subtle hover overlay - just for Quick View and Add to Cart */}
+          )}
+        </Link>
+
+        {/* Very subtle hover overlay - Now outside Link to prevent blocking */}
         {isHovered && (
-          <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-white/95 via-white/80 to-transparent">
-            <div className="flex gap-2">
+          <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-white/95 via-white/80 to-transparent pointer-events-none">
+            <div className="flex gap-2 pointer-events-auto">
               <button
                 onClick={(e) => {
-                  e.preventDefault();
+                  e.stopPropagation();
                   handleAddToCart();
                 }}
                 className="flex-1 bg-white border border-gray-300 text-gray-900 py-2.5 text-sm font-medium hover:bg-gray-50 transition-colors"
@@ -110,7 +112,7 @@ export default function MinimalProductCard({
               {onQuickView && (
                 <button
                   onClick={(e) => {
-                    e.preventDefault();
+                    e.stopPropagation();
                     onQuickView(product);
                   }}
                   className="px-3 bg-white border border-gray-300 text-gray-900 hover:bg-gray-50 transition-colors"
@@ -121,7 +123,7 @@ export default function MinimalProductCard({
             </div>
           </div>
         )}
-      </Link>
+      </div>
 
       {/* Minimal Content Below Image */}
       <div className="pt-4">
