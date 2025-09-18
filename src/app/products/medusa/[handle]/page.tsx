@@ -50,11 +50,8 @@ export default function EnhancedProductPage() {
   const [showSizeGuide, setShowSizeGuide] = useState(false)
   const [isWishlisted, setIsWishlisted] = useState(false)
   const [showZoom, setShowZoom] = useState(false)
-  const [viewCount] = useState(() => {
-    // Use a function to ensure same value on server and client
-    if (typeof window === 'undefined') return 12;
-    return Math.floor(Math.random() * 20) + 5;
-  })
+  // Use a fixed value to prevent hydration mismatch
+  const [viewCount] = useState(12)
 
   const handle = params.handle as string
 
