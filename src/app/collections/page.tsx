@@ -29,7 +29,7 @@ import {
 import { cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
 // import WishlistButton from '@/components/wishlist/WishlistButton'
-// import { AddToCartButton } from '@/components/cart/AddToCartButton'
+import { AddToCartButton } from '@/components/cart/AddToCartButton'
 
 // Collection categories with images
 const collections = [
@@ -647,16 +647,22 @@ function CollectionsContent() {
                           ${getProductPriceAsNumber(product).toFixed(2)}
                         </p>
                         
-                        {/* Select Options Button - actually navigates to product page */}
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            window.location.href = `/products/medusa/${product.handle}`;
-                          }}
-                          className="w-full bg-black text-white py-2 px-4 rounded-lg text-center font-medium hover:bg-gray-800 transition-colors"
-                        >
-                          Select Options
-                        </button>
+                        {/* Action Buttons */}
+                        <div className="flex gap-2">
+                          <Link 
+                            href={`/products/medusa/${product.handle}`}
+                            className="flex-1 bg-black text-white py-2 px-4 rounded-lg text-center font-medium hover:bg-gray-800 transition-colors"
+                          >
+                            View Details
+                          </Link>
+                          {product.variants && product.variants.length > 0 && stock.inStock && (
+                            <AddToCartButton 
+                              variantId={product.variants[0].id}
+                              className="flex-1"
+                              size="sm"
+                            />
+                          )}
+                        </div>
                         
                         {stock.inStock && stock.totalQuantity <= 5 && (
                           <p className="text-xs text-red-600 mt-1">
