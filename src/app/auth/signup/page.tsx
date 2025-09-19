@@ -223,7 +223,7 @@ function SignupForm() {
                 <Checkbox
                   id="terms"
                   checked={acceptTerms}
-                  onCheckedChange={(checked) => setAcceptTerms(checked as boolean)}
+                  onCheckedChange={(checked) => setAcceptTerms(checked === true)}
                 />
                 <label
                   htmlFor="terms"
