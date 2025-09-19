@@ -49,26 +49,32 @@ export default function CheckoutSuccessPage() {
   // Poll for order creation from backend
   // Helper function to parse variant information from order items
   const parseItemVariant = (item: any) => {
+    console.log('DEBUG: Parsing item variant:', item);
+
     // Enhanced variant title extraction - try multiple sources
     let productName = item.title || item.variant?.product?.title || item.product?.title || 'Product'
     let variantSize = item.variant?.title || item.variant_title || 'One Size'
-    
-    // If the title already includes the variant (like "Mint Vest - L"), parse it
-    if (productName.includes(' - ') && productName !== item.variant?.product?.title) {
+    let thumbnail = item.thumbnail || item.variant?.thumbnail || item.product?.thumbnail || item.product?.images?.[0]?.url
+
+    // If the title already includes the variant (like "Mint Vest - S"), parse it
+    if (productName.includes(' - ')) {
       const parts = productName.split(' - ')
       if (parts.length === 2) {
-        productName = parts[0]
-        variantSize = parts[1]
+        // Check if this isn't just repeating the product title
+        if (parts[1] !== item.variant?.product?.title && parts[1].length <= 10) {
+          productName = parts[0]
+          variantSize = parts[1]
+        }
       }
     }
-    
+
     // Try to get variant info from metadata if not found
-    if (variantSize === 'One Size' && item.metadata?.variant_size) {
+    if ((variantSize === 'One Size' || variantSize === 'Standard') && item.metadata?.variant_size) {
       variantSize = item.metadata.variant_size
     }
-    
+
     // Try to get from variant_options if available
-    if (variantSize === 'One Size' && item.variant_options?.length > 0) {
+    if ((variantSize === 'One Size' || variantSize === 'Standard') && item.variant_options?.length > 0) {
       const sizeOption = item.variant_options.find((opt: any) => opt.option?.title?.toLowerCase().includes('size'))
       if (sizeOption?.value) {
         variantSize = sizeOption.value
@@ -76,23 +82,31 @@ export default function CheckoutSuccessPage() {
     }
 
     // Try getting size from admin metadata fields
-    if (variantSize === 'One Size' && item.metadata?.size) {
+    if ((variantSize === 'One Size' || variantSize === 'Standard') && item.metadata?.size) {
       variantSize = item.metadata.size
     }
 
     // Try getting from admin display helpers
-    if (variantSize === 'One Size' && item.metadata?.display_name) {
+    if ((variantSize === 'One Size' || variantSize === 'Standard') && item.metadata?.display_name) {
       const displayParts = item.metadata.display_name.split(' - ')
-      if (displayParts.length === 2) {
+      if (displayParts.length === 2 && displayParts[1].length <= 10) {
         variantSize = displayParts[1]
       }
     }
+
+    // Try extracting from variant_details in metadata
+    if ((variantSize === 'One Size' || variantSize === 'Standard') && item.metadata?.variant_details?.title) {
+      variantSize = item.metadata.variant_details.title
+    }
+
+    console.log('DEBUG: Parsed result:', { productName, variantSize, thumbnail });
 
     return {
       name: productName,
       size: variantSize,
       quantity: item.quantity || 1,
-      price: `$${((item.unit_price || 0) / 100).toFixed(2)}`
+      price: `$${((item.unit_price || item.total || 0) / 100).toFixed(2)}`,
+      thumbnail: thumbnail
     }
   }
 
@@ -557,23 +571,37 @@ export default function CheckoutSuccessPage() {
               
               <div className="space-y-6 mb-6">
                 {orderDetails.items.map((item: any, index: number) => (
-                  <div key={index} className="flex justify-between items-start border-b border-gray-100 pb-4 last:border-b-0 last:pb-0">
+                  <div key={index} className="flex gap-4 border-b border-gray-100 pb-4 last:border-b-0 last:pb-0">
+                    {/* Product Image */}
+                    {item.thumbnail && (
+                      <div className="flex-shrink-0">
+                        <img
+                          src={item.thumbnail}
+                          alt={item.name}
+                          className="w-20 h-20 object-cover rounded-lg border border-gray-200"
+                        />
+                      </div>
+                    )}
+
+                    {/* Product Details */}
                     <div className="flex-1">
                       <div className="font-medium text-lg">{item.name}</div>
                       <div className="text-sm text-gray-600 mt-1">
                         <span className="inline-flex items-center gap-4">
-                          <span>Size: <span className="font-medium">{item.size}</span></span>
-                          <span>Quantity: <span className="font-medium">{item.quantity}</span></span>
+                          <span>Size: <span className="font-medium text-charcoal">{item.size}</span></span>
+                          <span>Quantity: <span className="font-medium text-charcoal">{item.quantity}</span></span>
                         </span>
                       </div>
-                      {item.variant && (
+                      {item.variant && item.variant !== item.size && (
                         <div className="text-sm text-gray-500 mt-1">
                           Variant: {item.variant}
                         </div>
                       )}
                     </div>
+
+                    {/* Price */}
                     <div className="text-right">
-                      <div className="font-medium text-lg">{item.price}</div>
+                      <div className="font-medium text-lg text-charcoal">{item.price}</div>
                       {item.quantity > 1 && (
                         <div className="text-sm text-gray-500">
                           ${((parseFloat(item.price.replace('$', '')) / item.quantity).toFixed(2))} each
