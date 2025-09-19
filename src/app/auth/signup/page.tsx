@@ -224,11 +224,11 @@ function SignupForm() {
                   id="terms"
                   checked={acceptTerms}
                   onChange={(e) => setAcceptTerms(e.target.checked)}
-                  className="mt-1 h-4 w-4 rounded border-gray-300 text-gold focus:ring-gold"
+                  className="mt-1 h-5 w-5 rounded border-2 border-gray-400 text-charcoal accent-charcoal focus:ring-2 focus:ring-charcoal focus:ring-offset-2 cursor-pointer"
                 />
                 <label
                   htmlFor="terms"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer select-none"
                 >
                   I agree to the{' '}
                   <Link href="/terms" className="text-primary hover:underline">

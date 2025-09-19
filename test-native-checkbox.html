@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test Native Checkbox Implementation</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body { font-family: system-ui; padding: 20px; }
+    .container { max-width: 600px; margin: 0 auto; }
+    .checkbox-container { display: flex; align-items: center; gap: 8px; margin: 20px 0; }
+    .button {
+      padding: 10px 20px;
+      background: #333;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 10px;
+    }
+    .button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .status {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 4px;
+      background: #f0f0f0;
+    }
+    .test-result {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 4px;
+    }
+    .success { background: #d4edda; color: #155724; }
+    .error { background: #f8d7da; color: #721c24; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Native Checkbox Test - KCT Menswear Signup</h1>
+    <div id="root"></div>
+  </div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    function TestCheckbox() {
+      const [acceptTerms, setAcceptTerms] = useState(false);
+      const [testResults, setTestResults] = useState([]);
+
+      const addTestResult = (message, success) => {
+        setTestResults(prev => [...prev, { message, success, time: new Date().toLocaleTimeString() }]);
+      };
+
+      const handleCheckboxChange = (e) => {
+        const checked = e.target.checked;
+        console.log('Checkbox changed:', {
+          checked,
+          type: typeof checked,
+          eventType: e.type,
+          target: e.target
+        });
+
+        setAcceptTerms(checked);
+        addTestResult(`Checkbox state updated to: ${checked}`, true);
+      };
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        if (!acceptTerms) {
+          addTestResult('Cannot submit - terms not accepted', false);
+          return;
+        }
+        addTestResult('Form submitted successfully!', true);
+      };
+
+      // Auto-test on mount
+      useEffect(() => {
+        addTestResult('Component mounted - initial state: false', true);
+
+        // Simulate user interaction after 1 second
+        setTimeout(() => {
+          const checkbox = document.getElementById('terms-native');
+          if (checkbox) {
+            // Programmatically check the box
+            checkbox.checked = true;
+            checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+            addTestResult('Programmatically checked checkbox', true);
+          }
+        }, 1000);
+      }, []);
+
+      return (
+        <div>
+          <div className="status">
+            <h3>Current State:</h3>
+            <p><strong>acceptTerms:</strong> {acceptTerms ? 'TRUE ✅' : 'FALSE ❌'}</p>
+            <p><strong>Button Status:</strong> {!acceptTerms ? 'DISABLED 🚫' : 'ENABLED ✅'}</p>
+          </div>
+
+          <form onSubmit={handleSubmit}>
+            <div className="checkbox-container">
+              <input
+                type="checkbox"
+                id="terms-native"
+                checked={acceptTerms}
+                onChange={handleCheckboxChange}
+                style={{ width: '16px', height: '16px' }}
+              />
+              <label htmlFor="terms-native" style={{ cursor: 'pointer' }}>
+                I agree to the Terms & Conditions (Native Checkbox)
+              </label>
+            </div>
+
+            <button
+              type="submit"
+              className="button"
+              disabled={!acceptTerms}
+            >
+              Create Account (Enabled: {acceptTerms ? 'YES' : 'NO'})
+            </button>
+          </form>
+
+          <div style={{ marginTop: '30px' }}>
+            <h3>Test Results:</h3>
+            {testResults.map((result, index) => (
+              <div key={index} className={`test-result ${result.success ? 'success' : 'error'}`}>
+                [{result.time}] {result.message}
+              </div>
+            ))}
+          </div>
+
+          <div style={{ marginTop: '30px', padding: '10px', background: '#e7f3ff', borderRadius: '4px' }}>
+            <h4>Implementation Code (What's Deployed):</h4>
+            <pre style={{ fontSize: '12px', overflow: 'auto' }}>
+{`<input
+  type="checkbox"
+  id="terms"
+  checked={acceptTerms}
+  onChange={(e) => setAcceptTerms(e.target.checked)}
+  className="mt-1 h-4 w-4 rounded border-gray-300"
+/>
+
+<Button
+  type="submit"
+  disabled={isLoading || !acceptTerms}
+>
+  Create Account
+</Button>`}
+            </pre>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<TestCheckbox />, document.getElementById('root'));
+  </script>
+</body>
+</html>
