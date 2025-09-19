@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Checkbox Test</title>
+</head>
+<body>
+  <h2>Testing Checkbox State</h2>
+
+  <div>
+    <input type="checkbox" id="test1" onchange="handleChange1(this)">
+    <label for="test1">Test 1 - Direct boolean</label>
+    <p id="result1">State: false</p>
+  </div>
+
+  <div>
+    <input type="checkbox" id="test2" onchange="handleChange2(event)">
+    <label for="test2">Test 2 - Event target</label>
+    <p id="result2">State: false</p>
+  </div>
+
+  <script>
+    function handleChange1(checkbox) {
+      const checked = checkbox.checked;
+      document.getElementById('result1').innerText = `State: ${checked} (type: ${typeof checked})`;
+      console.log('Test 1:', checked, typeof checked);
+    }
+
+    function handleChange2(event) {
+      const checked = event.target.checked;
+      document.getElementById('result2').innerText = `State: ${checked} (type: ${typeof checked})`;
+      console.log('Test 2:', checked, typeof checked);
+    }
+
+    // Test what Radix might return
+    function testRadixBehavior(value) {
+      console.log('Input:', value, 'Type:', typeof value);
+      console.log('value === true:', value === true);
+      console.log('!!value:', !!value);
+      console.log('Boolean(value):', Boolean(value));
+    }
+
+    console.log('Testing different values:');
+    testRadixBehavior(true);
+    testRadixBehavior(false);
+    testRadixBehavior('indeterminate');
+    testRadixBehavior(undefined);
+  </script>
+</body>
+</html>

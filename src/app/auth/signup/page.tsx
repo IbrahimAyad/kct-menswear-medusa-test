@@ -79,6 +79,14 @@ function SignupForm() {
     })
   }
 
+  // Fixed checkbox handler that properly handles CheckedState type
+  const handleCheckboxChange = (checked: boolean | 'indeterminate') => {
+    console.log('Checkbox changed:', checked, typeof checked)
+    // Convert to boolean - true only if explicitly true
+    const newValue = checked === true
+    setAcceptTerms(newValue)
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-charcoal/5 flex items-center justify-center px-4 py-12">
       <motion.div
@@ -223,21 +231,30 @@ function SignupForm() {
                 <Checkbox
                   id="terms"
                   checked={acceptTerms}
-                  onCheckedChange={(checked) => setAcceptTerms(checked === true)}
+                  onCheckedChange={handleCheckboxChange}
                 />
                 <label
                   htmlFor="terms"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer select-none"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    handleCheckboxChange(!acceptTerms)
+                  }}
                 >
                   I agree to the{' '}
-                  <Link href="/terms" className="text-primary hover:underline">
+                  <Link href="/terms" className="text-primary hover:underline" onClick={(e) => e.stopPropagation()}>
                     Terms & Conditions
                   </Link>{' '}
                   and{' '}
-                  <Link href="/privacy" className="text-primary hover:underline">
+                  <Link href="/privacy" className="text-primary hover:underline" onClick={(e) => e.stopPropagation()}>
                     Privacy Policy
                   </Link>
                 </label>
+              </div>
+
+              {/* Debug info - remove in production */}
+              <div className="text-xs text-gray-500">
+                Debug: acceptTerms = {acceptTerms ? 'true' : 'false'}
               </div>
 
               <Button
