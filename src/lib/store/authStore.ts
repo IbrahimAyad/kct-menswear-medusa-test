@@ -64,8 +64,27 @@ export const useAuthStore = create<AuthState>()(
               medusa.auth.setToken_('customer', token);
             }
 
-            // Now fetch the customer data
-            const { customer } = await medusa.store.customer.retrieve();
+            // Try to fetch customer data, but don't fail if it doesn't work
+            let customer = null;
+            try {
+              const customerResult = await medusa.store.customer.retrieve();
+              customer = customerResult.customer;
+            } catch (customerError) {
+              console.log("Could not fetch customer data immediately, but login successful");
+              // Create a basic customer object from the email
+              customer = {
+                id: '',
+                email: email,
+                first_name: null,
+                last_name: null,
+                phone: null,
+                billing_address: null,
+                shipping_addresses: [],
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                metadata: null
+              };
+            }
 
             // Store auth state
             set({
@@ -124,8 +143,27 @@ export const useAuthStore = create<AuthState>()(
               medusa.auth.setToken_('customer', token);
             }
 
-            // Now fetch the customer data
-            const { customer } = await medusa.store.customer.retrieve();
+            // Try to fetch customer data, but don't fail if it doesn't work
+            let customer = null;
+            try {
+              const customerResult = await medusa.store.customer.retrieve();
+              customer = customerResult.customer;
+            } catch (customerError) {
+              console.log("Could not fetch customer data immediately after registration, but account created successfully");
+              // Create a basic customer object from the registration data
+              customer = {
+                id: '',
+                email: data.email,
+                first_name: data.first_name || null,
+                last_name: data.last_name || null,
+                phone: null,
+                billing_address: null,
+                shipping_addresses: [],
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                metadata: null
+              };
+            }
 
             // Store auth state
             set({
