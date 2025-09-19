@@ -37,7 +37,9 @@ export class CartAdapter {
       // Try to retrieve existing cart
       if (this.medusaCartId) {
         try {
-          const response = await medusa.store.cart.retrieve(this.medusaCartId)
+          const response = await medusa.store.cart.retrieve(this.medusaCartId, {
+            fields: "*items,*items.variant,*items.product"
+          })
           
           if (!response || !response.cart) {
             throw new Error('Invalid cart response')
@@ -160,6 +162,10 @@ export class CartAdapter {
         {
           variant_id: variantId,
           quantity,
+        },
+        {},
+        {
+          fields: "*items,*items.variant,*items.product"
         }
       )
       
@@ -189,7 +195,11 @@ export class CartAdapter {
       // Remove from Medusa (SDK v2 method)
       const { cart: updatedCart, parent } = await medusa.store.cart.deleteLineItem(
         this.medusaCartId,
-        lineItemId
+        lineItemId,
+        {},
+        {
+          fields: "*items,*items.variant,*items.product"
+        }
       )
 
       this.medusaCart = updatedCart as unknown as MedusaCart
@@ -220,7 +230,11 @@ export class CartAdapter {
       const { cart: updatedCart } = await medusa.store.cart.updateLineItem(
         this.medusaCartId,
         lineItemId,
-        { quantity }
+        { quantity },
+        {},
+        {
+          fields: "*items,*items.variant,*items.product"
+        }
       )
 
       this.medusaCart = updatedCart as unknown as MedusaCart
@@ -341,9 +355,16 @@ export class CartAdapter {
       throw new Error('No cart initialized')
     }
 
-    const { cart: updatedCart } = await medusa.store.cart.update(this.medusaCartId, {
-      email,
-    })
+    const { cart: updatedCart } = await medusa.store.cart.update(
+      this.medusaCartId,
+      {
+        email,
+      },
+      {},
+      {
+        fields: "*items,*items.variant,*items.product"
+      }
+    )
 
     this.medusaCart = updatedCart as unknown as MedusaCart
     return this.medusaCart
@@ -367,9 +388,16 @@ export class CartAdapter {
       throw new Error('No cart initialized')
     }
 
-    const { cart: updatedCart } = await medusa.store.cart.update(this.medusaCartId, {
-      shipping_address: address,
-    })
+    const { cart: updatedCart } = await medusa.store.cart.update(
+      this.medusaCartId,
+      {
+        shipping_address: address,
+      },
+      {},
+      {
+        fields: "*items,*items.variant,*items.product"
+      }
+    )
 
     this.medusaCart = updatedCart as unknown as MedusaCart
     return this.medusaCart
@@ -392,9 +420,16 @@ export class CartAdapter {
       throw new Error('No cart initialized')
     }
 
-    const { cart: updatedCart } = await medusa.store.cart.update(this.medusaCartId, {
-      billing_address: address,
-    })
+    const { cart: updatedCart } = await medusa.store.cart.update(
+      this.medusaCartId,
+      {
+        billing_address: address,
+      },
+      {},
+      {
+        fields: "*items,*items.variant,*items.product"
+      }
+    )
 
     this.medusaCart = updatedCart as unknown as MedusaCart
     return this.medusaCart
@@ -412,6 +447,10 @@ export class CartAdapter {
       this.medusaCartId,
       {
         option_id: shippingOptionId,
+      },
+      {},
+      {
+        fields: "*items,*items.variant,*items.product"
       }
     )
 
@@ -440,8 +479,10 @@ export class CartAdapter {
     }
 
     try {
-      // First retrieve the cart object
-      const { cart } = await medusa.store.cart.retrieve(this.medusaCartId)
+      // First retrieve the cart object with expanded fields
+      const { cart } = await medusa.store.cart.retrieve(this.medusaCartId, {
+        fields: "*items,*items.variant,*items.product"
+      })
       
       if (!cart) {
         throw new Error('Cart not found')

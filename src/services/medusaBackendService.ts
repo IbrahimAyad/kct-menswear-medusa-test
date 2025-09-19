@@ -54,6 +54,21 @@ export interface MedusaCart {
     unit_price: number
     title: string
     thumbnail?: string
+    variant?: {
+      id: string
+      title: string
+      sku?: string
+      product?: {
+        id: string
+        title: string
+        handle?: string
+      }
+    }
+    product?: {
+      id: string
+      title: string
+      handle?: string
+    }
   }>
   shipping_address?: any
   billing_address?: any
@@ -288,7 +303,12 @@ export async function initializeCartPayment(cartId: string): Promise<any | null>
 export async function createMedusaCart(email?: string): Promise<MedusaCart | null> {
   try {
     // Using standard Medusa v2 /store/carts endpoint
-    const response = await fetch(`${MEDUSA_URL}/store/carts`, {
+    // Add query params to expand variant data in response
+    const params = new URLSearchParams({
+      fields: '*items,*items.variant,*items.product'
+    })
+
+    const response = await fetch(`${MEDUSA_URL}/store/carts?${params}`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({
@@ -317,7 +337,12 @@ export async function createMedusaCart(email?: string): Promise<MedusaCart | nul
 export async function addToMedusaCart(cartId: string, variantId: string, quantity: number = 1): Promise<MedusaCart | null> {
   try {
     // Using standard Medusa v2 /store/carts/{id}/line-items endpoint
-    const response = await fetch(`${MEDUSA_URL}/store/carts/${cartId}/line-items`, {
+    // Add query params to expand variant data in response
+    const params = new URLSearchParams({
+      fields: '*items,*items.variant,*items.product'
+    })
+
+    const response = await fetch(`${MEDUSA_URL}/store/carts/${cartId}/line-items?${params}`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({
@@ -364,7 +389,12 @@ export async function addToMedusaCart(cartId: string, variantId: string, quantit
 // Update item quantity using standard Medusa v2 endpoint
 export async function updateMedusaCartItem(cartId: string, itemId: string, quantity: number): Promise<MedusaCart | null> {
   try {
-    const response = await fetch(`${MEDUSA_URL}/store/carts/${cartId}/line-items/${itemId}`, {
+    // Add query params to expand variant data in response
+    const params = new URLSearchParams({
+      fields: '*items,*items.variant,*items.product'
+    })
+
+    const response = await fetch(`${MEDUSA_URL}/store/carts/${cartId}/line-items/${itemId}?${params}`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({
@@ -387,7 +417,12 @@ export async function updateMedusaCartItem(cartId: string, itemId: string, quant
 // Remove item from cart using standard Medusa v2 endpoint
 export async function removeFromMedusaCart(cartId: string, itemId: string): Promise<MedusaCart | null> {
   try {
-    const response = await fetch(`${MEDUSA_URL}/store/carts/${cartId}/line-items/${itemId}`, {
+    // Add query params to expand variant data in response
+    const params = new URLSearchParams({
+      fields: '*items,*items.variant,*items.product'
+    })
+
+    const response = await fetch(`${MEDUSA_URL}/store/carts/${cartId}/line-items/${itemId}?${params}`, {
       method: 'DELETE',
       headers: getHeaders()
     })
@@ -407,7 +442,12 @@ export async function removeFromMedusaCart(cartId: string, itemId: string): Prom
 // Get cart using standard Medusa v2 endpoint
 export async function getMedusaCart(cartId: string): Promise<MedusaCart | null> {
   try {
-    const response = await fetch(`${MEDUSA_URL}/store/carts/${cartId}`, {
+    // Add query params to expand variant and product data
+    const params = new URLSearchParams({
+      fields: '*items,*items.variant,*items.product'
+    })
+
+    const response = await fetch(`${MEDUSA_URL}/store/carts/${cartId}?${params}`, {
       method: 'GET',
       headers: getHeaders()
     })
