@@ -81,7 +81,6 @@ function SignupForm() {
 
   // Fixed checkbox handler that properly handles CheckedState type
   const handleCheckboxChange = (checked: boolean | 'indeterminate') => {
-    console.log('Checkbox changed:', checked, typeof checked)
     // Convert to boolean - true only if explicitly true
     const newValue = checked === true
     setAcceptTerms(newValue)
@@ -250,11 +249,6 @@ function SignupForm() {
                     Privacy Policy
                   </Link>
                 </label>
-              </div>
-
-              {/* Debug info - remove in production */}
-              <div className="text-xs text-gray-500">
-                Debug: acceptTerms = {acceptTerms ? 'true' : 'false'}
               </div>
 
               <Button
