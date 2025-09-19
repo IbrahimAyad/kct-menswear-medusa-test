@@ -3,8 +3,8 @@
 import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
-import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Loader2, CheckCircle } from 'lucide-react'
 import { useAuthStore } from '@/lib/store/authStore'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -30,10 +30,13 @@ function SignupForm() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [acceptTerms, setAcceptTerms] = useState(false)
   const [error, setError] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setSuccessMessage('')
 
     // Validation
     if (!formData.email || !formData.password || !formData.first_name || !formData.last_name) {
@@ -56,6 +59,8 @@ function SignupForm() {
       return
     }
 
+    setIsSubmitting(true)
+
     const result = await register({
       email: formData.email,
       password: formData.password,
@@ -64,10 +69,17 @@ function SignupForm() {
     })
 
     if (result.success) {
-      // Redirect to the intended page or account dashboard
-      router.push(redirectTo)
+      // Show success message
+      setSuccessMessage(result.message || 'Account created successfully!')
+
+      // Wait a moment to show the success message
+      setTimeout(() => {
+        // Redirect to the intended page or account dashboard
+        router.push(redirectTo)
+      }, 1500)
     } else {
       setError(result.error || 'Failed to create account')
+      setIsSubmitting(false)
     }
   }
 
@@ -76,6 +88,8 @@ function SignupForm() {
       ...formData,
       [e.target.name]: e.target.value
     })
+    // Clear error when user starts typing
+    if (error) setError('')
   }
 
   return (
@@ -96,11 +110,34 @@ function SignupForm() {
 
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
-              {error && (
-                <Alert variant="destructive">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
+              <AnimatePresence>
+                {successMessage && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                  >
+                    <Alert className="bg-green-50 border-green-200">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <AlertDescription className="text-green-800">
+                        {successMessage}
+                      </AlertDescription>
+                    </Alert>
+                  </motion.div>
+                )}
+
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                  >
+                    <Alert variant="destructive">
+                      <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -116,7 +153,7 @@ function SignupForm() {
                       onChange={handleInputChange}
                       className="pl-10"
                       required
-                      disabled={isLoading}
+                      disabled={isLoading || isSubmitting}
                     />
                   </div>
                 </div>
@@ -134,7 +171,7 @@ function SignupForm() {
                       onChange={handleInputChange}
                       className="pl-10"
                       required
-                      disabled={isLoading}
+                      disabled={isLoading || isSubmitting}
                     />
                   </div>
                 </div>
@@ -153,7 +190,7 @@ function SignupForm() {
                     onChange={handleInputChange}
                     className="pl-10"
                     required
-                    disabled={isLoading}
+                    disabled={isLoading || isSubmitting}
                   />
                 </div>
               </div>
@@ -171,7 +208,7 @@ function SignupForm() {
                     onChange={handleInputChange}
                     className="pl-10 pr-10"
                     required
-                    disabled={isLoading}
+                    disabled={isLoading || isSubmitting}
                   />
                   <button
                     type="button"
@@ -201,7 +238,7 @@ function SignupForm() {
                     onChange={handleInputChange}
                     className="pl-10 pr-10"
                     required
-                    disabled={isLoading}
+                    disabled={isLoading || isSubmitting}
                   />
                   <button
                     type="button"
@@ -225,6 +262,7 @@ function SignupForm() {
                   checked={acceptTerms}
                   onChange={(e) => setAcceptTerms(e.target.checked)}
                   className="mt-1 h-5 w-5 rounded border-2 border-gray-400 text-charcoal accent-charcoal focus:ring-2 focus:ring-charcoal focus:ring-offset-2 cursor-pointer"
+                  disabled={isLoading || isSubmitting}
                 />
                 <label
                   htmlFor="terms"
@@ -244,12 +282,12 @@ function SignupForm() {
               <Button
                 type="submit"
                 className="w-full bg-charcoal hover:bg-charcoal/90"
-                disabled={isLoading || !acceptTerms}
+                disabled={isLoading || !acceptTerms || isSubmitting}
               >
-                {isLoading ? (
+                {isLoading || isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating account...
+                    {successMessage ? 'Redirecting...' : 'Creating account...'}
                   </>
                 ) : (
                   <>

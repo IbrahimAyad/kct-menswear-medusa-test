@@ -3,8 +3,8 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, CheckCircle } from 'lucide-react'
 import { useAuthStore } from '@/lib/store/authStore'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -25,6 +25,8 @@ function LoginForm() {
   })
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Check if already authenticated
   useEffect(() => {
@@ -40,19 +42,26 @@ function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setSuccessMessage('')
 
     if (!formData.email || !formData.password) {
       setError('Please fill in all fields')
       return
     }
 
+    setIsSubmitting(true)
     const result = await login(formData.email, formData.password)
 
     if (result.success) {
-      // Redirect to the intended page or account dashboard
-      router.push(redirectTo)
+      setSuccessMessage(result.message || 'Welcome back!')
+
+      // Wait a moment to show success message
+      setTimeout(() => {
+        router.push(redirectTo)
+      }, 1000)
     } else {
-      setError(result.error || 'Invalid email or password')
+      setError(result.error || 'Failed to sign in')
+      setIsSubmitting(false)
     }
   }
 
@@ -61,6 +70,8 @@ function LoginForm() {
       ...formData,
       [e.target.name]: e.target.value
     })
+    // Clear error when user starts typing
+    if (error) setError('')
   }
 
   return (
@@ -81,11 +92,34 @@ function LoginForm() {
 
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
-              {error && (
-                <Alert variant="destructive">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
+              <AnimatePresence>
+                {successMessage && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                  >
+                    <Alert className="bg-green-50 border-green-200">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <AlertDescription className="text-green-800">
+                        {successMessage}
+                      </AlertDescription>
+                    </Alert>
+                  </motion.div>
+                )}
+
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                  >
+                    <Alert variant="destructive">
+                      <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
@@ -95,12 +129,13 @@ function LoginForm() {
                     id="email"
                     name="email"
                     type="email"
-                    placeholder="Enter your email"
+                    placeholder="john@example.com"
                     value={formData.email}
                     onChange={handleInputChange}
                     className="pl-10"
                     required
-                    disabled={isLoading}
+                    autoComplete="email"
+                    disabled={isLoading || isSubmitting}
                   />
                 </div>
               </div>
@@ -126,7 +161,8 @@ function LoginForm() {
                     onChange={handleInputChange}
                     className="pl-10 pr-10"
                     required
-                    disabled={isLoading}
+                    autoComplete="current-password"
+                    disabled={isLoading || isSubmitting}
                   />
                   <button
                     type="button"
@@ -146,12 +182,12 @@ function LoginForm() {
               <Button
                 type="submit"
                 className="w-full bg-charcoal hover:bg-charcoal/90"
-                disabled={isLoading}
+                disabled={isLoading || isSubmitting}
               >
-                {isLoading ? (
+                {isLoading || isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Signing in...
+                    {successMessage ? 'Redirecting...' : 'Signing in...'}
                   </>
                 ) : (
                   <>
@@ -166,7 +202,10 @@ function LoginForm() {
           <CardFooter>
             <div className="w-full text-center text-sm text-gray-600">
               Don't have an account?{' '}
-              <Link href="/auth/signup" className="text-primary hover:underline font-medium">
+              <Link
+                href={`/auth/signup${redirectTo ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ''}`}
+                className="text-primary hover:underline font-medium"
+              >
                 Create account
               </Link>
             </div>

@@ -8,25 +8,30 @@ interface Customer {
   first_name: string | null;
   last_name: string | null;
   phone: string | null;
-  has_account: boolean;
+  billing_address: any | null;
+  shipping_addresses: any[];
   created_at: string;
-  metadata?: Record<string, any>;
+  updated_at: string;
+  metadata: Record<string, any> | null;
 }
 
-interface AuthStore {
+interface AuthState {
   customer: Customer | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   token: string | null;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  register: (data: { email: string; password: string; first_name?: string; last_name?: string }) => Promise<{ success: boolean; error?: string }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string; message?: string }>;
+  register: (data: {
+    email: string;
+    password: string;
+    first_name: string;
+    last_name: string;
+  }) => Promise<{ success: boolean; error?: string; message?: string }>;
   logout: () => Promise<void>;
-  updateProfile: (data: Partial<Customer>) => Promise<void>;
-  refreshCustomer: () => Promise<void>;
   checkAuth: () => Promise<void>;
 }
 
-export const useAuthStore = create<AuthStore>()(
+export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       customer: null,
@@ -34,7 +39,7 @@ export const useAuthStore = create<AuthStore>()(
       isLoading: false,
       token: null,
 
-      login: async (email: string, password: string) => {
+      login: async (email, password) => {
         set({ isLoading: true });
         try {
           // Use Medusa 2.0 SDK auth method - returns only token
@@ -69,13 +74,23 @@ export const useAuthStore = create<AuthStore>()(
               token
             });
 
-            return { success: true };
+            return { success: true, message: "Welcome back to KCT Menswear!" };
           } else {
-            throw new Error('No token received from login');
+            throw new Error('Invalid credentials');
           }
         } catch (error: any) {
           console.error("Login error:", error);
-          const errorMessage = error.message || "Invalid credentials";
+
+          // User-friendly error messages
+          let errorMessage = "Unable to sign in";
+          if (error?.message?.includes('Unauthorized') || error?.message?.includes('401')) {
+            errorMessage = "Invalid email or password. Please try again.";
+          } else if (error?.message?.includes('network')) {
+            errorMessage = "Network error. Please check your connection.";
+          } else if (error?.message) {
+            errorMessage = error.message;
+          }
+
           return { success: false, error: errorMessage };
         } finally {
           set({ isLoading: false });
@@ -119,18 +134,31 @@ export const useAuthStore = create<AuthStore>()(
               token
             });
 
-            return { success: true };
+            return {
+              success: true,
+              message: "Welcome to KCT Menswear! Your account has been created successfully."
+            };
           } else {
             throw new Error('No token received from registration');
           }
         } catch (error: any) {
           console.error("Registration error:", error);
-          let errorMessage = "Registration failed";
-          if (error?.message?.includes('already exists')) {
-            errorMessage = 'An account with this email already exists';
+
+          // User-friendly error messages
+          let errorMessage = "Unable to create account";
+
+          if (error?.message?.includes('already exists') || error?.message?.includes('duplicate')) {
+            errorMessage = "This email is already registered. Please sign in instead.";
+          } else if (error?.message?.includes('password')) {
+            errorMessage = "Password must be at least 8 characters long.";
+          } else if (error?.message?.includes('email')) {
+            errorMessage = "Please enter a valid email address.";
+          } else if (error?.message?.includes('network')) {
+            errorMessage = "Network error. Please check your connection.";
           } else if (error?.message) {
             errorMessage = error.message;
           }
+
           return { success: false, error: errorMessage };
         } finally {
           set({ isLoading: false });
@@ -139,119 +167,66 @@ export const useAuthStore = create<AuthStore>()(
 
       logout: async () => {
         try {
-          // Call Medusa logout
-          await medusa.auth.logout();
-        } catch (error) {
-          console.error("Logout error:", error);
-        }
+          // Clear token from localStorage
+          localStorage.removeItem("medusa_token");
 
-        // Clear auth state
-        set({
-          customer: null,
-          isAuthenticated: false,
-          token: null
-        });
-
-        // Clear stored token
-        localStorage.removeItem("medusa_token");
-
-        // Clear cart data
-        localStorage.removeItem("medusa_cart_id");
-        localStorage.removeItem("kct-cart-storage");
-      },
-
-      updateProfile: async (data: Partial<Customer>) => {
-        const { customer } = get();
-        if (!customer) throw new Error("Not authenticated");
-
-        set({ isLoading: true });
-        try {
-          // Use Medusa 2.0 SDK to update customer
-          const updatedCustomer = await medusa.store.customer.update({
-            first_name: data.first_name,
-            last_name: data.last_name,
-            phone: data.phone,
-            metadata: data.metadata
-          });
-
-          set({ customer: updatedCustomer.customer as Customer });
-        } catch (error) {
-          console.error("Update profile error:", error);
-          throw error;
-        } finally {
-          set({ isLoading: false });
-        }
-      },
-
-      refreshCustomer: async () => {
-        try {
-          // Use Medusa 2.0 SDK to get current customer
-          const { customer } = await medusa.store.customer.retrieve();
-
-          if (customer) {
-            set({
-              customer: customer as Customer,
-              isAuthenticated: true
-            });
-          }
-        } catch (error) {
-          console.error("Refresh customer error:", error);
-          // If refresh fails, user is not authenticated
+          // Clear auth state
           set({
             customer: null,
             isAuthenticated: false,
             token: null
           });
+
+          // Optionally call logout endpoint
+          try {
+            await medusa.auth.logout();
+          } catch (e) {
+            // Ignore logout errors
+          }
+        } catch (error) {
+          console.error("Logout error:", error);
         }
       },
 
       checkAuth: async () => {
-        // Check if we have a stored token
-        const storedToken = localStorage.getItem("medusa_token");
-        if (!storedToken) {
-          set({
-            customer: null,
-            isAuthenticated: false,
-            token: null
-          });
-          return;
-        }
-
         try {
-          // Set the token in Medusa client before making requests
-          if (medusa.auth.setToken_) {
-            medusa.auth.setToken_('customer', storedToken);
-          }
+          const token = localStorage.getItem("medusa_token");
+          if (token) {
+            // Set the token in Medusa client
+            if (medusa.auth.setToken_) {
+              medusa.auth.setToken_('customer', token);
+            }
 
-          // Try to get customer with stored token
-          const { customer } = await medusa.store.customer.retrieve();
+            // Try to fetch customer data
+            const { customer } = await medusa.store.customer.retrieve();
 
-          if (customer) {
-            set({
-              customer: customer as Customer,
-              isAuthenticated: true,
-              token: storedToken
-            });
+            if (customer) {
+              set({
+                customer: customer as Customer,
+                isAuthenticated: true,
+                token
+              });
+            }
           }
         } catch (error) {
-          console.error("Auth check failed:", error);
-          // Token is invalid, clear auth state
+          // If token is invalid, clear auth state
+          localStorage.removeItem("medusa_token");
           set({
             customer: null,
             isAuthenticated: false,
             token: null
           });
-          localStorage.removeItem("medusa_token");
         }
-      },
+      }
     }),
     {
-      name: "kct-auth-storage",
+      name: "auth-storage",
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ 
+      partialize: (state) => ({
         customer: state.customer,
         isAuthenticated: state.isAuthenticated,
-      }),
+        token: state.token
+      })
     }
   )
 );
