@@ -11,7 +11,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Checkbox } from '@/components/ui/checkbox'
 
 function SignupForm() {
   const router = useRouter()
@@ -77,13 +76,6 @@ function SignupForm() {
       ...formData,
       [e.target.name]: e.target.value
     })
-  }
-
-  // Fixed checkbox handler that properly handles CheckedState type
-  const handleCheckboxChange = (checked: boolean | 'indeterminate') => {
-    // Convert to boolean - true only if explicitly true
-    const newValue = checked === true
-    setAcceptTerms(newValue)
   }
 
   return (
@@ -226,26 +218,24 @@ function SignupForm() {
                 </div>
               </div>
 
-              <div className="flex items-center space-x-2">
-                <Checkbox
+              <div className="flex items-start space-x-2">
+                <input
+                  type="checkbox"
                   id="terms"
                   checked={acceptTerms}
-                  onCheckedChange={handleCheckboxChange}
+                  onChange={(e) => setAcceptTerms(e.target.checked)}
+                  className="mt-1 h-4 w-4 rounded border-gray-300 text-gold focus:ring-gold"
                 />
                 <label
                   htmlFor="terms"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer select-none"
-                  onClick={(e) => {
-                    e.preventDefault()
-                    handleCheckboxChange(!acceptTerms)
-                  }}
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                 >
                   I agree to the{' '}
-                  <Link href="/terms" className="text-primary hover:underline" onClick={(e) => e.stopPropagation()}>
+                  <Link href="/terms" className="text-primary hover:underline">
                     Terms & Conditions
                   </Link>{' '}
                   and{' '}
-                  <Link href="/privacy" className="text-primary hover:underline" onClick={(e) => e.stopPropagation()}>
+                  <Link href="/privacy" className="text-primary hover:underline">
                     Privacy Policy
                   </Link>
                 </label>
