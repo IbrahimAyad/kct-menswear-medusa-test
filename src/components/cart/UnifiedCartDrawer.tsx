@@ -222,6 +222,9 @@ export function UnifiedCartDrawer() {
           )}
           <div className="flex-1">
             <h4 className="font-medium text-sm">{item.title}</h4>
+            {item.variant && item.variant.title && (
+              <p className="text-xs text-gray-600">Size: {item.variant.title}</p>
+            )}
             <p className="text-xs text-gray-600">Qty: {item.quantity}</p>
             <p className="text-sm font-semibold mt-1">{formatPrice(item.unit_price)}</p>
           </div>

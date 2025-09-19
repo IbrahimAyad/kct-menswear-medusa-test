@@ -115,15 +115,41 @@ export class CartAdapter {
       } else {
         // If we got a variant ID, we need to find the size name for Zustand
         try {
-          const { product: fullProduct } = await medusa.store.product.retrieve(product.id, {
-            fields: "*variants",
-          })
-          const variant = fullProduct.variants?.find((v: any) => v.id === variantId)
-          if (variant) {
-            sizeForZustand = variant.title // This should be the size like "L", "M", etc.
+          // First try to get it from the product object if it has variants
+          if (product.variants && Array.isArray(product.variants)) {
+            const variant = product.variants.find((v: any) =>
+              (typeof v === 'object' && v.id === variantId) || v === variantId
+            )
+            if (variant && typeof variant === 'object' && variant.title) {
+              sizeForZustand = variant.title
+              console.log('Found size from product object:', sizeForZustand)
+            } else if (variant && typeof variant === 'object' && variant.size) {
+              sizeForZustand = variant.size
+              console.log('Found size from variant.size:', sizeForZustand)
+            }
+          }
+
+          // If not found in product object, fetch from API
+          if (sizeForZustand === variantId) {
+            const response = await medusa.store.product.list({
+              id: product.id,
+              fields: "*variants",
+              region_id: MEDUSA_CONFIG.regionId
+            })
+
+            if (response.products && response.products[0]) {
+              const fullProduct = response.products[0]
+              const variant = fullProduct.variants?.find((v: any) => v.id === variantId)
+              if (variant) {
+                sizeForZustand = variant.title || variant.size || 'One Size'
+                console.log('Found size from API:', sizeForZustand)
+              }
+            }
           }
         } catch (error) {
-          console.warn('Could not find size name for variant:', variantId)
+          console.warn('Could not find size name for variant:', variantId, error)
+          // Default to a generic size if we can't find it
+          sizeForZustand = 'One Size'
         }
       }
 
