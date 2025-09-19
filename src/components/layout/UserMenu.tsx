@@ -1,14 +1,19 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuthStore } from '@/lib/store/authStore'
 import Link from 'next/link'
 import { User, ChevronDown, Heart, Sparkles } from 'lucide-react'
 
 export default function UserMenu() {
-  const { user, logout, isLoading } = useAuth()
+  const { customer, logout, isLoading, checkAuth, isAuthenticated } = useAuthStore()
   const [isOpen, setIsOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+
+  // Check auth on mount
+  useEffect(() => {
+    checkAuth()
+  }, [])
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -30,10 +35,10 @@ export default function UserMenu() {
     )
   }
 
-  if (!user) {
+  if (!isAuthenticated || !customer) {
     return (
       <Link
-        href="/login"
+        href="/auth/login"
         className="flex items-center gap-2 text-gray-700 hover:text-black transition-colors"
       >
         <User className="w-5 h-5" />
@@ -48,8 +53,8 @@ export default function UserMenu() {
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 text-gray-700 hover:text-black transition-colors"
       >
-        <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center text-sm font-medium">
-          {user.email?.[0].toUpperCase()}
+        <div className="w-8 h-8 rounded-full bg-charcoal text-white flex items-center justify-center text-sm font-medium">
+          {customer.email?.[0].toUpperCase()}
         </div>
         <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
@@ -65,7 +70,7 @@ export default function UserMenu() {
               My Account
             </Link>
             <Link
-              href="/orders"
+              href="/account/orders"
               onClick={() => setIsOpen(false)}
               className="group flex w-full items-center rounded-md px-3 py-2 text-sm hover:bg-gray-100 transition-colors"
             >

@@ -1,20 +1,24 @@
 'use client'
 
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuthStore } from '@/lib/store/authStore'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import Link from 'next/link'
 import { Package, Heart, User, CreditCard, MapPin, LogOut, Sparkles, ArrowRight } from 'lucide-react'
 
 export default function AccountPage() {
-  const { user, isLoading, isAuthenticated, logout } = useAuth()
+  const { customer, isLoading, isAuthenticated, logout, checkAuth } = useAuthStore()
   const router = useRouter()
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.push('/login?redirect=/account')
+    const verifyAuth = async () => {
+      await checkAuth()
+      if (!isAuthenticated) {
+        router.push('/auth/login?redirectTo=/account')
+      }
     }
-  }, [isAuthenticated, isLoading, router])
+    verifyAuth()
+  }, [])
 
   if (isLoading) {
     return (
@@ -24,7 +28,7 @@ export default function AccountPage() {
     )
   }
 
-  if (!user) {
+  if (!customer || !isAuthenticated) {
     return null
   }
 
@@ -32,7 +36,7 @@ export default function AccountPage() {
     {
       title: 'Order History',
       description: 'View and track your orders',
-      href: '/orders',
+      href: '/account/orders',
       icon: Package,
     },
     {
@@ -69,7 +73,7 @@ export default function AccountPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">My Account</h1>
-              <p className="text-gray-600 mt-1">{user.email}</p>
+              <p className="text-gray-600 mt-1">{customer.email}</p>
             </div>
             <button
               onClick={() => logout()}

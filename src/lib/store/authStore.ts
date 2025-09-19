@@ -1,16 +1,29 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { Customer } from "@/lib/types";
-import { adminClient } from "@/lib/api/adminClient";
+import { medusa } from "@/lib/medusa/client";
+
+interface Customer {
+  id: string;
+  email: string;
+  first_name: string | null;
+  last_name: string | null;
+  phone: string | null;
+  has_account: boolean;
+  created_at: string;
+  metadata?: Record<string, any>;
+}
 
 interface AuthStore {
   customer: Customer | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  token: string | null;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  register: (data: { email: string; password: string; first_name?: string; last_name?: string }) => Promise<{ success: boolean; error?: string }>;
+  logout: () => Promise<void>;
   updateProfile: (data: Partial<Customer>) => Promise<void>;
   refreshCustomer: () => Promise<void>;
+  checkAuth: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthStore>()(
@@ -19,51 +32,132 @@ export const useAuthStore = create<AuthStore>()(
       customer: null,
       isAuthenticated: false,
       isLoading: false,
+      token: null,
 
       login: async (email: string, password: string) => {
         set({ isLoading: true });
         try {
-          // In a real implementation, this would make an auth API call
-          // For now, we'll simulate with a customer fetch
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-API-Key": process.env.NEXT_PUBLIC_API_KEY || "",
-            },
-            body: JSON.stringify({ email, password }),
-          });
+          // Use Medusa 2.0 SDK auth method - returns only token
+          const result = await medusa.auth.login(
+            "customer",
+            "emailpass",
+            {
+              email,
+              password
+            }
+          );
 
-          if (!response.ok) {
-            throw new Error("Invalid credentials");
+          // The result is the token string directly
+          const token = result.token || result;
+
+          if (token && typeof token === 'string') {
+            // Store token for API calls
+            localStorage.setItem("medusa_token", token);
+
+            // Set the token in Medusa client for future requests
+            if (medusa.auth.setToken_) {
+              medusa.auth.setToken_('customer', token);
+            }
+
+            // Now fetch the customer data
+            const { customer } = await medusa.store.customer.retrieve();
+
+            // Store auth state
+            set({
+              customer: customer as Customer,
+              isAuthenticated: true,
+              token
+            });
+
+            return { success: true };
+          } else {
+            throw new Error('No token received from login');
           }
-
-          const { customer, token } = await response.json();
-
-          // Store token in httpOnly cookie (handled by API)
-          set({ 
-            customer, 
-            isAuthenticated: true 
-          });
-        } catch (error) {
-
-          throw error;
+        } catch (error: any) {
+          console.error("Login error:", error);
+          const errorMessage = error.message || "Invalid credentials";
+          return { success: false, error: errorMessage };
         } finally {
           set({ isLoading: false });
         }
       },
 
-      logout: () => {
+      register: async (data) => {
+        set({ isLoading: true });
+        try {
+          // Use Medusa 2.0 SDK to create customer - returns only token
+          const result = await medusa.auth.register(
+            "customer",
+            "emailpass",
+            {
+              email: data.email,
+              password: data.password,
+              first_name: data.first_name || "",
+              last_name: data.last_name || ""
+            }
+          );
+
+          // The result is the token string directly
+          const token = result.token || result;
+
+          if (token && typeof token === 'string') {
+            // Store token for API calls
+            localStorage.setItem("medusa_token", token);
+
+            // Set the token in Medusa client for future requests
+            if (medusa.auth.setToken_) {
+              medusa.auth.setToken_('customer', token);
+            }
+
+            // Now fetch the customer data
+            const { customer } = await medusa.store.customer.retrieve();
+
+            // Store auth state
+            set({
+              customer: customer as Customer,
+              isAuthenticated: true,
+              token
+            });
+
+            return { success: true };
+          } else {
+            throw new Error('No token received from registration');
+          }
+        } catch (error: any) {
+          console.error("Registration error:", error);
+          let errorMessage = "Registration failed";
+          if (error?.message?.includes('already exists')) {
+            errorMessage = 'An account with this email already exists';
+          } else if (error?.message) {
+            errorMessage = error.message;
+          }
+          return { success: false, error: errorMessage };
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+
+      logout: async () => {
+        try {
+          // Call Medusa logout
+          await medusa.auth.logout();
+        } catch (error) {
+          console.error("Logout error:", error);
+        }
+
         // Clear auth state
-        set({ 
-          customer: null, 
-          isAuthenticated: false 
+        set({
+          customer: null,
+          isAuthenticated: false,
+          token: null
         });
 
-        // Clear cart data
-        localStorage.removeItem("kct-cart-storage");
+        // Clear stored token
+        localStorage.removeItem("medusa_token");
 
-        // In a real app, also clear httpOnly cookies via API call
+        // Clear cart data
+        localStorage.removeItem("medusa_cart_id");
+        localStorage.removeItem("kct-cart-storage");
       },
 
       updateProfile: async (data: Partial<Customer>) => {
@@ -72,10 +166,17 @@ export const useAuthStore = create<AuthStore>()(
 
         set({ isLoading: true });
         try {
-          const updatedCustomer = await adminClient.updateCustomer(customer.id, data);
-          set({ customer: updatedCustomer });
-        } catch (error) {
+          // Use Medusa 2.0 SDK to update customer
+          const updatedCustomer = await medusa.store.customer.update({
+            first_name: data.first_name,
+            last_name: data.last_name,
+            phone: data.phone,
+            metadata: data.metadata
+          });
 
+          set({ customer: updatedCustomer.customer as Customer });
+        } catch (error) {
+          console.error("Update profile error:", error);
           throw error;
         } finally {
           set({ isLoading: false });
@@ -83,16 +184,64 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       refreshCustomer: async () => {
-        const { customer } = get();
-        if (!customer) return;
-
         try {
-          const freshCustomer = await adminClient.fetchCustomer(customer.id);
-          if (freshCustomer) {
-            set({ customer: freshCustomer });
+          // Use Medusa 2.0 SDK to get current customer
+          const { customer } = await medusa.store.customer.retrieve();
+
+          if (customer) {
+            set({
+              customer: customer as Customer,
+              isAuthenticated: true
+            });
           }
         } catch (error) {
+          console.error("Refresh customer error:", error);
+          // If refresh fails, user is not authenticated
+          set({
+            customer: null,
+            isAuthenticated: false,
+            token: null
+          });
+        }
+      },
 
+      checkAuth: async () => {
+        // Check if we have a stored token
+        const storedToken = localStorage.getItem("medusa_token");
+        if (!storedToken) {
+          set({
+            customer: null,
+            isAuthenticated: false,
+            token: null
+          });
+          return;
+        }
+
+        try {
+          // Set the token in Medusa client before making requests
+          if (medusa.auth.setToken_) {
+            medusa.auth.setToken_('customer', storedToken);
+          }
+
+          // Try to get customer with stored token
+          const { customer } = await medusa.store.customer.retrieve();
+
+          if (customer) {
+            set({
+              customer: customer as Customer,
+              isAuthenticated: true,
+              token: storedToken
+            });
+          }
+        } catch (error) {
+          console.error("Auth check failed:", error);
+          // Token is invalid, clear auth state
+          set({
+            customer: null,
+            isAuthenticated: false,
+            token: null
+          });
+          localStorage.removeItem("medusa_token");
         }
       },
     }),
