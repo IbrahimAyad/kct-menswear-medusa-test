@@ -64,14 +64,15 @@ export const useAuthStore = create<AuthState>()(
               medusa.auth.setToken_('customer', token);
             }
 
-            // Try to fetch customer data, but don't fail if it doesn't work
+            // Try to fetch customer data
             let customer = null;
             try {
               const customerResult = await medusa.store.customer.retrieve();
               customer = customerResult.customer;
             } catch (customerError) {
-              console.log("Could not fetch customer data immediately, but login successful");
-              // Create a basic customer object from the email
+              console.log("Customer record not found for this auth identity");
+              // The backend should have created this
+              // For now, create a placeholder object
               customer = {
                 id: '',
                 email: email,
@@ -143,14 +144,17 @@ export const useAuthStore = create<AuthState>()(
               medusa.auth.setToken_('customer', token);
             }
 
-            // Try to fetch customer data, but don't fail if it doesn't work
+            // Try to fetch customer data after registration
+            // Note: Medusa backend should auto-create customer records
             let customer = null;
             try {
               const customerResult = await medusa.store.customer.retrieve();
               customer = customerResult.customer;
+              console.log("Customer record retrieved successfully");
             } catch (customerError) {
-              console.log("Could not fetch customer data immediately after registration, but account created successfully");
-              // Create a basic customer object from the registration data
+              console.log("Customer record not immediately available after registration");
+              // The backend should be creating this automatically
+              // For now, create a placeholder object
               customer = {
                 id: '',
                 email: data.email,
