@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { medusa } from '@/lib/medusa/client'
 
 interface MedusaUser {
   id: string
@@ -42,6 +43,9 @@ export function MedusaAuthProvider({ children }: { children: ReactNode }) {
     const email = localStorage.getItem('medusa_email')
     
     if (token && email) {
+      // Set the JWT token in Medusa client
+      medusa.auth.setToken(token)
+      
       // Set basic user info from localStorage
       setUser({
         id: 'customer',
@@ -70,11 +74,14 @@ export function MedusaAuthProvider({ children }: { children: ReactNode }) {
         throw new Error(errorData.message || 'Invalid credentials')
       }
 
-      const { token } = await response.json()
+      const { token, customer } = await response.json()
 
       // Store authentication
       localStorage.setItem('medusa_token', token)
       localStorage.setItem('medusa_email', email)
+      
+      // Set the JWT token in Medusa client
+      medusa.auth.setToken(token)
 
       // Ensure customer record is synced
       try {
@@ -92,10 +99,12 @@ export function MedusaAuthProvider({ children }: { children: ReactNode }) {
         console.error('Failed to sync customer:', syncError)
       }
 
-      // Set user
+      // Set user with data from backend
       setUser({
-        id: 'customer',
-        email: email
+        id: customer?.id || 'customer',
+        email: customer?.email || email,
+        first_name: customer?.first_name,
+        last_name: customer?.last_name
       })
 
     } catch (err: any) {
@@ -129,7 +138,11 @@ export function MedusaAuthProvider({ children }: { children: ReactNode }) {
         throw new Error(errorData.message || 'Registration failed')
       }
 
-      const { token } = await response.json()
+      const responseData = await response.json()
+      const token = responseData.token || responseData.jwt || responseData
+      
+      // Set the JWT token in Medusa client
+      medusa.auth.setToken(token)
 
       // Ensure customer record is created in Medusa backend
       try {
@@ -152,10 +165,10 @@ export function MedusaAuthProvider({ children }: { children: ReactNode }) {
 
       // Set user
       setUser({
-        id: 'customer',
-        email: data.email,
-        first_name: data.first_name,
-        last_name: data.last_name
+        id: responseData.customer?.id || 'customer',
+        email: responseData.customer?.email || data.email,
+        first_name: responseData.customer?.first_name || data.first_name,
+        last_name: responseData.customer?.last_name || data.last_name
       })
       
     } catch (err: any) {
