@@ -1,11 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { User, Package, MapPin, Settings, Heart, CreditCard, Calendar, Star, Edit, Phone, Mail } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { useAuth } from '@/hooks/useAuth';
+import { useRouter } from 'next/navigation';
 
 interface UserProfile {
   name: string;
@@ -26,20 +28,30 @@ interface UserProfile {
 }
 
 export default function ProfilePage() {
+  const router = useRouter();
+  const { isAuthenticated, profile, isLoading } = useAuth();
+  
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push('/auth/login');
+    }
+  }, [isAuthenticated, isLoading, router]);
+
   const [user] = useState<UserProfile>({
-    name: 'John Smith',
-    email: 'john.smith@example.com',
-    phone: '+1 (555) 123-4567',
-    memberSince: new Date('2023-01-15'),
-    orders: 12,
-    favoriteItems: 8,
+    name: profile ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.email : 'Guest User',
+    email: profile?.email || 'guest@example.com',
+    phone: profile?.phone || 'Not provided',
+    memberSince: new Date(),
+    orders: 0,
+    favoriteItems: 0,
     addressBook: {
-      shipping: '123 Main Street, Detroit, MI 48201',
-      billing: '123 Main Street, Detroit, MI 48201'
+      shipping: 'No address saved',
+      billing: 'No address saved'
     },
     preferences: {
-      size: '40R',
-      style: 'Modern Classic',
+      size: 'Not set',
+      style: 'Not set',
       notifications: true
     }
   });

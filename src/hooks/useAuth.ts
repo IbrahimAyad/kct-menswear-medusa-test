@@ -1,39 +1,50 @@
-// TEMPORARILY DISABLED - Supabase auth disabled during migration to Medusa
-// TODO: Replace with Medusa customer authentication
-
-import { useEffect } from 'react'
-import { useCustomerStore } from '@/store/customerStore'
-import type { CustomerProfile, LoyaltyTier } from '@/lib/customer/types'
+// Medusa authentication integration
+import { useRouter } from 'next/navigation'
+import { useMedusaAuth } from '@/contexts/MedusaAuthContext'
 
 export function useAuth() {
-  const { login, logout, profile, isAuthenticated } = useCustomerStore()
-
-  useEffect(() => {
-    // Auth functionality disabled during migration
-    // TODO: Implement Medusa customer session check
-  }, [])
+  const router = useRouter()
+  const { user, login, register, logout: medusaLogout, isLoading, error } = useMedusaAuth()
 
   const signIn = async (email: string, password: string) => {
-    // Temporarily disabled during migration
-    console.log('Auth disabled during migration')
-    return { error: 'Authentication temporarily disabled' }
+    try {
+      await login(email, password)
+      // Redirect to profile page after successful login
+      router.push('/profile')
+      return { error: null }
+    } catch (err: any) {
+      return { error: { message: err.message || 'Login failed' } }
+    }
   }
 
-  const signUp = async (email: string, password: string, profile?: Partial<CustomerProfile>) => {
-    // Temporarily disabled during migration
-    console.log('Auth disabled during migration')
-    return { error: 'Authentication temporarily disabled' }
+  const signUp = async (email: string, password: string, profile?: any) => {
+    try {
+      await register({
+        email,
+        password,
+        first_name: profile?.first_name,
+        last_name: profile?.last_name
+      })
+      // Redirect to profile page after successful registration
+      router.push('/profile')
+      return { error: null }
+    } catch (err: any) {
+      return { error: { message: err.message || 'Registration failed' } }
+    }
   }
 
   const signOut = async () => {
-    logout()
+    medusaLogout()
+    router.push('/')
   }
 
   return {
-    isAuthenticated,
-    profile,
+    isAuthenticated: !!user,
+    profile: user,
     signIn,
     signUp,
     signOut,
+    isLoading,
+    error
   }
 }
