@@ -39,21 +39,52 @@ export function MedusaAuthProvider({ children }: { children: ReactNode }) {
 
   // Check for existing session on mount
   useEffect(() => {
-    const token = localStorage.getItem('medusa_token')
-    const email = localStorage.getItem('medusa_email')
-    
-    if (token && email) {
-      // Set the JWT token in Medusa client
-      medusa.auth.setToken(token)
+    const checkSession = async () => {
+      const token = localStorage.getItem('medusa_token')
+      const email = localStorage.getItem('medusa_email')
       
-      // Set basic user info from localStorage
-      setUser({
-        id: 'customer',
-        email: email
-      })
+      if (token && email) {
+        // Set the JWT token in Medusa client
+        medusa.auth.setToken(token)
+        
+        // Try to fetch actual user data
+        try {
+          const response = await fetch(`${API_URL}/store/customers/me`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'x-publishable-api-key': PUBLISHABLE_KEY
+            }
+          })
+          
+          if (response.ok) {
+            const { customer } = await response.json()
+            setUser({
+              id: customer.id,
+              email: customer.email,
+              first_name: customer.first_name,
+              last_name: customer.last_name,
+              phone: customer.phone
+            })
+          } else {
+            // Fallback to basic info if profile fetch fails
+            setUser({
+              id: 'customer',
+              email: email
+            })
+          }
+        } catch (error) {
+          // Fallback to basic info
+          setUser({
+            id: 'customer',
+            email: email
+          })
+        }
+      }
+      
+      setIsLoading(false)
     }
     
-    setIsLoading(false)
+    checkSession()
   }, [])
 
   const login = async (email: string, password: string) => {
