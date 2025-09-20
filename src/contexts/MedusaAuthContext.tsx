@@ -114,11 +114,26 @@ export function MedusaAuthProvider({ children }: { children: ReactNode }) {
       }
 
       const { token } = await response.json()
-      
+
+      // Ensure customer record is created in Medusa backend
+      try {
+        await fetch(`${API_URL}/store/ensure-customer`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email: data.email })
+        })
+        console.log('Customer record ensured for:', data.email)
+      } catch (ensureError) {
+        console.error('Failed to ensure customer record:', ensureError)
+        // Continue anyway - the backend has other fallback mechanisms
+      }
+
       // Store authentication
       localStorage.setItem('medusa_token', token)
       localStorage.setItem('medusa_email', data.email)
-      
+
       // Set user
       setUser({
         id: 'customer',
