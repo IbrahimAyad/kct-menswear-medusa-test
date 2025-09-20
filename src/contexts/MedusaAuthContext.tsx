@@ -55,7 +55,7 @@ export function MedusaAuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     setError(null)
     setIsLoading(true)
-    
+
     try {
       const response = await fetch(`${API_URL}/auth/customer/emailpass`, {
         method: 'POST',
@@ -71,17 +71,33 @@ export function MedusaAuthProvider({ children }: { children: ReactNode }) {
       }
 
       const { token } = await response.json()
-      
+
       // Store authentication
       localStorage.setItem('medusa_token', token)
       localStorage.setItem('medusa_email', email)
-      
+
+      // Ensure customer record is synced
+      try {
+        await fetch(`${API_URL}/store/customer/sync`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            'x-publishable-api-key': PUBLISHABLE_KEY
+          },
+          body: JSON.stringify({ email, token })
+        })
+        console.log('Customer synced after login')
+      } catch (syncError) {
+        console.error('Failed to sync customer:', syncError)
+      }
+
       // Set user
       setUser({
         id: 'customer',
         email: email
       })
-      
+
     } catch (err: any) {
       setError(err.message)
       throw err
