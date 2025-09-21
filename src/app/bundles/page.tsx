@@ -47,6 +47,7 @@ export default function BundleCollectionPage() {
   // Convert bundle to UnifiedProduct format for minimal cards
   const bundleToUnifiedProduct = (bundle: any) => ({
     id: bundle.id,
+    sku: bundle.id, // Use id as sku for bundles
     name: bundle.name,
     price: bundle.bundlePrice,
     originalPrice: bundle.originalPrice,
@@ -54,6 +55,8 @@ export default function BundleCollectionPage() {
     imageUrl: bundle.imageUrl,
     description: bundle.description,
     category: bundle.category,
+    type: 'bundle' as const, // Add type property
+    tags: bundle.tags || [], // Add tags property
     isBundle: true,
     inStock: true,
     trending: bundle.trending,
