@@ -110,7 +110,7 @@ export default function AccountPage() {
             return (
               <Link
                 key={section.href}
-                href={section.href}
+                href={section.href as any}
                 className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow group"
               >
                 <div className="flex items-start gap-4">

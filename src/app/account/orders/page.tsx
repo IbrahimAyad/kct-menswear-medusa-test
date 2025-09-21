@@ -63,9 +63,8 @@ export default function OrderHistoryPage() {
 
       // Use Medusa SDK to fetch customer orders
       const response = await medusa.store.order.list({
-        customer_id: customer.id,
         fields: 'id,display_id,created_at,status,fulfillment_status,payment_status,total,currency_code,items,metadata'
-      })
+      } as any)
 
       if (response?.orders) {
         setOrders(response.orders as Order[])

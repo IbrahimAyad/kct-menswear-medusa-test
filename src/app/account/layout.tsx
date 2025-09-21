@@ -9,16 +9,16 @@ export default function AccountLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, loading } = useAuth();
+  const { profile, isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!isLoading && !profile) {
       router.push("/auth/login?redirectTo=/account");
     }
-  }, [user, loading, router]);
+  }, [profile, isLoading, router]);
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div>
@@ -26,7 +26,7 @@ export default function AccountLayout({
     );
   }
 
-  if (!user) {
+  if (!profile) {
     return null;
   }
 

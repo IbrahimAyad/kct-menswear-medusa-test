@@ -23,11 +23,7 @@ export async function POST(request: NextRequest) {
     const history: any[] = []
 
     // Build conversation context
-    const conversationHistory: Message[] = history.map(msg => ({
-      role: msg.role,
-      content: msg.content,
-      timestamp: new Date(msg.created_at)
-    })) || []
+    const conversationHistory: Message[] = []
 
     const conversationContext: ConversationContext = {
       sessionId,

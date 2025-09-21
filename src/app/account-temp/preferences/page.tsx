@@ -52,7 +52,7 @@ export default function StylePreferencesPage() {
     setFormData({
       ...formData,
       colors: formData.colors.includes(color)
-        ? formData.colors.filter((c) => c !== color)
+        ? formData.colors.filter((c: string) => c !== color)
         : [...formData.colors, color],
     });
   };
@@ -61,7 +61,7 @@ export default function StylePreferencesPage() {
     setFormData({
       ...formData,
       occasions: formData.occasions.includes(occasion)
-        ? formData.occasions.filter((o) => o !== occasion)
+        ? formData.occasions.filter((o: string) => o !== occasion)
         : [...formData.occasions, occasion],
     });
   };
