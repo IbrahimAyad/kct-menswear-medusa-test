@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     const ai = AtelierAICore.getInstance()
 
     // Generate recommendations
-    const recommendations = await ai.generateOutfitRecommendations(context, userProfile)
+    const recommendations = await ai.generateOutfitRecommendations(context, userProfile || undefined)
 
     // Store recommendations for analytics - disabled during migration
     /*

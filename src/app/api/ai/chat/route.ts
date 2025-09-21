@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     */
 
     // If we have product recommendations, fetch full product details
-    let enrichedRecommendations = []
+    let enrichedRecommendations: any[] = []
     if (response.productRecommendations && response.productRecommendations.length > 0) {
       // Disabled during migration - return recommendations as-is
       enrichedRecommendations = response.productRecommendations
