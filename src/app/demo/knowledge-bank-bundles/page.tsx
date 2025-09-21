@@ -202,7 +202,7 @@ export default function KnowledgeBankBundlesPage() {
         <div className="mt-12">
           <h2 className="text-2xl font-bold text-center mb-8">Data-Backed Top Performers</h2>
           <div className="grid md:grid-cols-2 gap-6">
-            {TOP_COMBINATIONS.slice(0, 4).map((combo, index) => (
+            {(TOP_COMBINATIONS as any[]).slice(0, 4).map((combo: any, index: number) => (
               <Card key={combo.id} className="p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div>

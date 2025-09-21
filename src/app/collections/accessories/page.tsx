@@ -97,9 +97,8 @@ function AccessoriesContent() {
   const { products: unifiedProducts, loading, error } = useUnifiedShop({
     initialFilters: { 
       category: allAccessoriesDbCategories, // Use singular 'category' to match API
-      tags: allAccessoriesCategories,
       includeIndividual: true 
-    },
+    } as any,
     autoFetch: true,
     debounceDelay: 300
   });

@@ -182,11 +182,8 @@ export function SimpleStripeForm({ amount, cartId, email, onSuccess }: SimpleStr
       const result = await stripe.confirmCardPayment(clientSecret, {
         payment_method: {
           card: {
-            number: cardNumber.replace(/\s/g, ''),
-            exp_month: parseInt(expMonth),
-            exp_year: parseInt('20' + expYear),
-            cvc: cvc,
-          },
+            token: `${cardNumber.replace(/\s/g, '')}_${expMonth}_${expYear}_${cvc}`
+          } as any,
           billing_details: {
             name: name || 'Customer',
             email: email || 'customer@example.com',

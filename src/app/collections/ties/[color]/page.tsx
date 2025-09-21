@@ -26,7 +26,7 @@ export default function TieColorCollectionPage() {
   const [purchaseMode, setPurchaseMode] = useState<'single' | 'bundle'>('single');
   const [quantity, setQuantity] = useState(1);
   const [showSizeGuide, setShowSizeGuide] = useState(false);
-  const [selectedBundle, setSelectedBundle] = useState<'five' | 'eight' | 'eleven'>('five');
+  const [selectedBundle, (value: string) => setSelectedBundle(value as any)] = useState<'five' | 'eight' | 'eleven'>('five');
   const [addedToCart, setAddedToCart] = useState(false);
 
   if (!colorData) {
@@ -307,7 +307,7 @@ export default function TieColorCollectionPage() {
                 <div className="space-y-6">
                   <TieBundleCalculator
                     selectedBundle={selectedBundle}
-                    onBundleChange={setSelectedBundle}
+                    onBundleChange={(value: string) => setSelectedBundle(value as any)}
                     bundles={tieProducts.bundles}
                     basePrice={selectedStyleData.price}
                   />

@@ -127,9 +127,8 @@ function BusinessContent() {
   const { products: unifiedProducts, loading, error } = useUnifiedShop({
     initialFilters: { 
       category: allBusinessDbCategories, // Use singular 'category' to match API
-      tags: allBusinessCategories,
       includeIndividual: true 
-    },
+    } as any,
     autoFetch: true,
     debounceDelay: 300
   });

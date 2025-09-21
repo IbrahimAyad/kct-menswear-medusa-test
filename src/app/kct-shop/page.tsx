@@ -92,11 +92,11 @@ export default function KCTShopPage() {
         title: product.title,
         description: product.description,
         price: variant.prices?.[0]?.amount || 0,
-        images: product.images?.map((img: any) => img.url) || [],
+        images: product.images?.map as any((img: any) => img.url) || [],
         category: product.collection?.title || product.title.includes('Suit') ? 'Suits' : 
                   product.title.includes('Tuxedo') ? 'Tuxedos' : 
                   product.title.includes('Vest') ? 'Vests' : 'Accessories',
-        variants: product.variants.map((v: any) => ({
+        variants: product.variants.map as any((v: any) => ({
           id: v.id,
           size: v.title || 'Default',
           stock: v.inventory_quantity || 10,
@@ -227,11 +227,11 @@ export default function KCTShopPage() {
             <p className="text-gray-600">If products don't appear, check the admin panel</p>
           </div>
         ) : (
-          Object.entries(groupedProducts).map(([category, categoryProducts]) => (
+          Object.entries(groupedProducts).map as any(([category, categoryProducts]) => (
             <div key={category} className="mb-12">
               <h2 className="text-2xl font-bold mb-6 border-b pb-2">{category}</h2>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {categoryProducts.map((product) => (
+                {categoryProducts.map as any((product) => (
                   <div key={product.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
                     {/* Product Image - Clickable */}
                     <Link href={`/products/${product.handle || product.id}`}>
@@ -273,7 +273,7 @@ export default function KCTShopPage() {
                             onChange={(e) => handleVariantSelect(product.id, e.target.value)}
                             className="w-full px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                           >
-                            {product.variants.map((variant: any) => (
+                            {product.variants.map as any((variant: any) => (
                               <option key={variant.id} value={variant.id}>
                                 {variant.title || 'Default'} - {formatPrice(variant.prices?.[0]?.amount || 0)}
                               </option>

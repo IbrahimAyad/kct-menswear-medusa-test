@@ -69,30 +69,27 @@ export default function CustomSuitsPage() {
       id: `suit-${selection.suit.color}-${selection.suit.type}`,
       name: `${selection.suit.color.charAt(0).toUpperCase() + selection.suit.color.slice(1).replace(/([A-Z])/g, ' $1')} Suit (${selection.suit.type})`,
       price: selection.suit.price * discountMultiplier,
-      originalPrice: selection.suit.price,
       image: getSuitImages(selection.suit.color).main,
-      size: selection.suit.size,
+      selectedSize: selection.suit.size,
       quantity: 1
-    });
+    } as any);
     
     addItem({
       id: `shirt-${selection.shirt.color}-${selection.shirt.fit}`,
       name: `${selection.shirt.color} Dress Shirt (${selection.shirt.fit} fit)`,
       price: selection.shirt.price * discountMultiplier,
-      originalPrice: selection.shirt.price,
       image: dressShirtProducts.colors.find(c => c.id === selection.shirt!.color)?.imageUrl || '',
-      size: selection.shirt.size,
+      selectedSize: selection.shirt.size,
       quantity: 1
-    });
+    } as any);
     
     addItem({
       id: `tie-${selection.tie.color}-${selection.tie.style}`,
       name: `${selection.tie.color} ${selection.tie.style === 'bowtie' ? 'Bow Tie' : 'Tie'}`,
       price: selection.tie.price * discountMultiplier,
-      originalPrice: selection.tie.price,
       image: tieProducts.colors.find(t => t.displayName === selection.tie!.color)?.imageUrl || '',
       quantity: 1
-    });
+    } as any);
     
     // Show success message or redirect
     alert('Bundle added to cart!');
