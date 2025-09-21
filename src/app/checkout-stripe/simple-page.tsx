@@ -86,7 +86,7 @@ function CheckoutForm({ clientSecret }: { clientSecret: string }) {
 
 export default function SimpleStripeCheckout() {
   const router = useRouter()
-  const { cart, isLoading } = useMedusaCart()
+  const { medusaCart: cart, isLoading } = useMedusaCart()
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [initializingPayment, setInitializingPayment] = useState(false)
