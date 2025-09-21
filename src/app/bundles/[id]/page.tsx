@@ -119,7 +119,7 @@ export default function BundleDetailPage() {
       image: bundle.imageUrl,
       quantity: 1,
       category: isCasualBundle ? 'casual-bundle' : isPromBundle ? 'prom-bundle' : isWeddingBundle ? 'wedding-bundle' : 'bundle',
-      size: selectedSize,
+      selectedSize: selectedSize,
       metadata: {
         suit: bundle.suit,
         shirt: bundle.shirt,
