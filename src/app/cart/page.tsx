@@ -405,20 +405,13 @@ export default function CartPage() {
               <div className="space-y-4 mb-6">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Subtotal ({validCartItems.reduce((sum, item) => sum + item.quantity, 0)} items)</span>
-                  <span className="font-medium">{formatPrice(cartSummary.subtotal)}</span>
+                  <span className="font-medium">{formatPrice(cartSummary.totalPrice)}</span>
                 </div>
-                
-                {cartSummary.tax > 0 && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Tax</span>
-                    <span>{formatPrice(cartSummary.tax)}</span>
-                  </div>
-                )}
                 
                 <div className="flex justify-between">
                   <span className="text-gray-600">Shipping</span>
                   <span className="text-green-600">
-                    {cartSummary.subtotal >= 50000 ? 'FREE' : formatPrice(cartSummary.shipping)}
+                    {cartSummary.totalPrice >= 50000 ? 'FREE' : formatPrice(0)}
                   </span>
                 </div>
                 
