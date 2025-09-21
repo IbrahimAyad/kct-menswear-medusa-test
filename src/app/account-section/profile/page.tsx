@@ -12,10 +12,10 @@ export default function ProfilePage() {
   const [isSaving, setIsSaving] = useState(false);
   
   const [formData, setFormData] = useState({
-    firstName: customer?.firstName || "",
-    lastName: customer?.lastName || "",
+    firstName: customer?.first_name || "",
+    lastName: customer?.last_name || "",
     email: customer?.email || "",
-    phone: "",
+    phone: customer?.phone || "",
   });
 
   if (isLoading || !customer) {
@@ -121,10 +121,10 @@ export default function ProfilePage() {
               onClick={() => {
                 setIsEditing(false);
                 setFormData({
-                  firstName: customer.firstName,
-                  lastName: customer.lastName,
-                  email: customer.email,
-                  phone: "",
+                  firstName: customer.first_name || "",
+                  lastName: customer.last_name || "",
+                  email: customer.email || "",
+                  phone: customer.phone || "",
                 });
               }}
               className="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium"
