@@ -34,13 +34,13 @@ export async function POST(request: NextRequest) {
 
     switch (event) {
       case "inventory.adjusted":
-        await handleInventoryAdjusted(data);
+        await handleInventoryAdjusted(data as any);
         break;
       case "inventory.reserved":
-        await handleInventoryReserved(data);
+        await handleInventoryReserved(data as any);
         break;
       case "inventory.released":
-        await handleInventoryReleased(data);
+        await handleInventoryReleased(data as any);
         break;
       case "inventory.sync":
         await handleInventorySync(data);
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
 async function handleInventoryAdjusted(data: InventoryAdjustment) {
   const { sku, changes } = data;
 
-  for (const change of changes) {
+  for (const change of (changes as any)) {
     // Check for low stock situations
     if (change.currentStock > 0 && change.currentStock <= 5) {
       await notifyLowStock(sku, change.size, change.currentStock);

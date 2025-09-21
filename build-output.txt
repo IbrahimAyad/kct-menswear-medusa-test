@@ -1,0 +1,13 @@
+
+> kct-menswear-ai-enhanced@1.0.1 build
+> next build && echo 'Build completed successfully'
+
+   ▲ Next.js 15.5.0
+   - Environments: .env.local, .env.production
+   - Experiments (use with caution):
+     ✓ typedRoutes
+     ✓ serverActions
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 13.0s
+   Linting and checking validity of types ...

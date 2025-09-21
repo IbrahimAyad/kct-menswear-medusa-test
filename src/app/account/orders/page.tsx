@@ -67,7 +67,7 @@ export default function OrderHistoryPage() {
       } as any)
 
       if (response?.orders) {
-        setOrders(response.orders as Order[])
+        setOrders(response.orders as unknown as Order[])
       } else {
         setOrders([])
       }

@@ -84,9 +84,9 @@ export async function POST(req: NextRequest) {
 
         }
 
-        if (session.shipping_details) {
-
-        }
+        // Stripe Session doesn't have shipping_details directly
+        // Use shipping_cost or customer_details instead
+        const shippingInfo = (session as any).shipping_cost || (session as any).customer_details?.address;
 
         // TODO: Save order to your database
         // TODO: Send confirmation email
