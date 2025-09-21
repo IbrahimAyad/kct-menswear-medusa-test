@@ -129,7 +129,7 @@ export default function MedusaCartPage() {
                   <div className="flex justify-between">
                     <dt className="text-sm text-gray-600">Taxes</dt>
                     <dd className="text-sm font-medium text-gray-900">
-                      {formatPrice(cart.tax_total || 0)}
+                      {formatPrice((cart as any).tax_total || 0)}
                     </dd>
                   </div>
                   
