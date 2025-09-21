@@ -33,7 +33,7 @@ function LoginForm() {
     const checkUserAuth = async () => {
       await checkAuth()
       if (isAuthenticated) {
-        router.push(redirectTo)
+        router.push(redirectTo as any)
       }
     }
     checkUserAuth()
@@ -57,7 +57,7 @@ function LoginForm() {
 
       // Wait a moment to show success message
       setTimeout(() => {
-        router.push(redirectTo)
+        router.push(redirectTo as any)
       }, 1000)
     } else {
       setError(result.error || 'Failed to sign in')
