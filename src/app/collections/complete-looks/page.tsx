@@ -97,10 +97,9 @@ function CompleteLooksContent() {
   const { products: unifiedProducts, loading, error } = useUnifiedShop({
     initialFilters: { 
       category: allCompleteLooksDbCategories, // Use singular 'category' to match API
-      tags: allCompleteLooksCategories,
       includeIndividual: true,
       includeBundles: true // Explicitly include bundles for complete looks
-    },
+    } as any,
     autoFetch: true,
     debounceDelay: 300
   });
