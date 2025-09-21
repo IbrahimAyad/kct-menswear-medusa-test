@@ -92,11 +92,11 @@ export default function KCTShopPage() {
         title: product.title,
         description: product.description,
         price: variant.prices?.[0]?.amount || 0,
-        images: product.images?.map as any((img: any) => img.url) || [],
+        images: (product.images as any)?.map((img: any) => img.url) || [],
         category: product.collection?.title || product.title.includes('Suit') ? 'Suits' : 
                   product.title.includes('Tuxedo') ? 'Tuxedos' : 
                   product.title.includes('Vest') ? 'Vests' : 'Accessories',
-        variants: product.variants.map as any((v: any) => ({
+        variants: (product.variants as any)?.map((v: any) => ({
           id: v.id,
           size: v.title || 'Default',
           stock: v.inventory_quantity || 10,
