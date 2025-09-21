@@ -75,7 +75,7 @@ function SignupForm() {
       // Wait a moment to show the success message
       setTimeout(() => {
         // Redirect to the intended page or account dashboard
-        router.push(redirectTo)
+        router.push(redirectTo as any)
       }, 1500)
     } else {
       setError(result.error || 'Failed to create account')
