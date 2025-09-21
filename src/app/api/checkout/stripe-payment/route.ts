@@ -18,7 +18,7 @@ if (!stripeKey) {
 }
 
 const stripe = stripeKey ? new Stripe(stripeKey, {
-  apiVersion: '2025-08-27.basil', // Use latest stable API version
+  apiVersion: '2025-07-30.basil', // Use latest stable API version
   typescript: true,
 }) : null
 
@@ -154,7 +154,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Retrieve the payment intent to check its status
-    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId)
+    const paymentIntent = await stripe!.paymentIntents.retrieve(paymentIntentId)
 
     if (paymentIntent.status === 'succeeded') {
       // Payment successful, complete the order

@@ -8,7 +8,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<APIRespons
   const { searchParams } = new URL(request.url);
   const category = searchParams.get('category');
   
-  const products: Product[] = [
+  const products = [
     {
       id: "NVY-SUIT-001",
       sku: "NVY-SUIT-001",
@@ -100,7 +100,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<APIRespons
   const response: APIResponse<ProductsResponse> = {
     success: true,
     data: {
-      products,
+      products: products as Product[],
       total: products.length,
       hasMore: false,
       filters: {
