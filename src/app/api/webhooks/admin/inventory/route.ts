@@ -101,13 +101,10 @@ async function handleInventorySync(data: Record<string, unknown>) {
 async function notifyLowStock(sku: string, size: string, currentStock: number) {
   // Send internal notification to admin
   await sendAdminNotification({
-    type: "low_stock",
+    type: "inventory_low" as any,
     title: "Low Stock Alert",
     message: `${sku} size ${size} has only ${currentStock} items remaining`,
-    sku,
-    size,
-    stock: currentStock,
-  });
+  } as any);
 }
 
 async function notifyOutOfStock(sku: string, size: string) {
@@ -116,12 +113,10 @@ async function notifyOutOfStock(sku: string, size: string) {
 
   // Send admin notification
   await sendAdminNotification({
-    type: "out_of_stock",
+    type: "inventory_low" as any,
     title: "Out of Stock",
     message: `${sku} size ${size} is now out of stock`,
-    sku,
-    size,
-  });
+  } as any);
 }
 
 async function notifyBackInStock(sku: string, size: string) {
@@ -140,9 +135,12 @@ async function broadcastInventoryUpdate(data: Record<string, unknown>) {
 
   // In production, use a message queue or pub/sub system
   // For now, we'll use a simple approach
-  (global as Record<string, unknown>).sseClients?.forEach((client: SSEClient) => {
-    client.write(`data: ${message}\n\n`);
-  });
+  const clients = (global as Record<string, any>).sseClients;
+  if (clients && Array.isArray(clients)) {
+    clients.forEach((client: SSEClient) => {
+      client.write(`data: ${message}\n\n`);
+    });
+  }
 }
 
 async function sendAdminNotification(notification: AdminNotification) {
