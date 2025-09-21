@@ -401,7 +401,7 @@ function CollectionsContent() {
                         )}
                         
                         <p className="text-lg font-semibold">
-                          ${product.metadata?.tier_price as any || product.price || 0}
+                          ${(product.metadata as any)?.tier_price || product.price || 0}
                         </p>
                         
                         {stock.inStock && stock.totalQuantity <= 5 && (

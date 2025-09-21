@@ -347,7 +347,7 @@ export default function HomePage() {
           slug: p.handle,
           handle: p.handle, // Add handle explicitly for robust navigation
           title: p.title, // Add title for fallback slug generation
-          category: p.metadata?.categories as any || 'menswear'
+          category: (p.metadata as any)?.categories || 'menswear'
         }))} 
         title="Trending Now"
         subtitle="Discover what's capturing attention"

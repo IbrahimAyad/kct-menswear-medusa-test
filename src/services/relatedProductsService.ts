@@ -11,10 +11,10 @@ export function findRelatedProducts(
   
   // Get current product metadata
   const currentCollections = parseMetadataField(currentProduct.metadata?.collections as string)
-  const currentCategories = parseMetadataField(currentProduct.metadata?.categories as any as string)
+  const currentCategories = parseMetadataField((currentProduct.metadata as any)?.categories as string)
   const currentStyles = parseMetadataField(currentProduct.metadata?.styles as string)
   const currentColors = parseMetadataField(currentProduct.metadata?.colors as string)
-  const currentOccasions = parseMetadataField(currentProduct.metadata?.occasions as any as string)
+  const currentOccasions = parseMetadataField((currentProduct.metadata as any)?.occasions as string)
   const currentTags = parseMetadataField(currentProduct.metadata?.tags as string)
   
   // Score each product
@@ -25,10 +25,10 @@ export function findRelatedProducts(
       
       // Parse product metadata
       const collections = parseMetadataField(product.metadata?.collections as string)
-      const categories = parseMetadataField(product.metadata?.categories as any as string)
+      const categories = parseMetadataField((product.metadata as any)?.categories as string)
       const styles = parseMetadataField(product.metadata?.styles as string)
       const colors = parseMetadataField(product.metadata?.colors as string)
-      const occasions = parseMetadataField(product.metadata?.occasions as any as string)
+      const occasions = parseMetadataField((product.metadata as any)?.occasions as string)
       const tags = parseMetadataField(product.metadata?.tags as string)
       
       // Score based on matching metadata (weighted)
@@ -109,8 +109,8 @@ export function getComplementaryProducts(
 ): MedusaProduct[] {
   if (!currentProduct || !allProducts.length) return []
   
-  const currentCategories = parseMetadataField(currentProduct.metadata?.categories as any as string)
-  const currentOccasions = parseMetadataField(currentProduct.metadata?.occasions as any as string)
+  const currentCategories = parseMetadataField((currentProduct.metadata as any)?.categories as string)
+  const currentOccasions = parseMetadataField((currentProduct.metadata as any)?.occasions as string)
   
   // Define complementary category mappings
   const complementaryMap: { [key: string]: string[] } = {
@@ -145,8 +145,8 @@ export function getComplementaryProducts(
     .filter(p => {
       if (p.id === currentProduct.id) return false
       
-      const categories = parseMetadataField(p.metadata?.categories as any as string)
-      const occasions = parseMetadataField(p.metadata?.occasions as any as string)
+      const categories = parseMetadataField((p.metadata as any)?.categories as string)
+      const occasions = parseMetadataField((p.metadata as any)?.occasions as string)
       
       // Must be in a complementary category
       const inComplementaryCategory = categories.some(c => 
