@@ -37,14 +37,17 @@ export async function POST(request: NextRequest) {
 
     // Step 2: Complete the cart to create an order
     try {
-      const { order } = await medusa.store.cart.complete(cartId)
+      const response = await medusa.store.cart.complete(cartId)
+      
+      // The response contains the completed cart, which becomes an order
+      const completedCart = response as any
       
       return NextResponse.json({
         success: true,
-        orderId: order.id,
-        orderNumber: order.display_id,
-        total: order.total,
-        redirectUrl: `/checkout/success?order_id=${order.id}`
+        orderId: completedCart.id,
+        orderNumber: completedCart.display_id || completedCart.id,
+        total: completedCart.total,
+        redirectUrl: `/checkout/success?order_id=${completedCart.id}`
       })
     } catch (completeError: any) {
       // If cart completion fails, return error details

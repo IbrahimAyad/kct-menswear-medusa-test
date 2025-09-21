@@ -23,10 +23,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Step 2: Get shipping options if address provided
-    let shippingOptions = []
+    let shippingOptions: any = []
     if (shippingAddress) {
       try {
-        shippingOptions = await medusa.store.shipping.listCartOptions(cartId)
+        // In Medusa v2, shipping options are retrieved via fulfillment
+        const { shipping_options } = await medusa.store.fulfillment.listCartOptions({ cart_id: cartId }) as any
+        shippingOptions = shipping_options || []
         
         // Automatically select first shipping option
         if (shippingOptions.length > 0) {
@@ -40,7 +42,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Step 3: Get available payment providers
-    const providers = await medusa.store.payment.listPaymentProviders()
+    const providersResponse = await medusa.store.payment.listPaymentProviders() as any
+    const providers = providersResponse.payment_providers || []
     const hasStripe = providers.some((p: any) => p.id === 'pp_stripe_stripe' && p.is_enabled)
     
     if (!hasStripe) {
@@ -59,7 +62,8 @@ export async function POST(request: NextRequest) {
     )
 
     // Step 5: Extract client secret
-    const stripeSession = paymentCollection.payment_sessions?.find(
+    const paymentCollectionData = paymentCollection as any
+    const stripeSession = paymentCollectionData.payment_sessions?.find(
       (session: any) => session.provider_id === 'pp_stripe_stripe'
     )
 
@@ -105,12 +109,13 @@ export async function GET(request: NextRequest) {
     const { cart } = await medusa.store.cart.retrieve(cartId)
     
     // Get available payment providers
-    const providers = await medusa.store.payment.listPaymentProviders()
+    const providersResponse = await medusa.store.payment.listPaymentProviders() as any
+    const providersList = providersResponse.payment_providers || []
     
     return NextResponse.json({
       success: true,
       cart,
-      providers: providers.map((p: any) => ({ 
+      providers: providersList.map((p: any) => ({ 
         id: p.id, 
         is_enabled: p.is_enabled 
       }))

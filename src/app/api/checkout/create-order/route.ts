@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
     let paymentIntent
     try {
       paymentIntent = await stripe.paymentIntents.create({
-        amount: cart.total, // Amount in cents
+        amount: cart.total || 0, // Amount in cents
         currency: 'usd',
         metadata: {
           order_id: order.id,           // Key change: track by order_id
