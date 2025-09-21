@@ -336,3 +336,5 @@ export default function OrderTrackingPage() {
     </div>
   );
 }
+
+export const dynamic = 'force-dynamic'

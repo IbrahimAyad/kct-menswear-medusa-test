@@ -236,3 +236,5 @@ export default function LoginPage() {
     </Suspense>
   )
 }
+
+export const dynamic = 'force-dynamic'

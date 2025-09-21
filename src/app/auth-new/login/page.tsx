@@ -104,3 +104,5 @@ export default function MedusaLoginPage() {
     </div>
   )
 }
+
+export const dynamic = 'force-dynamic'

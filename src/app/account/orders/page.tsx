@@ -274,3 +274,5 @@ export default function OrderHistoryPage() {
     </div>
   )
 }
+
+export const dynamic = 'force-dynamic'

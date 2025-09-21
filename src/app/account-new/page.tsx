@@ -103,3 +103,5 @@ export default function MedusaAccountPage() {
     </div>
   )
 }
+
+export const dynamic = 'force-dynamic'

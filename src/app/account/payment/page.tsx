@@ -207,3 +207,5 @@ export default function PaymentMethodsPage() {
     </div>
   )
 }
+
+export const dynamic = 'force-dynamic'

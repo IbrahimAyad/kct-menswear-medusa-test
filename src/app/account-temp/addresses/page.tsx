@@ -196,3 +196,5 @@ export default function AddressBookPage() {
     </div>
   );
 }
+
+export const dynamic = 'force-dynamic'

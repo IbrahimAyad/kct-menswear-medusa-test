@@ -149,3 +149,5 @@ export default function WishlistPage() {
     </div>
   )
 }
+
+export const dynamic = 'force-dynamic'

@@ -221,3 +221,5 @@ export default function StylePreferencesPage() {
     </div>
   );
 }
+
+export const dynamic = 'force-dynamic'

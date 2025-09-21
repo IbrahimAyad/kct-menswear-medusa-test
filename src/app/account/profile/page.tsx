@@ -319,3 +319,5 @@ export default function ProfilePage() {
     </div>
   )
 }
+
+export const dynamic = 'force-dynamic'

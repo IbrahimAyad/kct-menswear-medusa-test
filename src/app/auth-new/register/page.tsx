@@ -164,3 +164,5 @@ export default function MedusaRegisterPage() {
     </div>
   )
 }
+
+export const dynamic = 'force-dynamic'

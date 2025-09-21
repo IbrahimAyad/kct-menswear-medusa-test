@@ -193,3 +193,5 @@ export default function MeasurementsPage() {
     </div>
   );
 }
+
+export const dynamic = 'force-dynamic'

@@ -313,3 +313,5 @@ export default function AddressesPage() {
     </div>
   )
 }
+
+export const dynamic = 'force-dynamic'
